@@ -1,0 +1,3 @@
+# Application code owns response structure and evidence gates
+
+The LLM may route requests, rewrite queries, select procedure evidence, phrase validated claims, and translate, but it does not produce the canonical response structure or decide safety-critical statuses. Application code assembles a typed response object and owns compatibility outcomes, citations, numeric verification, procedure completeness, and acceptance or rejection of the final answer. We chose this because the canonical envelope must remain machine-checkable even when a smaller model emits malformed or unreliable structured output, while the LLM's useful strengths remain available for language tasks.

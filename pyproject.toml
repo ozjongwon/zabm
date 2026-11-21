@@ -1,0 +1,40 @@
+[project]
+name = "zabm"
+version = "0.1.0"
+description = "Bicycle maintenance assistant with evidence-gated answers."
+requires-python = "==3.13.5"
+dependencies = [
+  "pydantic==2.14.3",
+]
+
+[dependency-groups]
+dev = [
+  "pyright[nodejs]==1.1.414",
+  "ruff==0.17.4",
+]
+test = [
+  "pytest==9.2.0",
+]
+eval = []
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"

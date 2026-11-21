@@ -1,0 +1,9 @@
+# Development-only tools. The runtime profile never reads this file.
+nodeenv==1.12.0 \
+    --hash=sha256:80644d65c10cc2be12e3e4b54b3367ff288c7ad24ae75c2dcc65454fc7449d4d
+nodejs-wheel-binaries==24.19.0 \
+    --hash=sha256:4196a947bcc883f2003ab101762d729f3e99b5e86b75bd09151563403e2eceb8
+pyright==1.1.414 \
+    --hash=sha256:2a6b4b3298c9eec174c5ed83bd338de6eee82df2992f3e1930e6199d381be36f
+ruff==0.17.4 \
+    --hash=sha256:2cd025509b2e15721b426fc70fd946d71f43b3db3b08e946dfec2d696d911690

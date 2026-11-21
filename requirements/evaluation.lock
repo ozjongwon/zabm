@@ -1,0 +1,3 @@
+# Evaluation-only dependencies. The runtime profile never reads this file.
+# The environment bootstrap does not introduce an evaluation framework before
+# the evaluation ticket selects one; future additions must be exact and hashed.
