@@ -1,0 +1,3681 @@
+{
+  "evaluation_set_id": "bicycle-maintenance-evaluation-v1",
+  "source_pack_id": "2026-11-23.3-frozen-1",
+  "frozen_at": "2026-11-23",
+  "maintainer_review": "ticket-10-hand-authored-evaluation-v1",
+  "items": [
+    {
+      "id": "spec-001",
+      "category": "specification",
+      "question": "What torque should I use for the RockShox Reverb Standard Remote clamp bolt during 50/200 Hour Service?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-002",
+      "category": "specification",
+      "question": "What is the T25 clamp bolt torque for a RockShox Reverb Standard Remote?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-003",
+      "category": "specification",
+      "question": "Provide the RockShox Reverb standard remote clamp fastener torque and its applicable service condition.",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-004",
+      "category": "specification",
+      "question": "What tightening range applies to the clamp bolt on a RockShox Reverb Standard Remote?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-005",
+      "category": "specification",
+      "question": "What torque does SRAM specify for the Reverb Standard Remote clamp bolt?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-006",
+      "category": "specification",
+      "question": "What is the RockShox Reverb standard remote clamp bolt specification in N·m?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-007",
+      "category": "specification",
+      "question": "Which torque range applies when installing the standard remote clamp on a RockShox Reverb seatpost?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-008",
+      "category": "specification",
+      "question": "What is the clamp bolt torque for the RockShox Reverb Standard Remote using a T25 wrench?",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-009",
+      "category": "specification",
+      "question": "What is the RockShox Reverb AXS saddle clamp bolt torque?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 32,
+          "printed_page": 32,
+          "section": "T orque Serrage Momento de torção"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 12,
+            "maximum": 12,
+            "unit": "N·m",
+            "display": "12 N·m (106 in-lb)"
+          },
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Fastener: saddle clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Assembly state: saddle rails seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-010",
+      "category": "specification",
+      "question": "What torque applies to the Reverb AXS saddle clamp fastener with the saddle rails seated squarely?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 32,
+          "printed_page": 32,
+          "section": "T orque Serrage Momento de torção"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 12,
+            "maximum": 12,
+            "unit": "N·m",
+            "display": "12 N·m (106 in-lb)"
+          },
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Fastener: saddle clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Assembly state: saddle rails seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-011",
+      "category": "specification",
+      "question": "Give the exact T25 saddle clamp bolt specification for a RockShox Reverb AXS seatpost.",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 32,
+          "printed_page": 32,
+          "section": "T orque Serrage Momento de torção"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 12,
+            "maximum": 12,
+            "unit": "N·m",
+            "display": "12 N·m (106 in-lb)"
+          },
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Fastener: saddle clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Assembly state: saddle rails seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-012",
+      "category": "specification",
+      "question": "What tightening value does SRAM give for the Reverb AXS saddle clamp bolt?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 32,
+          "printed_page": 32,
+          "section": "T orque Serrage Momento de torção"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 12,
+            "maximum": 12,
+            "unit": "N·m",
+            "display": "12 N·m (106 in-lb)"
+          },
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Fastener: saddle clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Assembly state: saddle rails seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-013",
+      "category": "specification",
+      "question": "What is the Reverb AXS saddle fastener torque in N·m and in-lb?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 32,
+          "printed_page": 32,
+          "section": "T orque Serrage Momento de torção"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 12,
+            "maximum": 12,
+            "unit": "N·m",
+            "display": "12 N·m (106 in-lb)"
+          },
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Fastener: saddle clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Assembly state: saddle rails seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-014",
+      "category": "specification",
+      "question": "Which torque applies after seating the saddle rails squarely on the inner rail clamps of a Reverb AXS?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 32,
+          "printed_page": 32,
+          "section": "T orque Serrage Momento de torção"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 12,
+            "maximum": 12,
+            "unit": "N·m",
+            "display": "12 N·m (106 in-lb)"
+          },
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Fastener: saddle clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Assembly state: saddle rails seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-015",
+      "category": "specification",
+      "question": "What saddle clamp bolt torque should I use for the RockShox Reverb AXS?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 32,
+          "printed_page": 32,
+          "section": "T orque Serrage Momento de torção"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 12,
+            "maximum": 12,
+            "unit": "N·m",
+            "display": "12 N·m (106 in-lb)"
+          },
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Fastener: saddle clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Assembly state: saddle rails seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-016",
+      "category": "specification",
+      "question": "What torque should I use for the 2011 RockShox Reba post mount brake caliper mounting bolts?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 10.2,
+            "maximum": 10.2,
+            "unit": "N·m",
+            "display": "10.2 N·m (90 in-lb)"
+          },
+          "required_qualifiers": [
+            "Fork: 2011 RockShox Reba",
+            "Mount: Post Mount",
+            "Fastener: brake caliper mounting bolts"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-017",
+      "category": "specification",
+      "question": "What is the 2011 Reba post-mount brake caliper fastener torque?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 10.2,
+            "maximum": 10.2,
+            "unit": "N·m",
+            "display": "10.2 N·m (90 in-lb)"
+          },
+          "required_qualifiers": [
+            "Fork: 2011 RockShox Reba",
+            "Mount: Post Mount",
+            "Fastener: brake caliper mounting bolts"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-018",
+      "category": "specification",
+      "question": "Give the RockShox Reba brake caliper mounting bolt tightening value for a post mount.",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 10.2,
+            "maximum": 10.2,
+            "unit": "N·m",
+            "display": "10.2 N·m (90 in-lb)"
+          },
+          "required_qualifiers": [
+            "Fork: 2011 RockShox Reba",
+            "Mount: Post Mount",
+            "Fastener: brake caliper mounting bolts"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-019",
+      "category": "specification",
+      "question": "What torque does the 2011 RockShox Reba technical manual specify for post-mount brake caliper bolts?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 10.2,
+            "maximum": 10.2,
+            "unit": "N·m",
+            "display": "10.2 N·m (90 in-lb)"
+          },
+          "required_qualifiers": [
+            "Fork: 2011 RockShox Reba",
+            "Mount: Post Mount",
+            "Fastener: brake caliper mounting bolts"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-020",
+      "category": "specification",
+      "question": "What is the post mount brake caliper bolt specification for the 2011 RockShox Reba in N·m?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 10.2,
+            "maximum": 10.2,
+            "unit": "N·m",
+            "display": "10.2 N·m (90 in-lb)"
+          },
+          "required_qualifiers": [
+            "Fork: 2011 RockShox Reba",
+            "Mount: Post Mount",
+            "Fastener: brake caliper mounting bolts"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-021",
+      "category": "specification",
+      "question": "Which torque applies to the brake caliper mounting bolts on a 2011 RockShox Reba post mount?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 10.2,
+            "maximum": 10.2,
+            "unit": "N·m",
+            "display": "10.2 N·m (90 in-lb)"
+          },
+          "required_qualifiers": [
+            "Fork: 2011 RockShox Reba",
+            "Mount: Post Mount",
+            "Fastener: brake caliper mounting bolts"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-022",
+      "category": "specification",
+      "question": "What is the 2011 Reba brake caliper bolt torque in in-lb?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 10.2,
+            "maximum": 10.2,
+            "unit": "N·m",
+            "display": "10.2 N·m (90 in-lb)"
+          },
+          "required_qualifiers": [
+            "Fork: 2011 RockShox Reba",
+            "Mount: Post Mount",
+            "Fastener: brake caliper mounting bolts"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-023",
+      "category": "specification",
+      "question": "What is the torque for the MAGURA GUSTAV PRO brake calliper retaining screws?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "6 Tightening torques"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m (53.1 lbf in)"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA GUSTAV PRO",
+            "Fastener: brake calliper retaining screws",
+            "Tool: 5 mm",
+            "Manual revision: 2026-01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-024",
+      "category": "specification",
+      "question": "What tightening value applies to the 5 mm brake calliper retaining screws on a MAGURA GUSTAV PRO?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "6 Tightening torques"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m (53.1 lbf in)"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA GUSTAV PRO",
+            "Fastener: brake calliper retaining screws",
+            "Tool: 5 mm",
+            "Manual revision: 2026-01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-025",
+      "category": "specification",
+      "question": "Give the MAGURA GUSTAV PRO brake calliper screw torque for the 2026-01 manual revision.",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "6 Tightening torques"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m (53.1 lbf in)"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA GUSTAV PRO",
+            "Fastener: brake calliper retaining screws",
+            "Tool: 5 mm",
+            "Manual revision: 2026-01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-026",
+      "category": "specification",
+      "question": "What is the GUSTAV PRO brake caliper retaining fastener torque in N·m?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "6 Tightening torques"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m (53.1 lbf in)"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA GUSTAV PRO",
+            "Fastener: brake calliper retaining screws",
+            "Tool: 5 mm",
+            "Manual revision: 2026-01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-027",
+      "category": "specification",
+      "question": "Which torque should I use for the MAGURA GUSTAV PRO calliper retaining screws with a 5 mm tool?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "6 Tightening torques"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m (53.1 lbf in)"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA GUSTAV PRO",
+            "Fastener: brake calliper retaining screws",
+            "Tool: 5 mm",
+            "Manual revision: 2026-01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-028",
+      "category": "specification",
+      "question": "What is the MAGURA GUSTAV PRO brake calliper retaining screw specification in lbf in?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "6 Tightening torques"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m (53.1 lbf in)"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA GUSTAV PRO",
+            "Fastener: brake calliper retaining screws",
+            "Tool: 5 mm",
+            "Manual revision: 2026-01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-029",
+      "category": "specification",
+      "question": "What exact torque does the MAGURA GUSTAV PRO owner's manual list for brake calliper retaining screws?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "6 Tightening torques"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m (53.1 lbf in)"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA GUSTAV PRO",
+            "Fastener: brake calliper retaining screws",
+            "Tool: 5 mm",
+            "Manual revision: 2026-01"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-030",
+      "category": "specification",
+      "question": "What is the maximum torque for the MAGURA MT A2 brake calliper mounting screws?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m maximum"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA MT A2",
+            "Fastener: brake calliper mounting screws (13)",
+            "Tool: 5 mm",
+            "Constraint: maximum torque",
+            "Check interval: regular maintenance"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-031",
+      "category": "specification",
+      "question": "What tightening limit applies to the 5 mm brake calliper mounting screws on a MAGURA MT A2?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m maximum"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA MT A2",
+            "Fastener: brake calliper mounting screws (13)",
+            "Tool: 5 mm",
+            "Constraint: maximum torque",
+            "Check interval: regular maintenance"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-032",
+      "category": "specification",
+      "question": "Give the MAGURA MT A2 calliper mounting screw maximum torque.",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m maximum"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA MT A2",
+            "Fastener: brake calliper mounting screws (13)",
+            "Tool: 5 mm",
+            "Constraint: maximum torque",
+            "Check interval: regular maintenance"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-033",
+      "category": "specification",
+      "question": "What is the MT A2 brake caliper mounting fastener torque constraint in N·m?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m maximum"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA MT A2",
+            "Fastener: brake calliper mounting screws (13)",
+            "Tool: 5 mm",
+            "Constraint: maximum torque",
+            "Check interval: regular maintenance"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-034",
+      "category": "specification",
+      "question": "Which maximum value should I use for the MAGURA MT A2 brake calliper screws numbered 13?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m maximum"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA MT A2",
+            "Fastener: brake calliper mounting screws (13)",
+            "Tool: 5 mm",
+            "Constraint: maximum torque",
+            "Check interval: regular maintenance"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-035",
+      "category": "specification",
+      "question": "What is the MAGURA MT A2 brake calliper mounting screw tightening specification?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m maximum"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA MT A2",
+            "Fastener: brake calliper mounting screws (13)",
+            "Tool: 5 mm",
+            "Constraint: maximum torque",
+            "Check interval: regular maintenance"
+          ]
+        }
+      }
+    },
+    {
+      "id": "spec-036",
+      "category": "specification",
+      "question": "What maximum torque does the MAGURA MT A2 user instruction specify for brake calliper mounting screws?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 6,
+            "maximum": 6,
+            "unit": "N·m",
+            "display": "6 N·m maximum"
+          },
+          "required_qualifiers": [
+            "Brake model: MAGURA MT A2",
+            "Fastener: brake calliper mounting screws (13)",
+            "Tool: 5 mm",
+            "Constraint: maximum torque",
+            "Check interval: regular maintenance"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-001",
+      "category": "compatibility",
+      "question": "Is the Reverb Stealth hose barb with barb sleeve compatible with a Reverb Stealth A2 seatpost?",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Bicycle model: Reverb Stealth",
+            "Revision: A2 and B1",
+            "Connection: hose barb with barb sleeve"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-002",
+      "category": "compatibility",
+      "question": "Can a RockShox Reverb Stealth hose barb and barb sleeve be used with a Reverb Stealth B1 seatpost?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Bicycle model: Reverb Stealth",
+            "Revision: A2 and B1",
+            "Connection: hose barb with barb sleeve"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-003",
+      "category": "compatibility",
+      "question": "Does SRAM approve the hose barb with barb sleeve connection for the Reverb Stealth A2?",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Bicycle model: Reverb Stealth",
+            "Revision: A2 and B1",
+            "Connection: hose barb with barb sleeve"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-004",
+      "category": "compatibility",
+      "question": "Is the hose barb with barb sleeve compatible with the Reverb Stealth B1 connection?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Bicycle model: Reverb Stealth",
+            "Revision: A2 and B1",
+            "Connection: hose barb with barb sleeve"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-005",
+      "category": "compatibility",
+      "question": "Is a syringe previously exposed to DOT brake fluid compatible with a RockShox Reverb hydraulic system?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 26,
+          "printed_page": 26,
+          "section": "Remote Syringe Preparation"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "not_compatible",
+          "required_qualifiers": [
+            "Fluid: DOT brake fluid",
+            "Seatpost: RockShox Reverb",
+            "Component: syringe that has contacted DOT brake fluid"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-006",
+      "category": "compatibility",
+      "question": "Can I use a DOT-contaminated syringe to service a RockShox Reverb seatpost?",
+      "edge_cases": [
+        "unsupported_material"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 26,
+          "printed_page": 26,
+          "section": "Remote Syringe Preparation"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "not_compatible",
+          "required_qualifiers": [
+            "Fluid: DOT brake fluid",
+            "Seatpost: RockShox Reverb",
+            "Component: syringe that has contacted DOT brake fluid"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-007",
+      "category": "compatibility",
+      "question": "Does SRAM allow DOT brake fluid contact in the RockShox Reverb hydraulic system through a used syringe?",
+      "edge_cases": [
+        "unsupported_material"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 26,
+          "printed_page": 26,
+          "section": "Remote Syringe Preparation"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "not_compatible",
+          "required_qualifiers": [
+            "Fluid: DOT brake fluid",
+            "Seatpost: RockShox Reverb",
+            "Component: syringe that has contacted DOT brake fluid"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-008",
+      "category": "compatibility",
+      "question": "Is the Reverb AXS seatpost compatible with a saddle with metal 7 mm diameter rails?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Saddle rail material: metal",
+            "Saddle rail diameter: 7 mm",
+            "Rail condition: seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-009",
+      "category": "compatibility",
+      "question": "Can a RockShox Reverb AXS dropper post be used with a metal 7 mm rail saddle seated squarely on the clamps?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Saddle rail material: metal",
+            "Saddle rail diameter: 7 mm",
+            "Rail condition: seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-010",
+      "category": "compatibility",
+      "question": "Does the Reverb AXS compatibility statement approve metal 7 mm saddle rails?",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Saddle rail material: metal",
+            "Saddle rail diameter: 7 mm",
+            "Rail condition: seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-011",
+      "category": "compatibility",
+      "question": "Is a saddle with metal 7 mm diameter rails approved for the RockShox Reverb AXS?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Saddle rail material: metal",
+            "Saddle rail diameter: 7 mm",
+            "Rail condition: seated squarely on the inner rail clamps"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-012",
+      "category": "compatibility",
+      "question": "Is a saddle with composite 7x9 mm oval rails compatible with a Reverb AXS seatpost?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Saddle rail material: composite",
+            "Saddle rail profile: 7x9 mm oval"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-013",
+      "category": "compatibility",
+      "question": "Does the Reverb AXS approve composite 7x9 mm oval saddle rails?",
+      "edge_cases": [
+        "unsupported_material"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Seatpost: Reverb AXS",
+            "Saddle rail material: composite",
+            "Saddle rail profile: 7x9 mm oval"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-014",
+      "category": "compatibility",
+      "question": "Is a 30.9 mm Reverb AXS seatpost compatible with a 31.6 mm seat tube?",
+      "edge_cases": [
+        "unsupported_material"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "not_compatible",
+          "required_qualifiers": [
+            "Seatpost diameter: 30.9 mm, 31.6 mm, or 34.9 mm",
+            "Seat tube diameter: must equal seatpost diameter"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-015",
+      "category": "compatibility",
+      "question": "Can I install a Reverb AXS seatpost when the seatpost and seat tube diameters are different?",
+      "edge_cases": [
+        "unsupported_material"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "not_compatible",
+          "required_qualifiers": [
+            "Seatpost diameter: 30.9 mm, 31.6 mm, or 34.9 mm",
+            "Seat tube diameter: must equal seatpost diameter"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-016",
+      "category": "compatibility",
+      "question": "Is an SRAM Eagle chain compatible with a Park Tool CC-4.2 chain wear check tool?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Chain families: SRAM Eagle, Flattop, and 11 speed",
+            "Task: chain wear measurement",
+            "Tool: Park Tool CC-4.2"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-017",
+      "category": "compatibility",
+      "question": "Can the Park Tool CC-4.2 be used for chain wear measurement on an SRAM Eagle chain?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Chain families: SRAM Eagle, Flattop, and 11 speed",
+            "Task: chain wear measurement",
+            "Tool: Park Tool CC-4.2"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-018",
+      "category": "compatibility",
+      "question": "Is a SRAM Flattop chain compatible with the Park Tool CC-4.2 wear indicator?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Chain families: SRAM Eagle, Flattop, and 11 speed",
+            "Task: chain wear measurement",
+            "Tool: Park Tool CC-4.2"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-019",
+      "category": "compatibility",
+      "question": "Does the SRAM compatibility map approve Park Tool CC-4.2 for Flattop chains?",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Chain families: SRAM Eagle, Flattop, and 11 speed",
+            "Task: chain wear measurement",
+            "Tool: Park Tool CC-4.2"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-020",
+      "category": "compatibility",
+      "question": "Is an 11 speed SRAM chain compatible with a Park Tool CC-4.2 chain wear tool?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Chain families: SRAM Eagle, Flattop, and 11 speed",
+            "Task: chain wear measurement",
+            "Tool: Park Tool CC-4.2"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-021",
+      "category": "compatibility",
+      "question": "Can Park Tool CC-4.2 check an 11 speed SRAM chain for wear?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Chain families: SRAM Eagle, Flattop, and 11 speed",
+            "Task: chain wear measurement",
+            "Tool: Park Tool CC-4.2"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-022",
+      "category": "compatibility",
+      "question": "Is an SRAM Eagle chain compatible with a Shimano CN-M8100 chain?",
+      "edge_cases": [
+        "cross_brand_pair",
+        "false_premise"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "Chain Wear Measurement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "compatibility": {
+          "outcome": "not_found",
+          "required_qualifiers": []
+        },
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "compat-023",
+      "category": "compatibility",
+      "question": "Is the Reverb AXS seatpost compatible with a saddle using carbon 7 mm round rails?",
+      "edge_cases": [
+        "unsupported_material"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "compatibility": {
+          "outcome": "not_found",
+          "required_qualifiers": []
+        },
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "compat-024",
+      "category": "compatibility",
+      "question": "Is the hose barb compatible with the seatpost?",
+      "edge_cases": [
+        "ambiguous_alias",
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "clarification_required",
+        "failure_contains": "Please identify the exact component",
+        "clarification_missing_information": [
+          "component"
+        ]
+      }
+    },
+    {
+      "id": "compat-025",
+      "category": "compatibility",
+      "question": "Can this barb be used with a Reverb?",
+      "edge_cases": [
+        "ambiguous_alias",
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "clarification_required",
+        "failure_contains": "Please identify the exact component",
+        "clarification_missing_information": [
+          "component"
+        ]
+      }
+    },
+    {
+      "id": "compat-026",
+      "category": "compatibility",
+      "question": "Are MAGURA GUSTAV PRO brake pads compatible with a MAGURA MT A2 brake calliper?",
+      "edge_cases": [
+        "cross_brand_pair"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "5.3 Changing the brake pads"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "compatibility": {
+          "outcome": "not_found",
+          "required_qualifiers": []
+        },
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "compat-027",
+      "category": "compatibility",
+      "question": "Is a Reverb Stealth hose barb with barb sleeve compatible with a Reverb AXS seatpost?",
+      "edge_cases": [
+        "adjacent_model"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "compatibility": {
+          "outcome": "not_found",
+          "required_qualifiers": []
+        },
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "procedure-001",
+      "category": "procedure",
+      "question": "What are the steps for hose sizing and remote installation on a RockShox Reverb?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 21,
+          "printed_page": 21,
+          "section": "Hose Sizing and Remote Installation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Hose Sizing and Remote Installation",
+          "steps": [
+            {
+              "number": 1,
+              "text": "With the seatpost fully extended and at the desired ride height in the frame, route the hose to the handlebar remote location.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Hold the hose and turn the handlebar side to side. The proper length of the hose should create a gentle bend and allow the handlebar to turn side to side.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Ensure there are no sharp bends in the hydraulic hose. A sharp bend in the hose will prevent fluid from flowing. Ensure there is no tension at the remote when the bar is turned. Too much tension will cause the hose to disconnect from the remote."
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "text": "Mark the cut location.",
+              "warnings": []
+            },
+            {
+              "number": 4,
+              "text": "Cut the hydraulic hose.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "To ensure a square cut and to prevent damage to the hose, use only a hydraulic hose cutter."
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "text": "Thread the remote lever hose barb into the hydraulic hose. Hold the end of the hose and rotate the remote lever clockwise while pushing the remote lever barb into the hose. Stop when the hose is hand tight on the hose barb.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Do not over-tighten and strip the threads inside the hydraulic hose. If the hose is over or under tightened, hydraulic fluid can leak."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-002",
+      "category": "procedure",
+      "question": "Walk me through routing and cutting the Reverb hydraulic hose to the handlebar remote.",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 21,
+          "printed_page": 21,
+          "section": "Hose Sizing and Remote Installation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Hose Sizing and Remote Installation",
+          "steps": [
+            {
+              "number": 1,
+              "text": "With the seatpost fully extended and at the desired ride height in the frame, route the hose to the handlebar remote location.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Hold the hose and turn the handlebar side to side. The proper length of the hose should create a gentle bend and allow the handlebar to turn side to side.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Ensure there are no sharp bends in the hydraulic hose. A sharp bend in the hose will prevent fluid from flowing. Ensure there is no tension at the remote when the bar is turned. Too much tension will cause the hose to disconnect from the remote."
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "text": "Mark the cut location.",
+              "warnings": []
+            },
+            {
+              "number": 4,
+              "text": "Cut the hydraulic hose.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "To ensure a square cut and to prevent damage to the hose, use only a hydraulic hose cutter."
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "text": "Thread the remote lever hose barb into the hydraulic hose. Hold the end of the hose and rotate the remote lever clockwise while pushing the remote lever barb into the hose. Stop when the hose is hand tight on the hose barb.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Do not over-tighten and strip the threads inside the hydraulic hose. If the hose is over or under tightened, hydraulic fluid can leak."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-003",
+      "category": "procedure",
+      "question": "What are the steps to test the RockShox Reverb remote hydraulic function?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 37,
+          "printed_page": 37,
+          "section": "Test Function"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 38,
+          "printed_page": 38,
+          "section": "Test Function"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Test Function",
+          "steps": [
+            {
+              "number": 1,
+              "text": "Press the remote actuator and push the seatpost down by hand. The seatpost should compress when the remote actuator is depressed and weight is applied to the saddle. Press the remote actuator again. The seatpost should return to full extension when the remote actuator is depressed and weight is removed from the saddle. If the seatpost does not compress or extend, the remote hydraulic volume and pressure may be insufficient. Repeat the Remote and Seatpost Bleed procedure.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Adjust the speed adjuster to the desired setting and repeat step 1. Adjust as desired. Reverb™ 1x™ Remote: Reinstall the boot onto the lever.",
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-004",
+      "category": "procedure",
+      "question": "Give the ordered Test Function procedure for a RockShox Reverb remote.",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 37,
+          "printed_page": 37,
+          "section": "Test Function"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 38,
+          "printed_page": 38,
+          "section": "Test Function"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Test Function",
+          "steps": [
+            {
+              "number": 1,
+              "text": "Press the remote actuator and push the seatpost down by hand. The seatpost should compress when the remote actuator is depressed and weight is applied to the saddle. Press the remote actuator again. The seatpost should return to full extension when the remote actuator is depressed and weight is removed from the saddle. If the seatpost does not compress or extend, the remote hydraulic volume and pressure may be insufficient. Repeat the Remote and Seatpost Bleed procedure.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Adjust the speed adjuster to the desired setting and repeat step 1. Adjust as desired. Reverb™ 1x™ Remote: Reinstall the boot onto the lever.",
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-005",
+      "category": "procedure",
+      "question": "What are the steps for SRAM chain wear measurement with a Park Tool CC-4.2?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "Chain Wear Measurement"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "No complete source-defined service procedure matches"
+      }
+    },
+    {
+      "id": "procedure-006",
+      "category": "procedure",
+      "question": "What are the steps for MAGURA MT A2 reach adjustment?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        },
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 2,
+          "printed_page": 2,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "procedure-007",
+      "category": "procedure",
+      "question": "What are the steps for changing MAGURA GUSTAV PRO brake pads?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "5.3 Changing the brake pads"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "procedure-008",
+      "category": "procedure",
+      "question": "What are the steps for RockShox Reba lower leg removal?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 9,
+          "printed_page": 9,
+          "section": "LOWER LEG REMOVAL"
+        },
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 10,
+          "printed_page": 10,
+          "section": "LOWER LEG REMOVAL (CONTINUED)"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "procedure-009",
+      "category": "procedure",
+      "question": "How do I size and install the hydraulic hose and remote for a Reverb Stealth?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 21,
+          "printed_page": 21,
+          "section": "Hose Sizing and Remote Installation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Hose Sizing and Remote Installation",
+          "steps": [
+            {
+              "number": 1,
+              "text": "With the seatpost fully extended and at the desired ride height in the frame, route the hose to the handlebar remote location.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Hold the hose and turn the handlebar side to side. The proper length of the hose should create a gentle bend and allow the handlebar to turn side to side.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Ensure there are no sharp bends in the hydraulic hose. A sharp bend in the hose will prevent fluid from flowing. Ensure there is no tension at the remote when the bar is turned. Too much tension will cause the hose to disconnect from the remote."
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "text": "Mark the cut location.",
+              "warnings": []
+            },
+            {
+              "number": 4,
+              "text": "Cut the hydraulic hose.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "To ensure a square cut and to prevent damage to the hose, use only a hydraulic hose cutter."
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "text": "Thread the remote lever hose barb into the hydraulic hose. Hold the end of the hose and rotate the remote lever clockwise while pushing the remote lever barb into the hose. Stop when the hose is hand tight on the hose barb.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Do not over-tighten and strip the threads inside the hydraulic hose. If the hose is over or under tightened, hydraulic fluid can leak."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-010",
+      "category": "procedure",
+      "question": "What is the ordered hose sizing and remote installation procedure for the Reverb?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 21,
+          "printed_page": 21,
+          "section": "Hose Sizing and Remote Installation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Hose Sizing and Remote Installation",
+          "steps": [
+            {
+              "number": 1,
+              "text": "With the seatpost fully extended and at the desired ride height in the frame, route the hose to the handlebar remote location.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Hold the hose and turn the handlebar side to side. The proper length of the hose should create a gentle bend and allow the handlebar to turn side to side.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Ensure there are no sharp bends in the hydraulic hose. A sharp bend in the hose will prevent fluid from flowing. Ensure there is no tension at the remote when the bar is turned. Too much tension will cause the hose to disconnect from the remote."
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "text": "Mark the cut location.",
+              "warnings": []
+            },
+            {
+              "number": 4,
+              "text": "Cut the hydraulic hose.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "To ensure a square cut and to prevent damage to the hose, use only a hydraulic hose cutter."
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "text": "Thread the remote lever hose barb into the hydraulic hose. Hold the end of the hose and rotate the remote lever clockwise while pushing the remote lever barb into the hose. Stop when the hose is hand tight on the hose barb.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Do not over-tighten and strip the threads inside the hydraulic hose. If the hose is over or under tightened, hydraulic fluid can leak."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-011",
+      "category": "procedure",
+      "question": "Which steps confirm that the RockShox Reverb remote hydraulic system functions correctly?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 37,
+          "printed_page": 37,
+          "section": "Test Function"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 38,
+          "printed_page": 38,
+          "section": "Test Function"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Test Function",
+          "steps": [
+            {
+              "number": 1,
+              "text": "Press the remote actuator and push the seatpost down by hand. The seatpost should compress when the remote actuator is depressed and weight is applied to the saddle. Press the remote actuator again. The seatpost should return to full extension when the remote actuator is depressed and weight is removed from the saddle. If the seatpost does not compress or extend, the remote hydraulic volume and pressure may be insufficient. Repeat the Remote and Seatpost Bleed procedure.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Adjust the speed adjuster to the desired setting and repeat step 1. Adjust as desired. Reverb™ 1x™ Remote: Reinstall the boot onto the lever.",
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-012",
+      "category": "procedure",
+      "question": "How should I perform the RockShox Reverb Test Function after a bleed?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 37,
+          "printed_page": 37,
+          "section": "Test Function"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 38,
+          "printed_page": 38,
+          "section": "Test Function"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Test Function",
+          "steps": [
+            {
+              "number": 1,
+              "text": "Press the remote actuator and push the seatpost down by hand. The seatpost should compress when the remote actuator is depressed and weight is applied to the saddle. Press the remote actuator again. The seatpost should return to full extension when the remote actuator is depressed and weight is removed from the saddle. If the seatpost does not compress or extend, the remote hydraulic volume and pressure may be insufficient. Repeat the Remote and Seatpost Bleed procedure.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Adjust the speed adjuster to the desired setting and repeat step 1. Adjust as desired. Reverb™ 1x™ Remote: Reinstall the boot onto the lever.",
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-013",
+      "category": "procedure",
+      "question": "What are the steps for RockShox Reverb 1x remote bleeding?",
+      "edge_cases": [
+        "adjacent_model",
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 31,
+          "printed_page": 31,
+          "section": "Remote Bleed - Reverb 1x Remote"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "procedure-014",
+      "category": "procedure",
+      "question": "What is the complete procedure for Reverb hose sizing and remote installation?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 21,
+          "printed_page": 21,
+          "section": "Hose Sizing and Remote Installation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Hose Sizing and Remote Installation",
+          "steps": [
+            {
+              "number": 1,
+              "text": "With the seatpost fully extended and at the desired ride height in the frame, route the hose to the handlebar remote location.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Hold the hose and turn the handlebar side to side. The proper length of the hose should create a gentle bend and allow the handlebar to turn side to side.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Ensure there are no sharp bends in the hydraulic hose. A sharp bend in the hose will prevent fluid from flowing. Ensure there is no tension at the remote when the bar is turned. Too much tension will cause the hose to disconnect from the remote."
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "text": "Mark the cut location.",
+              "warnings": []
+            },
+            {
+              "number": 4,
+              "text": "Cut the hydraulic hose.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "To ensure a square cut and to prevent damage to the hose, use only a hydraulic hose cutter."
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "text": "Thread the remote lever hose barb into the hydraulic hose. Hold the end of the hose and rotate the remote lever clockwise while pushing the remote lever barb into the hose. Stop when the hose is hand tight on the hose barb.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Do not over-tighten and strip the threads inside the hydraulic hose. If the hose is over or under tightened, hydraulic fluid can leak."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-015",
+      "category": "procedure",
+      "question": "Show the ordered Test Function steps for the RockShox Reverb Standard Remote.",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 37,
+          "printed_page": 37,
+          "section": "Test Function"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 38,
+          "printed_page": 38,
+          "section": "Test Function"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Test Function",
+          "steps": [
+            {
+              "number": 1,
+              "text": "Press the remote actuator and push the seatpost down by hand. The seatpost should compress when the remote actuator is depressed and weight is applied to the saddle. Press the remote actuator again. The seatpost should return to full extension when the remote actuator is depressed and weight is removed from the saddle. If the seatpost does not compress or extend, the remote hydraulic volume and pressure may be insufficient. Repeat the Remote and Seatpost Bleed procedure.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Adjust the speed adjuster to the desired setting and repeat step 1. Adjust as desired. Reverb™ 1x™ Remote: Reinstall the boot onto the lever.",
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-016",
+      "category": "procedure",
+      "question": "Can you list the Reverb remote hose sizing steps and attached notices?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 21,
+          "printed_page": 21,
+          "section": "Hose Sizing and Remote Installation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Hose Sizing and Remote Installation",
+          "steps": [
+            {
+              "number": 1,
+              "text": "With the seatpost fully extended and at the desired ride height in the frame, route the hose to the handlebar remote location.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Hold the hose and turn the handlebar side to side. The proper length of the hose should create a gentle bend and allow the handlebar to turn side to side.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Ensure there are no sharp bends in the hydraulic hose. A sharp bend in the hose will prevent fluid from flowing. Ensure there is no tension at the remote when the bar is turned. Too much tension will cause the hose to disconnect from the remote."
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "text": "Mark the cut location.",
+              "warnings": []
+            },
+            {
+              "number": 4,
+              "text": "Cut the hydraulic hose.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "To ensure a square cut and to prevent damage to the hose, use only a hydraulic hose cutter."
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "text": "Thread the remote lever hose barb into the hydraulic hose. Hold the end of the hose and rotate the remote lever clockwise while pushing the remote lever barb into the hose. Stop when the hose is hand tight on the hose barb.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Do not over-tighten and strip the threads inside the hydraulic hose. If the hose is over or under tightened, hydraulic fluid can leak."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-017",
+      "category": "procedure",
+      "question": "What should happen when I press the remote actuator and push the Reverb seatpost by hand?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 37,
+          "printed_page": 37,
+          "section": "Test Function"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 38,
+          "printed_page": 38,
+          "section": "Test Function"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Test Function",
+          "steps": [
+            {
+              "number": 1,
+              "text": "Press the remote actuator and push the seatpost down by hand. The seatpost should compress when the remote actuator is depressed and weight is applied to the saddle. Press the remote actuator again. The seatpost should return to full extension when the remote actuator is depressed and weight is removed from the saddle. If the seatpost does not compress or extend, the remote hydraulic volume and pressure may be insufficient. Repeat the Remote and Seatpost Bleed procedure.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Adjust the speed adjuster to the desired setting and repeat step 1. Adjust as desired. Reverb™ 1x™ Remote: Reinstall the boot onto the lever.",
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-018",
+      "category": "procedure",
+      "question": "What are the steps for service?",
+      "edge_cases": [
+        "ambiguous_alias",
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "clarification_required",
+        "failure_contains": "Please identify the exact task",
+        "clarification_missing_information": [
+          "task"
+        ]
+      }
+    },
+    {
+      "id": "procedure-019",
+      "category": "procedure",
+      "question": "Give the steps to route, mark, cut, and thread the Reverb hydraulic hose into the remote.",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 21,
+          "printed_page": 21,
+          "section": "Hose Sizing and Remote Installation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Hose Sizing and Remote Installation",
+          "steps": [
+            {
+              "number": 1,
+              "text": "With the seatpost fully extended and at the desired ride height in the frame, route the hose to the handlebar remote location.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Hold the hose and turn the handlebar side to side. The proper length of the hose should create a gentle bend and allow the handlebar to turn side to side.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Ensure there are no sharp bends in the hydraulic hose. A sharp bend in the hose will prevent fluid from flowing. Ensure there is no tension at the remote when the bar is turned. Too much tension will cause the hose to disconnect from the remote."
+                }
+              ]
+            },
+            {
+              "number": 3,
+              "text": "Mark the cut location.",
+              "warnings": []
+            },
+            {
+              "number": 4,
+              "text": "Cut the hydraulic hose.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "To ensure a square cut and to prevent damage to the hose, use only a hydraulic hose cutter."
+                }
+              ]
+            },
+            {
+              "number": 5,
+              "text": "Thread the remote lever hose barb into the hydraulic hose. Hold the end of the hose and rotate the remote lever clockwise while pushing the remote lever barb into the hose. Stop when the hose is hand tight on the hose barb.",
+              "warnings": [
+                {
+                  "severity": "notice",
+                  "text": "Do not over-tighten and strip the threads inside the hydraulic hose. If the hose is over or under tightened, hydraulic fluid can leak."
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-020",
+      "category": "procedure",
+      "question": "What are the final RockShox Reverb Test Function steps after bleeding?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 37,
+          "printed_page": 37,
+          "section": "Test Function"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 38,
+          "printed_page": 38,
+          "section": "Test Function"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Test Function",
+          "steps": [
+            {
+              "number": 1,
+              "text": "Press the remote actuator and push the seatpost down by hand. The seatpost should compress when the remote actuator is depressed and weight is applied to the saddle. Press the remote actuator again. The seatpost should return to full extension when the remote actuator is depressed and weight is removed from the saddle. If the seatpost does not compress or extend, the remote hydraulic volume and pressure may be insufficient. Repeat the Remote and Seatpost Bleed procedure.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Adjust the speed adjuster to the desired setting and repeat step 1. Adjust as desired. Reverb™ 1x™ Remote: Reinstall the boot onto the lever.",
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-021",
+      "category": "procedure",
+      "question": "How do I measure SRAM Eagle chain wear using Park Tool CC-4.2?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "Chain Wear Measurement"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "No complete source-defined service procedure matches"
+      }
+    },
+    {
+      "id": "procedure-022",
+      "category": "procedure",
+      "question": "What is the reach adjustment procedure for the MAGURA MT A2 brake lever?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        },
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 2,
+          "printed_page": 2,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "procedure-023",
+      "category": "procedure",
+      "question": "Walk me through the MAGURA GUSTAV PRO brake pad replacement procedure.",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "5.3 Changing the brake pads"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "procedure-024",
+      "category": "procedure",
+      "question": "What is the procedure to remove the lower legs from a RockShox Reba?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 9,
+          "printed_page": 9,
+          "section": "LOWER LEG REMOVAL"
+        },
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 10,
+          "printed_page": 10,
+          "section": "LOWER LEG REMOVAL (CONTINUED)"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "procedure-025",
+      "category": "procedure",
+      "question": "Walk me through the repair.",
+      "edge_cases": [
+        "ambiguous_alias",
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "clarification_required",
+        "failure_contains": "Please identify the exact task",
+        "clarification_missing_information": [
+          "task"
+        ]
+      }
+    },
+    {
+      "id": "procedure-026",
+      "category": "procedure",
+      "question": "What is the procedure?",
+      "edge_cases": [
+        "ambiguous_alias",
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "clarification_required",
+        "failure_contains": "Please identify the exact task",
+        "clarification_missing_information": [
+          "task"
+        ]
+      }
+    },
+    {
+      "id": "procedure-027",
+      "category": "procedure",
+      "question": "Give me the service steps.",
+      "edge_cases": [
+        "ambiguous_alias",
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "Hose Sizing and Remote Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "clarification_required",
+        "failure_contains": "Please identify the exact task",
+        "clarification_missing_information": [
+          "task"
+        ]
+      }
+    },
+    {
+      "id": "not-found-001",
+      "category": "not_found",
+      "question": "What is the RockShox Reverb X1 remote clamp bolt torque?",
+      "edge_cases": [
+        "adjacent_model",
+        "false_premise"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "not_found",
+        "failure_contains": "No human-verified structured evidence matches"
+      }
+    },
+    {
+      "id": "not-found-002",
+      "category": "not_found",
+      "question": "What is the 2012 RockShox Reba post mount brake caliper bolt torque?",
+      "edge_cases": [
+        "wrong_generation"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "not_found",
+        "failure_contains": "No human-verified structured evidence matches"
+      }
+    },
+    {
+      "id": "not-found-003",
+      "category": "not_found",
+      "question": "What is the Reverb AXS friction paste torque?",
+      "edge_cases": [
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 26,
+          "printed_page": 26,
+          "section": "Apply Friction Paste"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "not_found",
+        "failure_contains": "No human-verified structured evidence matches"
+      }
+    },
+    {
+      "id": "not-found-004",
+      "category": "not_found",
+      "question": "What is the MAGURA GUSTAV PRO brake hose torque?",
+      "edge_cases": [
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 22,
+          "printed_page": 22,
+          "section": "6 Tightening torques"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "not_found",
+        "failure_contains": "No human-verified structured evidence matches"
+      }
+    },
+    {
+      "id": "not-found-005",
+      "category": "not_found",
+      "question": "What is the numeric torque for the MAGURA MT A2 lever pivot screw?",
+      "edge_cases": [
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 2,
+          "printed_page": 2,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "not_found",
+        "failure_contains": "No human-verified structured evidence matches"
+      }
+    },
+    {
+      "id": "not-found-006",
+      "category": "not_found",
+      "question": "Is an SRAM Eagle chain compatible with a Shimano CN-M8100 chain?",
+      "edge_cases": [
+        "cross_brand_pair",
+        "false_premise"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "Chain Wear Measurement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "not-found-007",
+      "category": "not_found",
+      "question": "Is the Reverb AXS seatpost compatible with a saddle using carbon 7 mm round rails?",
+      "edge_cases": [
+        "unsupported_material"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilité Compatibilidade"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "not-found-008",
+      "category": "not_found",
+      "question": "Is the 2011 RockShox Reba fork compatible with a 29 inch wheel?",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "not-found-009",
+      "category": "not_found",
+      "question": "Are MAGURA GUSTAV PRO brake pads compatible with a MAGURA MT A2 brake calliper?",
+      "edge_cases": [
+        "cross_brand_pair"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "5.3 Changing the brake pads"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "not-found-010",
+      "category": "not_found",
+      "question": "Is a Reverb Stealth hose barb with barb sleeve compatible with a Reverb AXS seatpost?",
+      "edge_cases": [
+        "adjacent_model"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "not-found-011",
+      "category": "not_found",
+      "question": "What are the steps for SRAM chain wear measurement with a Park Tool CC-4.2?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "Chain Wear Measurement"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "No complete source-defined service procedure matches"
+      }
+    },
+    {
+      "id": "not-found-012",
+      "category": "not_found",
+      "question": "What are the steps for MAGURA MT A2 reach adjustment?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-mt-a2-user-instructions-2023",
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "A REACH ADJUST"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "not-found-013",
+      "category": "not_found",
+      "question": "What are the steps for changing MAGURA GUSTAV PRO brake pads?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "magura-gustav-pro-owners-manual-2026",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "5.3 Changing the brake pads"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "not-found-014",
+      "category": "not_found",
+      "question": "What are the steps for RockShox Reba lower leg removal?",
+      "edge_cases": [
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 9,
+          "printed_page": 9,
+          "section": "LOWER LEG REMOVAL"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "not-found-015",
+      "category": "not_found",
+      "question": "What are the steps for RockShox Reverb 1x remote bleeding?",
+      "edge_cases": [
+        "adjacent_model",
+        "truncated_procedure"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 31,
+          "printed_page": 31,
+          "section": "Remote Bleed - Reverb 1x Remote"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    },
+    {
+      "id": "conflict-001",
+      "category": "conflicting_evidence",
+      "question": "What torque should I use for the 2011 RockShox Reba top cap?",
+      "edge_cases": [
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "conflicting_evidence",
+        "conflicts": {
+          "candidates": [
+            {
+              "claim": "2011 RockShox Reba Top Cap: 7.3 N·m (65 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            },
+            {
+              "claim": "2011 RockShox Reba Top Cap (Air U-Turn Only): 14.6 N·m (130 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            }
+          ],
+          "precedence_established": false
+        }
+      }
+    },
+    {
+      "id": "conflict-002",
+      "category": "conflicting_evidence",
+      "question": "What is the RockShox Reba top cap tightening value?",
+      "edge_cases": [
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "conflicting_evidence",
+        "conflicts": {
+          "candidates": [
+            {
+              "claim": "2011 RockShox Reba Top Cap: 7.3 N·m (65 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            },
+            {
+              "claim": "2011 RockShox Reba Top Cap (Air U-Turn Only): 14.6 N·m (130 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            }
+          ],
+          "precedence_established": false
+        }
+      }
+    },
+    {
+      "id": "conflict-003",
+      "category": "conflicting_evidence",
+      "question": "Give the torque specification for a 2011 RockShox Reba top cap.",
+      "edge_cases": [
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "conflicting_evidence",
+        "conflicts": {
+          "candidates": [
+            {
+              "claim": "2011 RockShox Reba Top Cap: 7.3 N·m (65 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            },
+            {
+              "claim": "2011 RockShox Reba Top Cap (Air U-Turn Only): 14.6 N·m (130 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            }
+          ],
+          "precedence_established": false
+        }
+      }
+    },
+    {
+      "id": "conflict-004",
+      "category": "conflicting_evidence",
+      "question": "Which torque applies to the 2011 Reba top cap?",
+      "edge_cases": [
+        "missing_attribute"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reba-2011-technical-manual",
+          "physical_page": 7,
+          "printed_page": 7,
+          "section": "TORQUE TIGHTENING VALUES"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "conflicting_evidence",
+        "conflicts": {
+          "candidates": [
+            {
+              "claim": "2011 RockShox Reba Top Cap: 7.3 N·m (65 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            },
+            {
+              "claim": "2011 RockShox Reba Top Cap (Air U-Turn Only): 14.6 N·m (130 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            }
+          ],
+          "precedence_established": false
+        }
+      }
+    },
+    {
+      "id": "conflict-005",
+      "category": "conflicting_evidence",
+      "question": "What torque should I use for the RockShox Reverb Stealth hose barb?",
+      "edge_cases": [
+        "missing_attribute",
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 12,
+          "printed_page": 12,
+          "section": "Hose Barb and Barb Sleeve Preparation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "Reverb Stealth Hose Removal and Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "conflicting_evidence",
+        "conflicts": {
+          "candidates": [
+            {
+              "claim": "Tighten the hose barb and barb sleeve: 1.1-2.2 N·m (10-20 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            },
+            {
+              "claim": "Install the new hose barb into the seatpost and tighten: 3.4-4.5 N·m (30-40 in-lb).",
+              "evidence_indexes": [
+                1
+              ]
+            }
+          ],
+          "precedence_established": false
+        }
+      }
+    },
+    {
+      "id": "conflict-006",
+      "category": "conflicting_evidence",
+      "question": "What is the Reverb Stealth hose barb tightening value?",
+      "edge_cases": [
+        "missing_attribute",
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 12,
+          "printed_page": 12,
+          "section": "Hose Barb and Barb Sleeve Preparation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "Reverb Stealth Hose Removal and Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "conflicting_evidence",
+        "conflicts": {
+          "candidates": [
+            {
+              "claim": "Tighten the hose barb and barb sleeve: 1.1-2.2 N·m (10-20 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            },
+            {
+              "claim": "Install the new hose barb into the seatpost and tighten: 3.4-4.5 N·m (30-40 in-lb).",
+              "evidence_indexes": [
+                1
+              ]
+            }
+          ],
+          "precedence_established": false
+        }
+      }
+    },
+    {
+      "id": "conflict-007",
+      "category": "conflicting_evidence",
+      "question": "Give the torque specification for the Reverb Stealth hose barb connection.",
+      "edge_cases": [
+        "missing_attribute",
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 12,
+          "printed_page": 12,
+          "section": "Hose Barb and Barb Sleeve Preparation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "Reverb Stealth Hose Removal and Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "conflicting_evidence",
+        "conflicts": {
+          "candidates": [
+            {
+              "claim": "Tighten the hose barb and barb sleeve: 1.1-2.2 N·m (10-20 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            },
+            {
+              "claim": "Install the new hose barb into the seatpost and tighten: 3.4-4.5 N·m (30-40 in-lb).",
+              "evidence_indexes": [
+                1
+              ]
+            }
+          ],
+          "precedence_established": false
+        }
+      }
+    },
+    {
+      "id": "conflict-008",
+      "category": "conflicting_evidence",
+      "question": "Which torque applies to a RockShox Reverb Stealth hose barb?",
+      "edge_cases": [
+        "missing_attribute",
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 12,
+          "printed_page": 12,
+          "section": "Hose Barb and Barb Sleeve Preparation"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 16,
+          "printed_page": 16,
+          "section": "Reverb Stealth Hose Removal and Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "conflicting_evidence",
+        "conflicts": {
+          "candidates": [
+            {
+              "claim": "Tighten the hose barb and barb sleeve: 1.1-2.2 N·m (10-20 in-lb).",
+              "evidence_indexes": [
+                0
+              ]
+            },
+            {
+              "claim": "Install the new hose barb into the seatpost and tighten: 3.4-4.5 N·m (30-40 in-lb).",
+              "evidence_indexes": [
+                1
+              ]
+            }
+          ],
+          "precedence_established": false
+        }
+      }
+    },
+    {
+      "id": "oos-001",
+      "category": "out_of_scope",
+      "question": "Which carbon saddle should I buy for my road bike?",
+      "edge_cases": [],
+      "evidence": [],
+      "expected": {
+        "response_type": "out_of_scope",
+        "status": "out_of_scope",
+        "failure_contains": "only answers bicycle maintenance questions"
+      }
+    },
+    {
+      "id": "oos-002",
+      "category": "out_of_scope",
+      "question": "What bike frame size fits my body?",
+      "edge_cases": [],
+      "evidence": [],
+      "expected": {
+        "response_type": "out_of_scope",
+        "status": "out_of_scope",
+        "failure_contains": "only answers bicycle maintenance questions"
+      }
+    },
+    {
+      "id": "oos-003",
+      "category": "out_of_scope",
+      "question": "Build me a training program for a faster century ride.",
+      "edge_cases": [],
+      "evidence": [],
+      "expected": {
+        "response_type": "out_of_scope",
+        "status": "out_of_scope",
+        "failure_contains": "only answers bicycle maintenance questions"
+      }
+    },
+    {
+      "id": "oos-004",
+      "category": "out_of_scope",
+      "question": "How should I corner faster on a mountain bike?",
+      "edge_cases": [],
+      "evidence": [],
+      "expected": {
+        "response_type": "out_of_scope",
+        "status": "out_of_scope",
+        "failure_contains": "only answers bicycle maintenance questions"
+      }
+    },
+    {
+      "id": "oos-005",
+      "category": "out_of_scope",
+      "question": "Upload this photo and identify the part on my bike.",
+      "edge_cases": [],
+      "evidence": [],
+      "expected": {
+        "response_type": "out_of_scope",
+        "status": "out_of_scope",
+        "failure_contains": "only answers bicycle maintenance questions"
+      }
+    },
+    {
+      "id": "oos-006",
+      "category": "out_of_scope",
+      "question": "Search the web for the latest SRAM brake recall.",
+      "edge_cases": [],
+      "evidence": [],
+      "expected": {
+        "response_type": "out_of_scope",
+        "status": "out_of_scope",
+        "failure_contains": "only answers bicycle maintenance questions"
+      }
+    },
+    {
+      "id": "oos-007",
+      "category": "out_of_scope",
+      "question": "How do I update the firmware on my e-bike motor?",
+      "edge_cases": [
+        "false_premise"
+      ],
+      "evidence": [],
+      "expected": {
+        "response_type": "out_of_scope",
+        "status": "out_of_scope",
+        "failure_contains": "only answers bicycle maintenance questions"
+      }
+    }
+  ]
+}

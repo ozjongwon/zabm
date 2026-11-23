@@ -18,6 +18,13 @@ from zabm import __version__
 from zabm.agent import answer_question
 from zabm.compatibility import ingest_compatibility
 from zabm.coverage import run_coverage
+from zabm.evaluation_set import (
+    build_evaluation_report,
+    create_evaluation_freeze,
+    load_evaluation_set,
+    validate_evaluation_set,
+    verify_evaluation_freeze,
+)
 from zabm.procedures import (
     ProcedureEvidenceInspection,
     ingest_retrieval,
@@ -39,6 +46,7 @@ from zabm.specifications import (
     download_sources,
     file_sha256,
     ingest_sources,
+    load_source_manifest,
     verify_source_files,
 )
 
@@ -53,6 +61,8 @@ DEFAULT_RETRIEVAL_CONFIG = REPO_ROOT / "data" / "retrieval-smoke" / "retrieval-c
 DEFAULT_SMOKE_REPORT = REPO_ROOT / "data" / "retrieval-smoke" / "report-v1.json"
 DEFAULT_SOURCE_FREEZE = REPO_ROOT / "data" / "manifests" / "source-pack-freeze-v1.json"
 DEFAULT_COVERAGE_SET = REPO_ROOT / "data" / "coverage" / "coverage-v1.json"
+DEFAULT_EVALUATION_SET = REPO_ROOT / "data" / "evaluation" / "evaluation-set-v1.json"
+DEFAULT_EVALUATION_FREEZE = REPO_ROOT / "data" / "evaluation" / "evaluation-freeze-v1.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
 
@@ -470,6 +480,89 @@ def _coverage_command(
     return 0 if report.passed else 1
 
 
+def _evaluation_set_command(
+    evaluation_set_path: Path,
+    manifest_path: Path,
+    pdf_dir: Path,
+    source_pack_freeze_path: Path,
+    freeze_path: Path | None,
+    verify_freeze_path: Path | None,
+    maintainer_review: str | None,
+    as_json: bool,
+) -> int:
+    try:
+        evaluation_set = load_evaluation_set(evaluation_set_path)
+        manifest = load_source_manifest(manifest_path)
+        issues = validate_evaluation_set(evaluation_set, manifest, pdf_dir)
+    except (OSError, ValueError) as exc:
+        print(f"zabm evaluation-set: {exc}", file=sys.stderr)
+        return 1
+
+    if issues:
+        for issue in issues:
+            print(f"zabm evaluation-set: {issue}", file=sys.stderr)
+        return 1
+
+    effective_verify_path = verify_freeze_path
+    if (
+        effective_verify_path is None
+        and freeze_path is None
+        and evaluation_set_path.resolve() == DEFAULT_EVALUATION_SET.resolve()
+        and DEFAULT_EVALUATION_FREEZE.is_file()
+    ):
+        effective_verify_path = DEFAULT_EVALUATION_FREEZE
+    freeze_verified = effective_verify_path is not None
+    if effective_verify_path is not None:
+        try:
+            verify_evaluation_freeze(
+                effective_verify_path,
+                evaluation_set_path,
+                manifest_path,
+                source_pack_freeze_path,
+            )
+        except (OSError, ValueError) as exc:
+            print(f"zabm evaluation-set: {exc}", file=sys.stderr)
+            return 1
+
+    if freeze_path is not None:
+        if maintainer_review is None or not maintainer_review.strip():
+            print(
+                "zabm evaluation-set: --maintainer-review is required with --freeze",
+                file=sys.stderr,
+            )
+            return 1
+        try:
+            create_evaluation_freeze(
+                evaluation_set_path,
+                evaluation_set,
+                manifest,
+                manifest_path,
+                source_pack_freeze_path,
+                freeze_path,
+                maintainer_review=maintainer_review,
+            )
+        except (OSError, ValueError) as exc:
+            print(f"zabm evaluation-set: {exc}", file=sys.stderr)
+            return 1
+
+    report = build_evaluation_report(
+        evaluation_set,
+        freeze_verified=freeze_verified,
+    )
+    if as_json:
+        print(json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True))
+    else:
+        counts = ", ".join(
+            f"{category} {count}" for category, count in report.category_counts.items()
+        )
+        print(f"Evaluation set {report.evaluation_set_id} is valid: {counts}.")
+        if freeze_verified:
+            print("Frozen expected outcomes verified.")
+        if freeze_path is not None:
+            print(f"Frozen evaluation set: {freeze_path}")
+    return 0
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="zabm",
@@ -623,6 +716,54 @@ def _parser() -> argparse.ArgumentParser:
     )
     coverage.add_argument("--json", action="store_true", help="Emit the coverage report.")
 
+    evaluation_set = commands.add_parser(
+        "evaluation-set",
+        help="Validate the frozen evaluation set and its expected outcomes.",
+    )
+    evaluation_set.add_argument(
+        "--evaluation-set",
+        type=Path,
+        default=DEFAULT_EVALUATION_SET,
+        help="Path to the frozen evaluation set.",
+    )
+    evaluation_set.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_MANIFEST,
+        help="Path to the frozen source manifest.",
+    )
+    evaluation_set.add_argument(
+        "--pdf-dir",
+        type=Path,
+        default=DEFAULT_PDF_DIR,
+        help="Directory containing the frozen source PDFs.",
+    )
+    evaluation_set.add_argument(
+        "--source-freeze",
+        type=Path,
+        default=DEFAULT_SOURCE_FREEZE,
+        help="Path to the frozen source-pack descriptor.",
+    )
+    evaluation_set.add_argument(
+        "--freeze",
+        type=Path,
+        help="Write an evaluation-set freeze after validation succeeds.",
+    )
+    evaluation_set.add_argument(
+        "--verify-freeze",
+        type=Path,
+        help="Verify a previously written evaluation-set freeze.",
+    )
+    evaluation_set.add_argument(
+        "--maintainer-review",
+        help="Stable review reference recorded when freezing the evaluation set.",
+    )
+    evaluation_set.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the evaluation-set validation report.",
+    )
+
     retrieval_smoke = commands.add_parser(
         "retrieval-smoke",
         help="Run the retrieval-only source-pack smoke set and optionally freeze the pack.",
@@ -720,6 +861,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.manifest,
             args.coverage_set,
             args.data_dir,
+            args.json,
+        )
+    if args.command == "evaluation-set":
+        return _evaluation_set_command(
+            args.evaluation_set,
+            args.manifest,
+            args.pdf_dir,
+            args.source_freeze,
+            args.freeze,
+            args.verify_freeze,
+            args.maintainer_review,
             args.json,
         )
     if args.command == "retrieval-smoke":

@@ -177,6 +177,38 @@ content, attaches an exact citation, and records verification in the structured
 evidence file. Incomplete procedures remain `not_found`; the coverage inventory
 keeps their completeness or citation defects inspectable.
 
+## Frozen evaluation set
+
+The hand-authored evaluation set in
+`data/evaluation/evaluation-set-v1.json` contains exactly 120 scored items:
+36 specifications, 27 compatibility questions, 27 procedures, 15 not-found
+cases, 8 conflicting-evidence cases, and 7 out-of-scope requests. It includes
+adjacent models, wrong generations, cross-brand pairs, unsupported materials,
+missing attributes, truncated procedures, ambiguous aliases, and false
+premises. Specification labels include normalized values, ranges, units, and
+required qualifiers; compatibility labels include exact statuses and
+outcomes; and procedure labels include every required step and attached
+warning.
+
+Validate the set and its source locators:
+
+```bash
+make evaluation-set
+```
+
+The freeze record in `data/evaluation/evaluation-freeze-v1.json` binds the set
+bytes to the frozen source-pack descriptor and manifest. `zabm evaluation-set`
+verifies that record by default. Changing a question or expected outcome
+requires a reviewed replacement freeze and a complete evaluation rerun:
+
+```bash
+./.venv/bin/python -m zabm evaluation-set \
+  --freeze data/evaluation/evaluation-freeze-v1.json \
+  --maintainer-review <review-reference>
+```
+
+No answer-accuracy baseline is run by this command.
+
 ## Retrieval-only freeze
 
 Retrieval usability is checked before answer-accuracy work with a fixed
