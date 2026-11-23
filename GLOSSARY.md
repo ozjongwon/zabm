@@ -66,6 +66,10 @@ _Avoid_: unknown, no result
 **Conflicting evidence**:
 Two or more applicable pieces of evidence disagree, so no answer is given unless their applicability clearly resolves the disagreement.
 
+**Precedence**:
+An explicit, cited source statement about model scope, supersession, revision date, or manufacturer applicability that resolves otherwise conflicting evidence.
+_Avoid_: confidence, recency without a citation, matching dimensions
+
 **Out of scope**:
 The request is outside bicycle maintenance, so it is declined without attempting an evidence search.
 _Avoid_: not found, unsupported

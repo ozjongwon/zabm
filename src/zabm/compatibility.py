@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from zabm.conflicts import EvidenceCandidate, adjudicate, conflicting_evidence_response
 from zabm.matching import identity_matches, tokens, unknown_tokens
 from zabm.response import (
     CanonicalResponse,
@@ -15,15 +16,18 @@ from zabm.response import (
     CompatibilityAnswer,
     CompatibilityComponent,
     Failure,
+    PrecedenceDecision,
     StoredCitation,
 )
 from zabm.specifications import (
     CitationTarget,
     HumanVerification,
+    PrecedenceRule,
     citation_issues,
     load_source_manifest,
     load_source_pages,
     normalize_text,
+    store_precedence,
     write_json,
 )
 
@@ -38,6 +42,7 @@ class VerifiedCompatibilityRule(BaseModel):
     citation: CitationTarget
     evidence_excerpts: list[str]
     verification: HumanVerification
+    precedence: PrecedenceRule | None = None
 
 
 class VerifiedCompatibilityFile(BaseModel):
@@ -47,6 +52,8 @@ class VerifiedCompatibilityFile(BaseModel):
 class StoredCompatibilityRule(BaseModel):
     rule: VerifiedCompatibilityRule
     citation: StoredCitation
+    precedence: PrecedenceDecision | None = None
+    precedence_validation_issues: list[str] = Field(default_factory=list[str])
     validation_issues: list[str] = Field(default_factory=list[str])
 
 
@@ -88,6 +95,12 @@ def ingest_compatibility(
             issues.extend(citation_issues(rule.citation, rule.evidence_excerpts, pages))
 
         issues.extend(_eligibility_issues(rule))
+        stored_precedence, precedence_issues = store_precedence(
+            rule.precedence,
+            sources,
+            page_texts,
+            manifest.manifest_version,
+        )
         citation = StoredCitation(
             document_id=rule.source_id,
             title=source.title if source else "unknown",
@@ -102,10 +115,13 @@ def ingest_compatibility(
             StoredCompatibilityRule(
                 rule=rule,
                 citation=citation,
+                precedence=stored_precedence,
+                precedence_validation_issues=precedence_issues,
                 validation_issues=issues,
             )
         )
         all_issues.extend(f"{rule.id}: {issue}" for issue in issues)
+        all_issues.extend(f"{rule.id} precedence: {issue}" for issue in precedence_issues)
 
     catalog = CompatibilityCatalog(
         source_pack_id=manifest.manifest_version,
@@ -155,18 +171,50 @@ def answer_compatibility(question: str, data_dir: Path) -> CanonicalResponse:
             source_pack_id=catalog.source_pack_id,
         )
     if len(matches) > 1:
-        return _clarification_required(
-            [item.rule for item in matches],
+        groups: dict[tuple[tuple[str, str], ...], list[StoredCompatibilityRule]] = {}
+        for item in matches:
+            components = (
+                item.rule.component_a,
+                item.rule.component_b,
+            )
+            key = tuple(
+                sorted(
+                    (component.manufacturer.casefold(), component.name.casefold())
+                    for component in components
+                )
+            )
+            groups.setdefault(key, []).append(item)
+        if len(groups) > 1:
+            return _clarification_required(
+                [item.rule for item in matches],
+                source_pack_id=catalog.source_pack_id,
+            )
+        matches = next(iter(groups.values()))
+
+    for match in matches:
+        issues = match.validation_issues + _eligibility_issues(match.rule)
+        if issues:
+            return _not_found(
+                f"Verified compatibility evidence was rejected: {issues[0]}",
+                source_pack_id=catalog.source_pack_id,
+            )
+
+    candidates = [_evidence_candidate(item) for item in matches]
+    adjudication = adjudicate(candidates)
+    if adjudication.selected is None:
+        assert adjudication.report is not None
+        return conflicting_evidence_response(
+            response_type="compatibility",
+            report=adjudication.report,
             source_pack_id=catalog.source_pack_id,
         )
 
+    selected_claim_id = adjudication.selected.claim_id
     stored = matches[0]
-    issues = stored.validation_issues + _eligibility_issues(stored.rule)
-    if issues:
-        return _not_found(
-            f"Verified compatibility evidence was rejected: {issues[0]}",
-            source_pack_id=catalog.source_pack_id,
-        )
+    for match in matches:
+        if match.rule.id == selected_claim_id:
+            stored = match
+            break
 
     rule = stored.rule
     return CanonicalResponse(
@@ -188,8 +236,22 @@ def answer_compatibility(question: str, data_dir: Path) -> CanonicalResponse:
             component_b=rule.component_b,
             conditions=rule.conditions,
         ),
+        conflicts=adjudication.report,
         citations=[stored.citation],
         source_pack_id=catalog.source_pack_id,
+    )
+
+
+def _evidence_candidate(stored: StoredCompatibilityRule) -> EvidenceCandidate:
+    rule = stored.rule
+    return EvidenceCandidate(
+        claim_id=rule.id,
+        claim=_claim_text(rule),
+        evidence_ids=(rule.id,),
+        excerpts=tuple(rule.evidence_excerpts),
+        citations=(stored.citation,),
+        answer_key=(rule.outcome,),
+        precedence=stored.precedence,
     )
 
 

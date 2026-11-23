@@ -67,6 +67,36 @@ Compatibility answers use only human-verified manufacturer rules and return
 or visually similar names without an explicit rule do not produce a definitive
 compatibility result.
 
+When two or more applicable specification values or compatibility rules
+disagree, the CLI returns `conflicting_evidence` with every candidate claim,
+excerpt, and citation. It does not average, interpolate, or select a value from
+confidence or matching dimensions. A human-verified evidence record may include
+an optional `precedence` object when the cited source explicitly supports one
+candidate:
+
+```json
+{
+  "precedence": {
+    "kind": "supersession",
+    "supersedes": ["earlier-evidence-id"],
+    "reason": "Revision C supersedes Revision B for this torque.",
+    "source_id": "source-id",
+    "citation": {
+      "printed_page": 36,
+      "physical_page": 32,
+      "section": "Torque table"
+    },
+    "evidence_excerpts": ["Revision C supersedes Revision B for this torque."]
+  }
+}
+```
+
+The supported kinds are `model_scope`, `supersession`, `revision_date`, and
+`manufacturer_scope`. The precedence excerpt must be present at its cited
+location and must itself state the precedence; otherwise the precedence is
+ignored and the conflict remains unresolved. A resolved response keeps the
+selected and rejected candidates plus the cited reason in `conflicts`.
+
 Procedure answers use only page-structured retrieval evidence. A procedure is
 returned only when its numbered steps form a complete source-defined sequence;
 every step carries its own citation and attached warnings. A truncated or

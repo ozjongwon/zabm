@@ -44,7 +44,7 @@ class StoredCitation(BaseModel):
 
 
 class Failure(BaseModel):
-    code: Literal["not_found", "out_of_scope"]
+    code: Literal["not_found", "conflicting_evidence", "out_of_scope"]
     message: str
 
 
@@ -81,6 +81,31 @@ class CompatibilityAnswer(BaseModel):
     conditions: list[str]
 
 
+class ConflictCandidate(BaseModel):
+    claim_id: str
+    claim: str
+    evidence_ids: list[str]
+    excerpts: list[str]
+    citations: list[StoredCitation] = Field(min_length=1)
+    selected: bool = False
+
+
+class PrecedenceDecision(BaseModel):
+    kind: Literal["model_scope", "supersession", "revision_date", "manufacturer_scope"]
+    reason: str
+    supersedes: list[str]
+    excerpt: str
+    citation: StoredCitation
+
+
+class ConflictReport(BaseModel):
+    candidates: list[ConflictCandidate] = Field(min_length=2)
+    precedence_established: bool = False
+    precedence: PrecedenceDecision | None = None
+    selected_claim_id: str | None = None
+    rejected_claim_ids: list[str] = Field(default_factory=list[str])
+
+
 class ProcedureWarning(BaseModel):
     severity: Literal["warning", "notice"]
     text: str
@@ -104,13 +129,20 @@ class CanonicalResponse(BaseModel):
     timestamp: datetime
     response_type: Literal["specification", "compatibility", "procedure", "out_of_scope"]
     language: Literal["en"]
-    status: Literal["supported", "clarification_required", "not_found", "out_of_scope"]
+    status: Literal[
+        "supported",
+        "clarification_required",
+        "not_found",
+        "conflicting_evidence",
+        "out_of_scope",
+    ]
     failure: Failure | None = None
     clarification: Clarification | None = None
     claims: list[Claim] = Field(default_factory=list[Claim])
     specification: SpecificationAnswer | None = None
     compatibility: CompatibilityAnswer | None = None
     procedure: ProcedureAnswer | None = None
+    conflicts: ConflictReport | None = None
     citations: list[StoredCitation] = Field(default_factory=list[StoredCitation])
     provider: ProviderIdentity = Field(default_factory=default_provider_identity)
     source_pack_id: str

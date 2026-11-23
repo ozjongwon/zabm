@@ -365,6 +365,7 @@ def _reject_generated_answer(
             "specification": None,
             "compatibility": compatibility,
             "procedure": None,
+            "conflicts": None,
             "citations": [],
         }
     )

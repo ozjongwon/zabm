@@ -241,8 +241,15 @@ def _ingest_command(
 
 
 def _render_response(response: CanonicalResponse) -> str:
-    if response.status in {"not_found", "out_of_scope"}:
+    if response.status in {"not_found", "out_of_scope", "conflicting_evidence"}:
         assert response.failure is not None
+        if response.status == "conflicting_evidence":
+            return "\n".join(
+                [
+                    f"conflicting_evidence: {response.failure.message}",
+                    _render_conflict_record(response),
+                ]
+            )
         return f"{response.status}: {response.failure.message}"
 
     if response.status == "clarification_required":
@@ -256,7 +263,7 @@ def _render_response(response: CanonicalResponse) -> str:
         assert compatibility.component_b is not None
         citation = response.citations[0]
         conditions = "; ".join(compatibility.conditions)
-        return (
+        rendered = (
             f"{compatibility.component_a.name} with {compatibility.component_b.name}: "
             f"{compatibility.outcome}\n"
             f"Conditions: {conditions}\n"
@@ -264,6 +271,7 @@ def _render_response(response: CanonicalResponse) -> str:
             f"physical page {citation.physical_page}, {citation.section}, "
             f"retrieved {citation.retrieval_date.isoformat()}"
         )
+        return _append_conflict_record(rendered, response)
 
     if response.response_type == "procedure":
         assert response.procedure is not None
@@ -280,13 +288,13 @@ def _render_response(response: CanonicalResponse) -> str:
                 f"physical page {citation.physical_page}, {citation.section}, "
                 f"retrieved {citation.retrieval_date.isoformat()}"
             )
-        return "\n".join(lines)
+        return _append_conflict_record("\n".join(lines), response)
 
     assert response.specification is not None
     specification = response.specification
     citation = response.citations[0]
     conditions = "; ".join(specification.conditions)
-    return (
+    rendered = (
         f"{specification.manufacturer} {specification.model} "
         f"{specification.component} {specification.attribute}: "
         f"{specification.value.display}\n"
@@ -295,6 +303,43 @@ def _render_response(response: CanonicalResponse) -> str:
         f"physical page {citation.physical_page}, {citation.section}, "
         f"retrieved {citation.retrieval_date.isoformat()}"
     )
+    return _append_conflict_record(rendered, response)
+
+
+def _append_conflict_record(rendered: str, response: CanonicalResponse) -> str:
+    if response.conflicts is None:
+        return rendered
+    return f"{rendered}\n\n{_render_conflict_record(response)}"
+
+
+def _render_conflict_record(response: CanonicalResponse) -> str:
+    assert response.conflicts is not None
+    conflicts = response.conflicts
+    if conflicts.precedence_established:
+        lines = ["Conflict resolved by cited precedence:"]
+    else:
+        lines = ["Applicable evidence:"]
+    for candidate in conflicts.candidates:
+        state = "selected" if candidate.selected else "rejected"
+        lines.append(f"- {state}: {candidate.claim}")
+        lines.append(f"  Excerpt: {' '.join(candidate.excerpts)}")
+        for citation in candidate.citations:
+            lines.append(
+                f"  Source: {citation.title}, printed page {citation.printed_page}, "
+                f"physical page {citation.physical_page}, {citation.section}, "
+                f"retrieved {citation.retrieval_date.isoformat()}"
+            )
+    if conflicts.precedence is not None:
+        precedence = conflicts.precedence
+        lines.append(f"Precedence ({precedence.kind}): {precedence.reason}")
+        lines.append(f"  Excerpt: {precedence.excerpt}")
+        citation = precedence.citation
+        lines.append(
+            f"  Source: {citation.title}, printed page {citation.printed_page}, "
+            f"physical page {citation.physical_page}, {citation.section}, "
+            f"retrieved {citation.retrieval_date.isoformat()}"
+        )
+    return "\n".join(lines)
 
 
 def _ask_command(

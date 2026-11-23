@@ -8,17 +8,20 @@ import unicodedata
 from collections.abc import Iterable
 from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Literal
 from urllib.request import Request, urlopen
 
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
+from zabm.conflicts import EvidenceCandidate, adjudicate, conflicting_evidence_response
 from zabm.matching import identity_matches, tokens, unknown_tokens
 from zabm.response import (
     CanonicalResponse,
     Claim,
     Clarification,
     Failure,
+    PrecedenceDecision,
     SpecificationAnswer,
     SpecificationValue,
     StoredCitation,
@@ -55,6 +58,15 @@ class HumanVerification(BaseModel):
     verified_at: date | None = None
 
 
+class PrecedenceRule(BaseModel):
+    kind: Literal["model_scope", "supersession", "revision_date", "manufacturer_scope"]
+    supersedes: list[str]
+    reason: str
+    source_id: str
+    citation: CitationTarget
+    evidence_excerpts: list[str]
+
+
 class VerifiedSpecification(BaseModel):
     id: str
     manufacturer: str
@@ -68,6 +80,7 @@ class VerifiedSpecification(BaseModel):
     citation: CitationTarget
     evidence_excerpts: list[str]
     verification: HumanVerification
+    precedence: PrecedenceRule | None = None
 
 
 class VerifiedSpecificationFile(BaseModel):
@@ -77,6 +90,8 @@ class VerifiedSpecificationFile(BaseModel):
 class StoredSpecification(BaseModel):
     specification: VerifiedSpecification
     citation: StoredCitation
+    precedence: PrecedenceDecision | None = None
+    precedence_validation_issues: list[str] = Field(default_factory=list[str])
     validation_issues: list[str] = Field(default_factory=list)
 
 
@@ -241,6 +256,12 @@ def ingest_sources(
             )
 
         issues.extend(_eligibility_issues(specification))
+        stored_precedence, precedence_issues = store_precedence(
+            specification.precedence,
+            sources,
+            page_texts,
+            manifest.manifest_version,
+        )
         citation = StoredCitation(
             document_id=specification.source_id,
             title=source.title if source else "unknown",
@@ -255,10 +276,13 @@ def ingest_sources(
             StoredSpecification(
                 specification=specification,
                 citation=citation,
+                precedence=stored_precedence,
+                precedence_validation_issues=precedence_issues,
                 validation_issues=issues,
             )
         )
         all_issues.extend(f"{specification.id}: {issue}" for issue in issues)
+        all_issues.extend(f"{specification.id} precedence: {issue}" for issue in precedence_issues)
 
     catalog = SpecificationCatalog(
         source_pack_id=manifest.manifest_version,
@@ -306,25 +330,53 @@ def answer_specification(question: str, data_dir: Path) -> CanonicalResponse:
             source_pack_id=catalog.source_pack_id,
         )
     if len(matches) > 1:
-        return _clarification_required(
-            [item.specification for item in matches],
+        groups: dict[
+            tuple[str, str, str, str],
+            list[StoredSpecification],
+        ] = {}
+        for item in matches:
+            specification = item.specification
+            key = (
+                specification.manufacturer.casefold(),
+                specification.model.casefold(),
+                specification.component.casefold(),
+                specification.attribute.casefold(),
+            )
+            groups.setdefault(key, []).append(item)
+        if len(groups) > 1:
+            return _clarification_required(
+                [item.specification for item in matches],
+                source_pack_id=catalog.source_pack_id,
+            )
+        matches = next(iter(groups.values()))
+
+    for stored in matches:
+        issues = stored.validation_issues + _eligibility_issues(stored.specification)
+        if issues:
+            return _not_found(
+                f"Verified evidence was rejected: {issues[0]}",
+                source_pack_id=catalog.source_pack_id,
+            )
+
+    candidates = [_evidence_candidate(item) for item in matches]
+    adjudication = adjudicate(candidates)
+    if adjudication.selected is None:
+        assert adjudication.report is not None
+        return conflicting_evidence_response(
+            response_type="specification",
+            report=adjudication.report,
             source_pack_id=catalog.source_pack_id,
         )
 
+    selected_claim_id = adjudication.selected.claim_id
     stored = matches[0]
-    issues = stored.validation_issues + _eligibility_issues(stored.specification)
-    if issues:
-        return _not_found(
-            f"Verified evidence was rejected: {issues[0]}",
-            source_pack_id=catalog.source_pack_id,
-        )
+    for match in matches:
+        if match.specification.id == selected_claim_id:
+            stored = match
+            break
 
     specification = stored.specification
-    claim_text = (
-        f"{specification.manufacturer} {specification.model} "
-        f"{specification.component} {specification.attribute}: "
-        f"{specification.value.display}."
-    )
+    claim_text = _claim_text(specification)
     return CanonicalResponse(
         request_id=os.urandom(16).hex(),
         timestamp=datetime.now(UTC),
@@ -346,9 +398,117 @@ def answer_specification(question: str, data_dir: Path) -> CanonicalResponse:
             value=specification.value,
             conditions=specification.conditions,
         ),
+        conflicts=adjudication.report,
         citations=[stored.citation],
         source_pack_id=catalog.source_pack_id,
     )
+
+
+def _evidence_candidate(stored: StoredSpecification) -> EvidenceCandidate:
+    specification = stored.specification
+    return EvidenceCandidate(
+        claim_id=specification.id,
+        claim=_claim_text(specification),
+        evidence_ids=(specification.id,),
+        excerpts=tuple(specification.evidence_excerpts),
+        citations=(stored.citation,),
+        answer_key=(
+            specification.value.minimum,
+            specification.value.maximum,
+            specification.value.unit,
+            specification.value.display,
+            *specification.conditions,
+        ),
+        precedence=stored.precedence,
+    )
+
+
+def _claim_text(specification: VerifiedSpecification) -> str:
+    return (
+        f"{specification.manufacturer} {specification.model} "
+        f"{specification.component} {specification.attribute}: "
+        f"{specification.value.display}."
+    )
+
+
+def store_precedence(
+    precedence: PrecedenceRule | None,
+    sources: dict[str, SourceRecord],
+    page_texts: dict[str, list[str]],
+    manifest_version: str,
+) -> tuple[PrecedenceDecision | None, list[str]]:
+    if precedence is None:
+        return None, []
+
+    issues: list[str] = []
+    if not precedence.supersedes:
+        issues.append("precedence does not identify superseded evidence")
+    if not precedence.reason.strip():
+        issues.append("precedence reason is missing")
+    if not precedence.evidence_excerpts:
+        issues.append("precedence evidence excerpt is missing")
+
+    source = sources.get(precedence.source_id)
+    if source is None:
+        issues.append(f"precedence source {precedence.source_id} is not in the manifest")
+    else:
+        issues.extend(
+            citation_issues(
+                precedence.citation,
+                precedence.evidence_excerpts,
+                page_texts[precedence.source_id],
+            )
+        )
+        cue_issue = _precedence_cue_issue(precedence, source)
+        if cue_issue is not None:
+            issues.append(cue_issue)
+    if issues:
+        return None, issues
+    citation = StoredCitation(
+        document_id=precedence.source_id,
+        title=source.title if source else "unknown",
+        manufacturer=source.manufacturer if source else "unknown",
+        printed_page=precedence.citation.printed_page,
+        physical_page=precedence.citation.physical_page,
+        section=precedence.citation.section,
+        retrieval_date=source.retrieval_date if source else date.min,
+        source_manifest_version=manifest_version,
+    )
+    return (
+        PrecedenceDecision(
+            kind=precedence.kind,
+            reason=precedence.reason,
+            supersedes=precedence.supersedes,
+            excerpt=" ".join(precedence.evidence_excerpts),
+            citation=citation,
+        ),
+        [],
+    )
+
+
+def _precedence_cue_issue(
+    precedence: PrecedenceRule,
+    source: SourceRecord,
+) -> str | None:
+    evidence = normalize_text(" ".join(precedence.evidence_excerpts))
+    if precedence.kind == "supersession":
+        if not any(cue in evidence for cue in ("supersed", "replace", "obsolete")):
+            return "precedence excerpt does not establish supersession"
+    elif precedence.kind == "revision_date":
+        if not (
+            any(cue in evidence for cue in ("revision", "revised", "effective"))
+            or re.search(r"\b(?:19|20)\d{2}\b", evidence)
+        ):
+            return "precedence excerpt does not establish a revision date"
+    elif precedence.kind == "model_scope":
+        if not any(
+            cue in evidence
+            for cue in ("applies to", "applies only", "only for", "specific to", "model scope")
+        ):
+            return "precedence excerpt does not establish model scope"
+    elif normalize_text(source.manufacturer) not in evidence:
+        return "precedence excerpt does not establish manufacturer scope"
+    return None
 
 
 def _not_found(message: str, source_pack_id: str) -> CanonicalResponse:
