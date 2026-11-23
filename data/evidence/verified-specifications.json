@@ -1,0 +1,43 @@
+{
+  "specifications": [
+    {
+      "id": "sram-reverb-standard-remote-clamp-bolt-torque",
+      "manufacturer": "SRAM (RockShox)",
+      "model": "Reverb",
+      "component": "remote clamp bolt",
+      "attribute": "torque",
+      "aliases": [
+        "RockShox Reverb standard remote clamp fastener torque",
+        "Reverb Stealth standard remote clamp torque"
+      ],
+      "value": {
+        "minimum": 2.8,
+        "maximum": 3.4,
+        "unit": "N·m",
+        "display": "2.8-3.4 N·m (25-30 in-lb)"
+      },
+      "conditions": [
+        "Remote: Standard Remote",
+        "Fastener: remote clamp bolt",
+        "Tool: T25 TORX wrench",
+        "Service: 50/200 Hour Service"
+      ],
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "citation": {
+        "printed_page": 36,
+        "physical_page": 36,
+        "section": "Saddle, Remote, and Brake Installation"
+      },
+      "evidence_excerpts": [
+        "50/200 Hour Service Saddle, Remote, and Brake Installation",
+        "Standard Remote: Install the remote in the desired position and tighten the clamp bolt.",
+        "T25 2.8-3.4 N•m (25-30 in-lb) Standard"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
+    }
+  ]
+}

@@ -42,6 +42,23 @@ make verify
 `make verify` runs the CLI health check, Ruff lint and formatting checks,
 Pyright type checking, and the automated test suite.
 
+## Specification tracer
+
+Download the hash-verified source PDFs into the local `.zabm/sources`
+directory, ingest the committed human-verified evidence, and ask a
+specification question:
+
+```bash
+./.venv/bin/python -m zabm download
+./.venv/bin/python -m zabm ingest
+./.venv/bin/python -m zabm ask \
+  "What torque should I use for the RockShox Reverb Standard Remote clamp bolt?"
+```
+
+Add `--json` to any command for structured output. Downloaded PDFs and
+generated evidence are local build artifacts under `.zabm/`; they are never
+committed.
+
 ## NVIDIA prerequisite
 
 The installer detects `nvidia-smi` but never installs, upgrades, or replaces the

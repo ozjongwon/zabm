@@ -1,0 +1,14 @@
+{
+  "manifest_version": "2026-11-23.1",
+  "sources": [
+    {
+      "id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "title": "Reverb Stealth & Reverb Hydraulic Hose Replacement Remote System Bleed",
+      "manufacturer": "SRAM (RockShox)",
+      "url": "https://www.sram.com/contentassets/86873b08dc2644a4b03aa36c6394bf85/gen.0000000005105_sm_reverb_hose_replacement_and_bleed_english_rev_c.pdf",
+      "sha256": "680dac35afaa2ba04d37f8ca7d15932ef9cf7eb0ca7eade6f754925fa2cfcc5d",
+      "retrieval_date": "2026-11-23",
+      "revision": "GEN.0000000005105 Rev C, 2018"
+    }
+  ]
+}
