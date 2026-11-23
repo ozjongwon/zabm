@@ -495,10 +495,7 @@ def _precedence_cue_issue(
         if not any(cue in evidence for cue in ("supersed", "replace", "obsolete")):
             return "precedence excerpt does not establish supersession"
     elif precedence.kind == "revision_date":
-        if not (
-            any(cue in evidence for cue in ("revision", "revised", "effective"))
-            or re.search(r"\b(?:19|20)\d{2}\b", evidence)
-        ):
+        if not any(cue in evidence for cue in ("revision", "revised", "effective")):
             return "precedence excerpt does not establish a revision date"
     elif precedence.kind == "model_scope":
         if not any(

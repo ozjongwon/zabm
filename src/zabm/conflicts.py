@@ -38,8 +38,13 @@ def conflicting_evidence_response(
     report: ConflictReport,
     source_pack_id: str,
 ) -> CanonicalResponse:
-    subject = (
-        "verified evidence" if response_type == "specification" else "verified compatibility rules"
+    message = (
+        "Applicable verified evidence disagrees and no cited precedence resolves the conflict."
+        if response_type == "specification"
+        else (
+            "Applicable verified compatibility rules disagree and no cited precedence "
+            "resolves the conflict."
+        )
     )
     return CanonicalResponse(
         request_id=os.urandom(16).hex(),
@@ -49,9 +54,7 @@ def conflicting_evidence_response(
         status="conflicting_evidence",
         failure=Failure(
             code="conflicting_evidence",
-            message=(
-                f"Applicable {subject} disagree and no cited precedence resolves the conflict."
-            ),
+            message=message,
         ),
         conflicts=report,
         citations=[citation for candidate in report.candidates for citation in candidate.citations],

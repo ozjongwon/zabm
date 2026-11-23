@@ -129,6 +129,7 @@ def prepare_conflict_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
             "Standard Remote: tighten the remote clamp bolt to 4.0-5.0 N*m (35-45 in-lb).",
             "Revision C supersedes Revision B for this torque.",
             "Revision C is newer.",
+            "The 2011 manual gives this torque.",
         ],
     )
     source_hash = hashlib.sha256(source_path.read_bytes()).hexdigest()
@@ -443,6 +444,40 @@ def test_cli_does_not_use_precedence_without_an_explicit_source_statement(
             "section": "Torque table",
         },
         "evidence_excerpts": ["Revision C is newer."],
+    }
+    evidence_path.write_text(json.dumps(payload), encoding="utf-8")
+    download_and_ingest(manifest_path, evidence_path, compatibility_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post Standard Remote clamp bolt torque?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "conflicting_evidence"
+    assert response["conflicts"]["precedence_established"] is False
+    assert response["conflicts"]["precedence"] is None
+    assert response["claims"] == []
+
+
+def test_cli_does_not_treat_a_model_year_as_revision_precedence(tmp_path: Path) -> None:
+    manifest_path, evidence_path, compatibility_path, data_dir = prepare_conflict_fixture(tmp_path)
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    payload["specifications"][1]["precedence"] = {
+        "kind": "revision_date",
+        "supersedes": ["test-clamp-torque-rev-b"],
+        "reason": "The value comes from the 2011 manual.",
+        "source_id": "test-manual",
+        "citation": {
+            "printed_page": 17,
+            "physical_page": 1,
+            "section": "Torque table",
+        },
+        "evidence_excerpts": ["The 2011 manual gives this torque."],
     }
     evidence_path.write_text(json.dumps(payload), encoding="utf-8")
     download_and_ingest(manifest_path, evidence_path, compatibility_path, data_dir)

@@ -26,4 +26,5 @@
   the precedence citation in both JSON and plain CLI output. CLI tests cover
   unresolved conflicts, cited precedence, invalid precedence, visible rejected
   evidence, shared compatibility handling, and a dimensional near miss.
-  `make verify` passes with 86 tests.
+  Review also tightened revision precedence so a model year alone is not treated
+  as a revision statement. `make verify` passes with 87 tests.
