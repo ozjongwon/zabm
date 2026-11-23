@@ -57,15 +57,34 @@ class CompatibilityAnswer(BaseModel):
     conditions: list[str]
 
 
+class ProcedureWarning(BaseModel):
+    severity: Literal["warning", "notice"]
+    text: str
+
+
+class ProcedureStep(BaseModel):
+    number: int
+    text: str
+    warnings: list[ProcedureWarning] = Field(default_factory=list[ProcedureWarning])
+    citation: StoredCitation
+
+
+class ProcedureAnswer(BaseModel):
+    title: str
+    heading_path: list[str]
+    steps: list[ProcedureStep]
+
+
 class CanonicalResponse(BaseModel):
     request_id: str
     timestamp: datetime
-    response_type: Literal["specification", "compatibility"]
+    response_type: Literal["specification", "compatibility", "procedure"]
     language: Literal["en"]
     status: Literal["supported", "not_found"]
     failure: Failure | None = None
     claims: list[Claim] = Field(default_factory=list[Claim])
     specification: SpecificationAnswer | None = None
     compatibility: CompatibilityAnswer | None = None
+    procedure: ProcedureAnswer | None = None
     citations: list[StoredCitation] = Field(default_factory=list[StoredCitation])
     source_pack_id: str

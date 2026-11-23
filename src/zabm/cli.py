@@ -14,6 +14,12 @@ from pydantic import BaseModel
 
 from zabm import __version__
 from zabm.compatibility import answer_compatibility, ingest_compatibility
+from zabm.procedures import (
+    ProcedureEvidenceInspection,
+    answer_procedure,
+    ingest_retrieval,
+    inspect_procedure_evidence,
+)
 from zabm.response import CanonicalResponse
 from zabm.specifications import (
     IngestionError,
@@ -39,6 +45,24 @@ COMPATIBILITY_CUES = (
     "used together",
     "work together",
 )
+PROCEDURE_CUES = (
+    "how do i ",
+    "how to ",
+    "procedure",
+    "service steps",
+    "steps",
+    "walk me through",
+)
+PROCEDURE_ACTIONS = {
+    "adjust",
+    "assemble",
+    "bleed",
+    "disassemble",
+    "install",
+    "prepare",
+    "remove",
+    "replace",
+}
 
 
 class HealthReport(BaseModel):
@@ -134,6 +158,7 @@ def _ingest_command(
             pdf_dir,
             data_dir,
         )
+        retrieval_report = ingest_retrieval(manifest, pdf_dir, data_dir)
     except (OSError, IngestionError, ValueError) as exc:
         print(f"zabm ingest: {exc}", file=sys.stderr)
         return 1
@@ -145,9 +170,15 @@ def _ingest_command(
             "eligible_compatibility_rule_count": (
                 compatibility_report.eligible_compatibility_rule_count
             ),
+            "retrieval_page_count": retrieval_report.page_count,
+            "table_row_count": retrieval_report.table_row_count,
+            "warning_count": retrieval_report.warning_count,
+            "procedure_count": retrieval_report.procedure_count,
+            "eligible_procedure_count": retrieval_report.eligible_procedure_count,
             "validation_issues": [
                 *report.validation_issues,
                 *compatibility_report.validation_issues,
+                *retrieval_report.validation_issues,
             ],
         }
         print(json.dumps(combined_report, indent=2, sort_keys=True))
@@ -161,9 +192,15 @@ def _ingest_command(
             f"Ingested {compatibility_report.compatibility_rule_count} compatibility "
             f"rule(s); {compatibility_report.eligible_compatibility_rule_count} eligible."
         )
+        print(
+            f"Ingested {retrieval_report.procedure_count} service procedure(s) from "
+            f"{retrieval_report.page_count} retrieval page(s); "
+            f"{retrieval_report.eligible_procedure_count} complete."
+        )
         for issue in [
             *report.validation_issues,
             *compatibility_report.validation_issues,
+            *retrieval_report.validation_issues,
         ]:
             print(f"- rejected: {issue}", file=sys.stderr)
     return 0
@@ -190,6 +227,23 @@ def _render_response(response: CanonicalResponse) -> str:
             f"retrieved {citation.retrieval_date.isoformat()}"
         )
 
+    if response.response_type == "procedure":
+        assert response.procedure is not None
+        procedure = response.procedure
+        lines = [procedure.title]
+        for step in procedure.steps:
+            lines.append(f"{step.number}. {step.text}")
+            lines.extend(
+                f"   {warning.severity.upper()}: {warning.text}" for warning in step.warnings
+            )
+            citation = step.citation
+            lines.append(
+                f"   Source: {citation.title}, printed page {citation.printed_page}, "
+                f"physical page {citation.physical_page}, {citation.section}, "
+                f"retrieved {citation.retrieval_date.isoformat()}"
+            )
+        return "\n".join(lines)
+
     assert response.specification is not None
     specification = response.specification
     citation = response.citations[0]
@@ -206,16 +260,42 @@ def _render_response(response: CanonicalResponse) -> str:
 
 
 def _ask_command(question: str, data_dir: Path, as_json: bool) -> int:
-    response = (
-        answer_compatibility(question, data_dir)
-        if _is_compatibility_question(question)
-        else answer_specification(question, data_dir)
-    )
+    if _is_compatibility_question(question):
+        response = answer_compatibility(question, data_dir)
+    elif _is_procedure_question(question):
+        response = answer_procedure(question, data_dir)
+    else:
+        response = answer_specification(question, data_dir)
     if as_json:
         print(json.dumps(response.model_dump(mode="json"), indent=2, sort_keys=True))
     else:
         print(_render_response(response))
     return 0
+
+
+def _evidence_command(question: str, data_dir: Path, as_json: bool) -> int:
+    inspection = inspect_procedure_evidence(question, data_dir)
+    if as_json:
+        print(json.dumps(inspection.model_dump(mode="json"), indent=2, sort_keys=True))
+    else:
+        _render_evidence(inspection)
+    return 0
+
+
+def _render_evidence(inspection: ProcedureEvidenceInspection) -> None:
+    if not inspection.matches:
+        print("No retrieval-evidence section matches this procedure question.")
+        return
+    for match in inspection.matches:
+        state = "complete" if match.complete else "partial"
+        pages = ", ".join(str(page.printed_page) for page in match.pages)
+        print(f"{match.title} ({state}; printed pages {pages})")
+        for issue in match.validation_issues:
+            print(f"- {issue}")
+        for step in match.steps:
+            print(f"{step.number}. {step.text}")
+            for warning in step.warnings:
+                print(f"   {warning.severity.upper()}: {warning.text}")
 
 
 def _is_compatibility_question(question: str) -> bool:
@@ -228,6 +308,14 @@ def _is_compatibility_question(question: str) -> bool:
             normalized_question,
         )
     )
+
+
+def _is_procedure_question(question: str) -> bool:
+    normalized_question = question.casefold()
+    if any(cue in normalized_question for cue in PROCEDURE_CUES):
+        return True
+    first_word = normalized_question.strip().split(maxsplit=1)[0].rstrip(".,:;?!")
+    return first_word in PROCEDURE_ACTIONS
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -268,7 +356,7 @@ def _parser() -> argparse.ArgumentParser:
 
     ingest = commands.add_parser(
         "ingest",
-        help="Validate sources and build the structured evidence store.",
+        help="Validate sources and build the structured and retrieval evidence stores.",
     )
     ingest.add_argument(
         "--manifest",
@@ -314,6 +402,19 @@ def _parser() -> argparse.ArgumentParser:
         help="Directory for generated evidence.",
     )
     ask.add_argument("--json", action="store_true", help="Emit the canonical response.")
+
+    evidence = commands.add_parser(
+        "evidence",
+        help="Inspect the retrieval evidence selected for a procedure question.",
+    )
+    evidence.add_argument("question", help="Procedure question to inspect.")
+    evidence.add_argument(
+        "--data-dir",
+        type=Path,
+        default=DEFAULT_DATA_DIR,
+        help="Directory for generated evidence.",
+    )
+    evidence.add_argument("--json", action="store_true", help="Emit the evidence report.")
     return parser
 
 
@@ -334,4 +435,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "ask":
         return _ask_command(args.question, args.data_dir, args.json)
+    if args.command == "evidence":
+        return _evidence_command(args.question, args.data_dir, args.json)
     raise AssertionError(f"unhandled command: {args.command}")

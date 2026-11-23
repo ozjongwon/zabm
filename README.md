@@ -42,11 +42,10 @@ make verify
 `make verify` runs the CLI health check, Ruff lint and formatting checks,
 Pyright type checking, and the automated test suite.
 
-## Specification and compatibility tracers
+## Specification, compatibility, and procedure tracers
 
 Download the original hash-verified source PDFs into the local `pdf-doc`
-directory, ingest the committed human-verified specification and compatibility
-evidence, and ask a question:
+directory, ingest the structured and retrieval evidence, and ask a question:
 
 ```bash
 ./.venv/bin/python -m zabm download
@@ -55,6 +54,8 @@ evidence, and ask a question:
   "What torque should I use for the RockShox Reverb Standard Remote clamp bolt?"
 ./.venv/bin/python -m zabm ask \
   "Is a Reverb Stealth hose barb with barb sleeve compatible with a Reverb Stealth A2 seatpost?"
+./.venv/bin/python -m zabm ask \
+  "What are the steps for hose sizing and remote installation?"
 ```
 
 Add `--json` to any command for structured output. Original PDFs are stored in
@@ -65,6 +66,17 @@ Compatibility answers use only human-verified manufacturer rules and return
 `compatible`, `not_compatible`, `unknown`, or `not_found`. Dimensional matches
 or visually similar names without an explicit rule do not produce a definitive
 compatibility result.
+
+Procedure answers use only page-structured retrieval evidence. A procedure is
+returned only when its numbered steps form a complete source-defined sequence;
+every step carries its own citation and attached warnings. A truncated or
+uncertain sequence returns `not_found` without partial steps. Inspect the
+selected procedure evidence with:
+
+```bash
+./.venv/bin/python -m zabm evidence \
+  "What are the steps for hose sizing and remote installation?"
+```
 
 ## NVIDIA prerequisite
 
