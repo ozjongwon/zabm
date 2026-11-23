@@ -147,6 +147,31 @@ issues, and SHA-256 checksums for the three canonical generated artifacts.
 Re-running both commands from a clean generated-data state produces identical
 artifact bytes and checksums.
 
+Register every unregistered PDF already present in `pdf-doc/`:
+
+```bash
+./scripts/register-sources.sh
+```
+
+The filename stem becomes the source ID. Files whose stem is already present in
+the manifest are skipped. Every readable unregistered PDF is added with
+derived title, manufacturer, hash, retrieval date, and available revision
+metadata. The manifest version is bumped and the normal ingestion command runs.
+
+For public provenance, place a sidecar beside the PDF using either
+`<filename>.source-url` or `<filename>.url` containing the original direct URL.
+Without a sidecar, the manifest records the local file URI.
+
+Use `--manufacturer "Manufacturer Name"` when the filename does not identify
+the manufacturer. `--skip-ingest` registers without rebuilding, and
+`--retrieval-date YYYY-MM-DD` overrides the recorded retrieval date.
+
+Encrypted PDFs without a readable password and PDFs with no extractable text
+are reported and left unregistered. Other readable PDFs in the same scan are
+still registered, and the command exits nonzero while any file remains
+rejected. Provide a directly readable text PDF or human-transcribed source for
+those documents.
+
 ## NVIDIA prerequisite
 
 The installer detects `nvidia-smi` but never installs, upgrades, or replaces the

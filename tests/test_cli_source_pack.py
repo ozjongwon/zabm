@@ -280,3 +280,175 @@ def test_documented_build_wrappers_are_executable_and_forward_cli_arguments() ->
 
         assert result.returncode == 0, result.stderr
         assert f"zabm {command}" in result.stdout
+
+
+def test_register_sources_registers_local_pdf_updates_manifest_and_ingests(
+    tmp_path: Path,
+) -> None:
+    pdf_dir = tmp_path / "pdf-doc"
+    pdf_dir.mkdir()
+    (pdf_dir / "magura-test-manual.pdf").write_bytes(FIXTURE_PDF)
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        json.dumps({"manifest_version": "test-1", "sources": []}),
+        encoding="utf-8",
+    )
+    specification_evidence_path = tmp_path / "specifications.json"
+    specification_evidence_path.write_text(
+        json.dumps({"specifications": []}),
+        encoding="utf-8",
+    )
+    compatibility_evidence_path = tmp_path / "compatibility.json"
+    compatibility_evidence_path.write_text(
+        json.dumps({"compatibility_rules": []}),
+        encoding="utf-8",
+    )
+    data_dir = tmp_path / "data"
+
+    result = subprocess.run(
+        [
+            str(REPO_ROOT / "scripts" / "register-sources.sh"),
+            "--manifest",
+            str(manifest_path),
+            "--pdf-dir",
+            str(pdf_dir),
+            "--data-dir",
+            str(data_dir),
+            "--evidence",
+            str(specification_evidence_path),
+            "--compatibility-evidence",
+            str(compatibility_evidence_path),
+            "--retrieval-date",
+            "2026-11-23",
+            "--manufacturer",
+            "MAGURA",
+        ],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    manifest: dict[str, Any] = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["manifest_version"] == "test-2"
+    assert len(manifest["sources"]) == 1
+    source = manifest["sources"][0]
+    assert source["id"] == "magura-test-manual"
+    assert source["manufacturer"] == "MAGURA"
+    assert source["title"].casefold().count("magura") == 1
+    assert source["retrieval_date"] == "2026-11-23"
+    assert source["sha256"] == hashlib.sha256(FIXTURE_PDF).hexdigest()
+    assert source["url"].startswith("file:")
+    assert (pdf_dir / "magura-test-manual.pdf").is_file()
+    assert (data_dir / "generated" / "retrieval.json").is_file()
+
+
+def test_register_sources_rejects_a_non_pdf_before_updating_the_manifest(
+    tmp_path: Path,
+) -> None:
+    pdf_dir = tmp_path / "pdf-doc"
+    pdf_dir.mkdir()
+    (pdf_dir / "not-a-pdf.pdf").write_text("<html>not a PDF</html>", encoding="utf-8")
+    manifest_path = tmp_path / "manifest.json"
+    original_manifest: dict[str, Any] = {"manifest_version": "test-1", "sources": []}
+    manifest_path.write_text(json.dumps(original_manifest), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            str(REPO_ROOT / "scripts" / "register-sources.sh"),
+            "--manifest",
+            str(manifest_path),
+            "--pdf-dir",
+            str(pdf_dir),
+            "--manufacturer",
+            "MAGURA",
+            "--skip-ingest",
+        ],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "is not a PDF document" in result.stderr
+    assert json.loads(manifest_path.read_text(encoding="utf-8")) == original_manifest
+
+
+def test_register_sources_skips_already_registered_pdf(tmp_path: Path) -> None:
+    pdf_dir = tmp_path / "pdf-doc"
+    pdf_dir.mkdir()
+    (pdf_dir / "registered-manual.pdf").write_bytes(FIXTURE_PDF)
+    manifest_path = tmp_path / "manifest.json"
+    manifest = {
+        "manifest_version": "test-9",
+        "sources": [
+            {
+                "id": "registered-manual",
+                "title": "Registered Manual",
+                "manufacturer": "MAGURA",
+                "url": "file:///registered-manual.pdf",
+                "sha256": hashlib.sha256(FIXTURE_PDF).hexdigest(),
+                "retrieval_date": "2026-11-23",
+                "revision": None,
+            }
+        ],
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            str(REPO_ROOT / "scripts" / "register-sources.sh"),
+            "--manifest",
+            str(manifest_path),
+            "--pdf-dir",
+            str(pdf_dir),
+            "--skip-ingest",
+        ],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "No unregistered PDF files found." in result.stdout
+    assert json.loads(manifest_path.read_text(encoding="utf-8")) == manifest
+
+
+def test_register_sources_registers_valid_files_and_reports_invalid_ones(
+    tmp_path: Path,
+) -> None:
+    pdf_dir = tmp_path / "pdf-doc"
+    pdf_dir.mkdir()
+    (pdf_dir / "magura-test-manual.pdf").write_bytes(FIXTURE_PDF)
+    (pdf_dir / "broken.pdf").write_text("<html>not a PDF</html>", encoding="utf-8")
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        json.dumps({"manifest_version": "test-1", "sources": []}),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            str(REPO_ROOT / "scripts" / "register-sources.sh"),
+            "--manifest",
+            str(manifest_path),
+            "--pdf-dir",
+            str(pdf_dir),
+            "--manufacturer",
+            "MAGURA",
+            "--skip-ingest",
+        ],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Registered magura-test-manual" in result.stdout
+    assert "Rejected" in result.stderr
+    manifest: dict[str, Any] = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert [source["id"] for source in manifest["sources"]] == ["magura-test-manual"]

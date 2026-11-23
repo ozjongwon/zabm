@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
+from pypdf._configuration import overwrite_configuration
 
 from zabm import __version__
 from zabm.agent import answer_question
@@ -443,6 +444,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     logging.getLogger("pypdf").setLevel(logging.ERROR)
+    overwrite_configuration(stream_parsing_work_maximum_count=20_000_000)
     args = _parser().parse_args(argv)
     if args.command == "health":
         return _health_command(args.json)
