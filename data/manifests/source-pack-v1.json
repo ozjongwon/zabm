@@ -1,5 +1,5 @@
 {
-  "manifest_version": "2026-11-23.2-candidate-2",
+  "manifest_version": "2026-11-23.3-frozen-1",
   "sources": [
     {
       "id": "sram-rockshox-reverb-hose-replacement-rev-c",
@@ -54,15 +54,6 @@
       "sha256": "0c8f6389546c05033382cbc198d2be720badf7a06bd71b01413a82649f8c94eb",
       "retrieval_date": "2026-11-23",
       "revision": "0020165-2023"
-    },
-    {
-      "id": "MAGURA-MT_Owners-manual_EN",
-      "title": "Manual de instrucciones – MT 2019",
-      "manufacturer": "MAGURA",
-      "url": "file:///home/jc/Projects/zabm/pdf-doc/MAGURA-MT_Owners-manual_EN.pdf",
-      "sha256": "c53c9326804092a228e4188fa2e960e3513bc1bb3b259ed007106c0da5d0f820",
-      "retrieval_date": "2026-11-23",
-      "revision": "PDF modified 2026-01-26"
     }
   ]
 }

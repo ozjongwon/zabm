@@ -1,0 +1,3128 @@
+{
+  "evaluation_mode": "retrieval-only",
+  "item_results": [
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            36
+          ],
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-reverb-standard-remote-clamp-bolt",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb Standard Remote clamp bolt torque T25",
+      "retrieved_evidence": [
+        {
+          "physical_page": 36,
+          "score": 17.284524,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 9,
+          "score": 15.329449,
+          "section": "Bicycle Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 5,
+          "score": 13.31924,
+          "section": "RockShox\u00ae Service",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 10,
+          "score": 12.749631,
+          "section": "Bicycle Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 32,
+          "score": 11.609028,
+          "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            32
+          ],
+          "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-reverb-axs-saddle-clamp-bolt",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb AXS saddle clamp bolt torque T25 12 N m",
+      "retrieved_evidence": [
+        {
+          "physical_page": 32,
+          "score": 21.838389,
+          "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 36,
+          "score": 18.538875,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 28,
+          "score": 15.419619,
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 33,
+          "score": 15.111432,
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 30,
+          "score": 14.991123,
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            7
+          ],
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-reba-fork-fastener-torque",
+      "path_id": "page-bm25-title-section",
+      "query": "Reba fork torque tightening values fasteners",
+      "retrieved_evidence": [
+        {
+          "physical_page": 7,
+          "score": 18.473381,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 3,
+          "score": 15.244332,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 5,
+          "score": 10.736101,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 6,
+          "score": 7.900045,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 7,
+          "score": 7.545373,
+          "section": "T o adjust the banjo brake calliper connection,",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            22
+          ],
+          "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-gustav-calliper-retaining-screws",
+      "path_id": "page-bm25-title-section",
+      "query": "MAGURA GUSTAV PRO brake calliper retaining screws torque 5 mm",
+      "retrieved_evidence": [
+        {
+          "physical_page": 9,
+          "score": 31.018597,
+          "section": "Use\ta\t5\tmm\tAllen\tkey\tto\ttighten\tthe\tretaining\tscrews",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 8,
+          "score": 28.333934,
+          "section": "4.3\t Fitting the brake calliper",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 13,
+          "score": 27.783361,
+          "section": "4.7\t Aligning\tthe\tbrake\tcalliper The\t entire\t surface\t of\t the\t brake\t pad\t must\t be\t in",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 22,
+          "score": 27.561325,
+          "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 7,
+          "score": 23.727508,
+          "section": "T o adjust the banjo brake calliper connection,",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            1
+          ],
+          "section": "A REACH ADJUST",
+          "source_id": "magura-mt-a2-user-instructions-2023"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-mt-a2-calliper-bolt",
+      "path_id": "page-bm25-title-section",
+      "query": "MAGURA MT A2 T25 brake calliper bolt 6 N m",
+      "retrieved_evidence": [
+        {
+          "physical_page": 1,
+          "score": 21.430982,
+          "section": "A REACH ADJUST",
+          "source_id": "magura-mt-a2-user-instructions-2023"
+        },
+        {
+          "physical_page": 2,
+          "score": 20.432967,
+          "section": "A REACH ADJUST",
+          "source_id": "magura-mt-a2-user-instructions-2023"
+        },
+        {
+          "physical_page": 16,
+          "score": 14.034978,
+          "section": "5.3 Changing\tthe\tbrake\tpads",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 22,
+          "score": 13.291386,
+          "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 20,
+          "score": 13.218992,
+          "section": "5.5 Changing\tthe\tbrake\tlever\tblade",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            1
+          ],
+          "section": "SRAM\u00ae Eagle\u2122, Flattop\u2122, and 11 speed Chain Compatible Tools GEN.0000000007151 Rev F \u00a9 2025 SRAM, LLC",
+          "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-sram-chain-wear-tool",
+      "path_id": "page-bm25-title-section",
+      "query": "SRAM Eagle Flattop chain wear check tool Park Tool",
+      "retrieved_evidence": [
+        {
+          "physical_page": 1,
+          "score": 47.200919,
+          "section": "\u00ae",
+          "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f"
+        },
+        {
+          "physical_page": 23,
+          "score": 7.968993,
+          "section": "L Check out our worldwide partners and service centres at www.magura.com",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 15,
+          "score": 7.944272,
+          "section": "Maintenance 5.2 Check\tbrake\tdiscs\tand\tpads\tfor 5.2.2 Check brake pads",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 8,
+          "score": 7.697335,
+          "section": "L OWER L EG BUSHING INSPE CT ION",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 4,
+          "score": 7.146254,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        }
+      ]
+    },
+    {
+      "evidence_type": "compatibility",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            11
+          ],
+          "section": "Hydraulic Hose Replacement",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "compat-reverb-hose-barb-sleeve",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb Stealth hose barb with barb sleeve compatible A2 B1",
+      "retrieved_evidence": [
+        {
+          "physical_page": 11,
+          "score": 34.626364,
+          "section": "Hydraulic Hose Replacement",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 7,
+          "score": 27.941314,
+          "section": "*Compatible with Reverb Stealth and Reverb",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 14,
+          "score": 15.72406,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 12,
+          "score": 15.419345,
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 15,
+          "score": 15.375205,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "compatibility",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            26
+          ],
+          "section": "Remote Syringe Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "compat-reverb-dot-contaminated-syringe",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb hydraulic system syringe DOT brake fluid not compatible",
+      "retrieved_evidence": [
+        {
+          "physical_page": 27,
+          "score": 21.728699,
+          "section": "Seatpost Syringe Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 26,
+          "score": 20.360942,
+          "section": "Remote Syringe Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 10,
+          "score": 15.868373,
+          "section": "Bicycle Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 30,
+          "score": 14.648277,
+          "section": "Remote Bleed - Standard Remote",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 31,
+          "score": 13.77752,
+          "section": "Remote Bleed - Reverb\u2122 1x\u2122 Remote",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "compatibility",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            13
+          ],
+          "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ],
+      "hit": true,
+      "item_id": "compat-reverb-axs-saddle-rails",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb AXS compatible saddle metal 7 mm rails composite 7x9 oval",
+      "retrieved_evidence": [
+        {
+          "physical_page": 13,
+          "score": 37.159003,
+          "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 31,
+          "score": 11.995059,
+          "section": "Install Installer Instalar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 36,
+          "score": 10.577154,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 12,
+          "score": 9.362221,
+          "section": "Reverb AXS Seatpost Tige de selle Reverb AXS Espig\u00e3o do assento Reverb AXS",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 10,
+          "score": 8.579314,
+          "section": "Bicycle Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            21,
+            22
+          ],
+          "section": "Hose Sizing and Remote Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-hose-sizing-remote-installation",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb hose sizing and remote installation steps",
+      "retrieved_evidence": [
+        {
+          "physical_page": 21,
+          "score": 14.500797,
+          "section": "Hose Sizing and Remote Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 22,
+          "score": 14.029795,
+          "section": "Hose Sizing and Remote Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 18,
+          "score": 12.811655,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 4,
+          "score": 12.37335,
+          "section": "TABLE OF CONTENTS",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 23,
+          "score": 11.805995,
+          "section": "Remote System Bleed",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            30
+          ],
+          "section": "Remote Bleed - Standard Remote",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-reverb-standard-remote-bleed",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb Standard Remote bleed procedure syringe actuator",
+      "retrieved_evidence": [
+        {
+          "physical_page": 30,
+          "score": 24.393667,
+          "section": "Remote Bleed - Standard Remote",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 37,
+          "score": 18.78267,
+          "section": "Test Function",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 28,
+          "score": 18.164422,
+          "section": "Remote and Seatpost Bleed",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 33,
+          "score": 16.162816,
+          "section": "Remote Bleed - Reverb\u2122 1x\u2122 Remote",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 26,
+          "score": 15.49457,
+          "section": "Remote Syringe Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            12
+          ],
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-hose-barb-sleeve-preparation",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb hose barb and barb sleeve preparation install sleeve o-ring",
+      "retrieved_evidence": [
+        {
+          "physical_page": 12,
+          "score": 24.258604,
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 4,
+          "score": 15.791202,
+          "section": "TABLE OF CONTENTS",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 16,
+          "score": 12.821397,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 14,
+          "score": 12.348541,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 11,
+          "score": 12.319267,
+          "section": "Hydraulic Hose Replacement",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            11
+          ],
+          "section": "L OWER L EG SEA L SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-reba-lower-leg-seal",
+      "path_id": "page-bm25-title-section",
+      "query": "Reba lower leg seal removal service",
+      "retrieved_evidence": [
+        {
+          "physical_page": 25,
+          "score": 17.129512,
+          "section": "MO T ION CON T RO L / BL A C KBOX MO T ION CON T RO L DA M PER SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 11,
+          "score": 16.885656,
+          "section": "L OWER L EG SEA L SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 21,
+          "score": 14.849981,
+          "section": "TURNKEY DA M PER SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 3,
+          "score": 14.80104,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 16,
+          "score": 13.277753,
+          "section": "A IR U -TURN SPRING SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            16
+          ],
+          "section": "5.3 Changing\t the\tbrake\tpads",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-gustav-change-brake-pads",
+      "path_id": "page-bm25-title-section",
+      "query": "MAGURA GUSTAV PRO changing the brake pads remove wheel locking screw",
+      "retrieved_evidence": [
+        {
+          "physical_page": 16,
+          "score": 38.690807,
+          "section": "5.3 Changing\tthe\tbrake\tpads",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 20,
+          "score": 30.318804,
+          "section": "5.5 Changing\tthe\tbrake\tlever\tblade",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 18,
+          "score": 28.600883,
+          "section": "When\tall\tbrake\tpistons\tare\tin\tthe\toutermost\tposi- Remove\tthe\tplug.",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 17,
+          "score": 23.088598,
+          "section": "Install the wheel with the disc brake rotor fitted 5.4\t Bleeding/filling the brakes",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 2,
+          "score": 22.343258,
+          "section": "Contents",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            30,
+            31,
+            32
+          ],
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-sram-axs-saddle-installation",
+      "path_id": "page-bm25-title-section",
+      "query": "Reverb AXS saddle installation rail clamps tighten bolt",
+      "retrieved_evidence": [
+        {
+          "physical_page": 31,
+          "score": 18.658833,
+          "section": "Install Installer Instalar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 36,
+          "score": 17.540495,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 30,
+          "score": 14.173332,
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 32,
+          "score": 14.03006,
+          "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 12,
+          "score": 12.708718,
+          "section": "Reverb AXS Seatpost Tige de selle Reverb AXS Espig\u00e3o do assento Reverb AXS",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            1,
+            2
+          ],
+          "section": "A REACH ADJUST",
+          "source_id": "magura-mt-a2-user-instructions-2023"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-mt-a2-reach-adjust",
+      "path_id": "page-bm25-title-section",
+      "query": "MAGURA MT A2 reach adjust brake lever",
+      "retrieved_evidence": [
+        {
+          "physical_page": 2,
+          "score": 20.603757,
+          "section": "A REACH ADJUST",
+          "source_id": "magura-mt-a2-user-instructions-2023"
+        },
+        {
+          "physical_page": 1,
+          "score": 20.39617,
+          "section": "A REACH ADJUST",
+          "source_id": "magura-mt-a2-user-instructions-2023"
+        },
+        {
+          "physical_page": 14,
+          "score": 16.342245,
+          "section": "Release\tthe\tMAGURA\tEasy\tlink\t3\tclip\tand\tcare- Carefully\t push\t the\t brake\t lever\t cover\t with\t the",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 2,
+          "score": 12.689819,
+          "section": "Contents",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 19,
+          "score": 11.972714,
+          "section": "Insert\tthe\tempty\tbleeding\tsyringe\tfirmly\tinto\tthe",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            36
+          ],
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-reverb-standard-remote-clamp-bolt",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb Standard Remote clamp bolt torque T25",
+      "retrieved_evidence": [
+        {
+          "physical_page": 36,
+          "score": 0.707107,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 9,
+          "score": 0.683763,
+          "section": "Bicycle Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 38,
+          "score": 0.624695,
+          "section": "Test Function",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 10,
+          "score": 0.533002,
+          "section": "Bicycle Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 18,
+          "score": 0.507093,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            32
+          ],
+          "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-reverb-axs-saddle-clamp-bolt",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb AXS saddle clamp bolt torque T25 12 N m",
+      "retrieved_evidence": [
+        {
+          "physical_page": 36,
+          "score": 0.824958,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 32,
+          "score": 0.741249,
+          "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 28,
+          "score": 0.737865,
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 29,
+          "score": 0.632456,
+          "section": "Quitar/Aflojar Verwijderen/Losmaken",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 30,
+          "score": 0.589506,
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            7
+          ],
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-reba-fork-fastener-torque",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reba fork torque tightening values fasteners",
+      "retrieved_evidence": [
+        {
+          "physical_page": 3,
+          "score": 0.452911,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 7,
+          "score": 0.39036,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 5,
+          "score": 0.319801,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 6,
+          "score": 0.263117,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 4,
+          "score": 0.25,
+          "section": "TABLE OF CONTENTS",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            22
+          ],
+          "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-gustav-calliper-retaining-screws",
+      "path_id": "page-token-overlap-title-section",
+      "query": "MAGURA GUSTAV PRO brake calliper retaining screws torque 5 mm",
+      "retrieved_evidence": [
+        {
+          "physical_page": 1,
+          "score": 1.224745,
+          "section": "GUSTAV Owner\u2019s manual",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 9,
+          "score": 0.75,
+          "section": "Use\ta\t5\tmm\tAllen\tkey\tto\ttighten\tthe\tretaining\tscrews",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 22,
+          "score": 0.668153,
+          "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 8,
+          "score": 0.662085,
+          "section": "4.3\t Fitting the brake calliper",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 13,
+          "score": 0.648886,
+          "section": "4.7\t Aligning\tthe\tbrake\tcalliper The\t entire\t surface\t of\t the\t brake\t pad\t must\t be\t in",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            1
+          ],
+          "section": "A REACH ADJUST",
+          "source_id": "magura-mt-a2-user-instructions-2023"
+        }
+      ],
+      "hit": false,
+      "item_id": "spec-mt-a2-calliper-bolt",
+      "path_id": "page-token-overlap-title-section",
+      "query": "MAGURA MT A2 T25 brake calliper bolt 6 N m",
+      "retrieved_evidence": [
+        {
+          "physical_page": 36,
+          "score": 0.589256,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 20,
+          "score": 0.53033,
+          "section": "Reverb\u2122 Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 28,
+          "score": 0.421637,
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 29,
+          "score": 0.421637,
+          "section": "Quitar/Aflojar Verwijderen/Losmaken",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 1,
+          "score": 0.408248,
+          "section": "GUSTAV Owner\u2019s manual",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ]
+    },
+    {
+      "evidence_type": "specification",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            1
+          ],
+          "section": "SRAM\u00ae Eagle\u2122, Flattop\u2122, and 11 speed Chain Compatible Tools GEN.0000000007151 Rev F \u00a9 2025 SRAM, LLC",
+          "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f"
+        }
+      ],
+      "hit": true,
+      "item_id": "spec-sram-chain-wear-tool",
+      "path_id": "page-token-overlap-title-section",
+      "query": "SRAM Eagle Flattop chain wear check tool Park Tool",
+      "retrieved_evidence": [
+        {
+          "physical_page": 1,
+          "score": 0.784465,
+          "section": "\u00ae",
+          "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f"
+        },
+        {
+          "physical_page": 4,
+          "score": 0.365148,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 1,
+          "score": 0.25,
+          "section": "\u00a9 2018 SRAM, LLC",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 5,
+          "score": 0.230089,
+          "section": "RockShox\u00ae Service",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 1,
+          "score": 0.213201,
+          "section": "95-6818-005-000 Rev L",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ]
+    },
+    {
+      "evidence_type": "compatibility",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            11
+          ],
+          "section": "Hydraulic Hose Replacement",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "compat-reverb-hose-barb-sleeve",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb Stealth hose barb with barb sleeve compatible A2 B1",
+      "retrieved_evidence": [
+        {
+          "physical_page": 7,
+          "score": 1.315192,
+          "section": "*Compatible with Reverb Stealth and Reverb",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 11,
+          "score": 1.202676,
+          "section": "Hydraulic Hose Replacement",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 8,
+          "score": 1.118034,
+          "section": "Reverb\u2122 - Exploded View",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 14,
+          "score": 0.816497,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 12,
+          "score": 0.790569,
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "compatibility",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            26
+          ],
+          "section": "Remote Syringe Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "compat-reverb-dot-contaminated-syringe",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb hydraulic system syringe DOT brake fluid not compatible",
+      "retrieved_evidence": [
+        {
+          "physical_page": 27,
+          "score": 0.92376,
+          "section": "Seatpost Syringe Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 28,
+          "score": 0.781133,
+          "section": "Remote and Seatpost Bleed",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 26,
+          "score": 0.755929,
+          "section": "Remote Syringe Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 1,
+          "score": 0.75,
+          "section": "\u00a9 2018 SRAM, LLC",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 10,
+          "score": 0.746203,
+          "section": "Bicycle Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "compatibility",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            13
+          ],
+          "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ],
+      "hit": true,
+      "item_id": "compat-reverb-axs-saddle-rails",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb AXS compatible saddle metal 7 mm rails composite 7x9 oval",
+      "retrieved_evidence": [
+        {
+          "physical_page": 40,
+          "score": 0.534522,
+          "section": "Adjust R\u00e9gler Ajustar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 20,
+          "score": 0.53033,
+          "section": "Reverb\u2122 Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 13,
+          "score": 0.521286,
+          "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 12,
+          "score": 0.474342,
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 36,
+          "score": 0.471405,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            21,
+            22
+          ],
+          "section": "Hose Sizing and Remote Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": false,
+      "item_id": "procedure-hose-sizing-remote-installation",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb hose sizing and remote installation steps",
+      "retrieved_evidence": [
+        {
+          "physical_page": 18,
+          "score": 1.014185,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 20,
+          "score": 0.883883,
+          "section": "Reverb\u2122 Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 12,
+          "score": 0.790569,
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 39,
+          "score": 0.784465,
+          "section": "TORX\u00ae is a registered trademark of Acument Intellectual Properties, LLC.",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 19,
+          "score": 0.780869,
+          "section": "Reverb\u2122 Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            30
+          ],
+          "section": "Remote Bleed - Standard Remote",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": false,
+      "item_id": "procedure-reverb-standard-remote-bleed",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb Standard Remote bleed procedure syringe actuator",
+      "retrieved_evidence": [
+        {
+          "physical_page": 8,
+          "score": 0.894427,
+          "section": "Reverb\u2122 - Exploded View",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 37,
+          "score": 0.83205,
+          "section": "Test Function",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 7,
+          "score": 0.821995,
+          "section": "*Compatible with Reverb Stealth and Reverb",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 28,
+          "score": 0.781133,
+          "section": "Remote and Seatpost Bleed",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 38,
+          "score": 0.780869,
+          "section": "Test Function",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            12
+          ],
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-hose-barb-sleeve-preparation",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb hose barb and barb sleeve preparation install sleeve o-ring",
+      "retrieved_evidence": [
+        {
+          "physical_page": 12,
+          "score": 1.264911,
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 8,
+          "score": 0.894427,
+          "section": "Reverb\u2122 - Exploded View",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 20,
+          "score": 0.883883,
+          "section": "Reverb\u2122 Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 7,
+          "score": 0.821995,
+          "section": "*Compatible with Reverb Stealth and Reverb",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 16,
+          "score": 0.768221,
+          "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            11
+          ],
+          "section": "L OWER L EG SEA L SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        }
+      ],
+      "hit": false,
+      "item_id": "procedure-reba-lower-leg-seal",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reba lower leg seal removal service",
+      "retrieved_evidence": [
+        {
+          "physical_page": 25,
+          "score": 0.574696,
+          "section": "MO T ION CON T RO L / BL A C KBOX MO T ION CON T RO L DA M PER SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 21,
+          "score": 0.493197,
+          "section": "TURNKEY DA M PER SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 16,
+          "score": 0.469956,
+          "section": "A IR U -TURN SPRING SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 3,
+          "score": 0.452911,
+          "section": "GEN.0000000003212 REV A",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        },
+        {
+          "physical_page": 13,
+          "score": 0.399043,
+          "section": "D UA L A IR SPRING SERVI C E",
+          "source_id": "sram-rockshox-reba-2011-technical-manual"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            16
+          ],
+          "section": "5.3 Changing\t the\tbrake\tpads",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-gustav-change-brake-pads",
+      "path_id": "page-token-overlap-title-section",
+      "query": "MAGURA GUSTAV PRO changing the brake pads remove wheel locking screw",
+      "retrieved_evidence": [
+        {
+          "physical_page": 1,
+          "score": 1.224745,
+          "section": "GUSTAV Owner\u2019s manual",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 16,
+          "score": 1.048809,
+          "section": "5.3 Changing\tthe\tbrake\tpads",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 21,
+          "score": 0.881917,
+          "section": "Check\tthe\tlatch\ton\tthe\tbrake\tlever",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 18,
+          "score": 0.880451,
+          "section": "When\tall\tbrake\tpistons\tare\tin\tthe\toutermost\tposi- Remove\tthe\tplug.",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 20,
+          "score": 0.78326,
+          "section": "5.5 Changing\tthe\tbrake\tlever\tblade",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            30,
+            31,
+            32
+          ],
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        }
+      ],
+      "hit": true,
+      "item_id": "procedure-sram-axs-saddle-installation",
+      "path_id": "page-token-overlap-title-section",
+      "query": "Reverb AXS saddle installation rail clamps tighten bolt",
+      "retrieved_evidence": [
+        {
+          "physical_page": 36,
+          "score": 0.707107,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 40,
+          "score": 0.534522,
+          "section": "Adjust R\u00e9gler Ajustar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 20,
+          "score": 0.53033,
+          "section": "Reverb\u2122 Hose Removal and Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        },
+        {
+          "physical_page": 30,
+          "score": 0.505291,
+          "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+          "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+        },
+        {
+          "physical_page": 12,
+          "score": 0.474342,
+          "section": "Hose Barb and Barb Sleeve Preparation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    },
+    {
+      "evidence_type": "procedure",
+      "expected_evidence": [
+        {
+          "physical_pages": [
+            1,
+            2
+          ],
+          "section": "A REACH ADJUST",
+          "source_id": "magura-mt-a2-user-instructions-2023"
+        }
+      ],
+      "hit": false,
+      "item_id": "procedure-mt-a2-reach-adjust",
+      "path_id": "page-token-overlap-title-section",
+      "query": "MAGURA MT A2 reach adjust brake lever",
+      "retrieved_evidence": [
+        {
+          "physical_page": 14,
+          "score": 0.5,
+          "section": "Release\tthe\tMAGURA\tEasy\tlink\t3\tclip\tand\tcare- Carefully\t push\t the\t brake\t lever\t cover\t with\t the",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 1,
+          "score": 0.408248,
+          "section": "GUSTAV Owner\u2019s manual",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 2,
+          "score": 0.392232,
+          "section": "Contents",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 21,
+          "score": 0.377964,
+          "section": "Check\tthe\tlatch\ton\tthe\tbrake\tlever",
+          "source_id": "magura-gustav-pro-owners-manual-2026"
+        },
+        {
+          "physical_page": 36,
+          "score": 0.353553,
+          "section": "Saddle, Remote, and Brake Installation",
+          "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+        }
+      ]
+    }
+  ],
+  "path_results": [
+    {
+      "hit_count": 16,
+      "item_count": 16,
+      "items": [
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                36
+              ],
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-reverb-standard-remote-clamp-bolt",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb Standard Remote clamp bolt torque T25",
+          "retrieved_evidence": [
+            {
+              "physical_page": 36,
+              "score": 17.284524,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 9,
+              "score": 15.329449,
+              "section": "Bicycle Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 5,
+              "score": 13.31924,
+              "section": "RockShox\u00ae Service",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 10,
+              "score": 12.749631,
+              "section": "Bicycle Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 32,
+              "score": 11.609028,
+              "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                32
+              ],
+              "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-reverb-axs-saddle-clamp-bolt",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb AXS saddle clamp bolt torque T25 12 N m",
+          "retrieved_evidence": [
+            {
+              "physical_page": 32,
+              "score": 21.838389,
+              "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 36,
+              "score": 18.538875,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 28,
+              "score": 15.419619,
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 33,
+              "score": 15.111432,
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 30,
+              "score": 14.991123,
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                7
+              ],
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-reba-fork-fastener-torque",
+          "path_id": "page-bm25-title-section",
+          "query": "Reba fork torque tightening values fasteners",
+          "retrieved_evidence": [
+            {
+              "physical_page": 7,
+              "score": 18.473381,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 3,
+              "score": 15.244332,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 5,
+              "score": 10.736101,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 6,
+              "score": 7.900045,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 7,
+              "score": 7.545373,
+              "section": "T o adjust the banjo brake calliper connection,",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                22
+              ],
+              "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-gustav-calliper-retaining-screws",
+          "path_id": "page-bm25-title-section",
+          "query": "MAGURA GUSTAV PRO brake calliper retaining screws torque 5 mm",
+          "retrieved_evidence": [
+            {
+              "physical_page": 9,
+              "score": 31.018597,
+              "section": "Use\ta\t5\tmm\tAllen\tkey\tto\ttighten\tthe\tretaining\tscrews",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 8,
+              "score": 28.333934,
+              "section": "4.3\t Fitting the brake calliper",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 13,
+              "score": 27.783361,
+              "section": "4.7\t Aligning\tthe\tbrake\tcalliper The\t entire\t surface\t of\t the\t brake\t pad\t must\t be\t in",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 22,
+              "score": 27.561325,
+              "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 7,
+              "score": 23.727508,
+              "section": "T o adjust the banjo brake calliper connection,",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                1
+              ],
+              "section": "A REACH ADJUST",
+              "source_id": "magura-mt-a2-user-instructions-2023"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-mt-a2-calliper-bolt",
+          "path_id": "page-bm25-title-section",
+          "query": "MAGURA MT A2 T25 brake calliper bolt 6 N m",
+          "retrieved_evidence": [
+            {
+              "physical_page": 1,
+              "score": 21.430982,
+              "section": "A REACH ADJUST",
+              "source_id": "magura-mt-a2-user-instructions-2023"
+            },
+            {
+              "physical_page": 2,
+              "score": 20.432967,
+              "section": "A REACH ADJUST",
+              "source_id": "magura-mt-a2-user-instructions-2023"
+            },
+            {
+              "physical_page": 16,
+              "score": 14.034978,
+              "section": "5.3 Changing\tthe\tbrake\tpads",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 22,
+              "score": 13.291386,
+              "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 20,
+              "score": 13.218992,
+              "section": "5.5 Changing\tthe\tbrake\tlever\tblade",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                1
+              ],
+              "section": "SRAM\u00ae Eagle\u2122, Flattop\u2122, and 11 speed Chain Compatible Tools GEN.0000000007151 Rev F \u00a9 2025 SRAM, LLC",
+              "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-sram-chain-wear-tool",
+          "path_id": "page-bm25-title-section",
+          "query": "SRAM Eagle Flattop chain wear check tool Park Tool",
+          "retrieved_evidence": [
+            {
+              "physical_page": 1,
+              "score": 47.200919,
+              "section": "\u00ae",
+              "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f"
+            },
+            {
+              "physical_page": 23,
+              "score": 7.968993,
+              "section": "L Check out our worldwide partners and service centres at www.magura.com",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 15,
+              "score": 7.944272,
+              "section": "Maintenance 5.2 Check\tbrake\tdiscs\tand\tpads\tfor 5.2.2 Check brake pads",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 8,
+              "score": 7.697335,
+              "section": "L OWER L EG BUSHING INSPE CT ION",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 4,
+              "score": 7.146254,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            }
+          ]
+        },
+        {
+          "evidence_type": "compatibility",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                11
+              ],
+              "section": "Hydraulic Hose Replacement",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "compat-reverb-hose-barb-sleeve",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb Stealth hose barb with barb sleeve compatible A2 B1",
+          "retrieved_evidence": [
+            {
+              "physical_page": 11,
+              "score": 34.626364,
+              "section": "Hydraulic Hose Replacement",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 7,
+              "score": 27.941314,
+              "section": "*Compatible with Reverb Stealth and Reverb",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 14,
+              "score": 15.72406,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 12,
+              "score": 15.419345,
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 15,
+              "score": 15.375205,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "compatibility",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                26
+              ],
+              "section": "Remote Syringe Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "compat-reverb-dot-contaminated-syringe",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb hydraulic system syringe DOT brake fluid not compatible",
+          "retrieved_evidence": [
+            {
+              "physical_page": 27,
+              "score": 21.728699,
+              "section": "Seatpost Syringe Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 26,
+              "score": 20.360942,
+              "section": "Remote Syringe Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 10,
+              "score": 15.868373,
+              "section": "Bicycle Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 30,
+              "score": 14.648277,
+              "section": "Remote Bleed - Standard Remote",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 31,
+              "score": 13.77752,
+              "section": "Remote Bleed - Reverb\u2122 1x\u2122 Remote",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "compatibility",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                13
+              ],
+              "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ],
+          "hit": true,
+          "item_id": "compat-reverb-axs-saddle-rails",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb AXS compatible saddle metal 7 mm rails composite 7x9 oval",
+          "retrieved_evidence": [
+            {
+              "physical_page": 13,
+              "score": 37.159003,
+              "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 31,
+              "score": 11.995059,
+              "section": "Install Installer Instalar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 36,
+              "score": 10.577154,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 12,
+              "score": 9.362221,
+              "section": "Reverb AXS Seatpost Tige de selle Reverb AXS Espig\u00e3o do assento Reverb AXS",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 10,
+              "score": 8.579314,
+              "section": "Bicycle Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                21,
+                22
+              ],
+              "section": "Hose Sizing and Remote Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-hose-sizing-remote-installation",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb hose sizing and remote installation steps",
+          "retrieved_evidence": [
+            {
+              "physical_page": 21,
+              "score": 14.500797,
+              "section": "Hose Sizing and Remote Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 22,
+              "score": 14.029795,
+              "section": "Hose Sizing and Remote Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 18,
+              "score": 12.811655,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 4,
+              "score": 12.37335,
+              "section": "TABLE OF CONTENTS",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 23,
+              "score": 11.805995,
+              "section": "Remote System Bleed",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                30
+              ],
+              "section": "Remote Bleed - Standard Remote",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-reverb-standard-remote-bleed",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb Standard Remote bleed procedure syringe actuator",
+          "retrieved_evidence": [
+            {
+              "physical_page": 30,
+              "score": 24.393667,
+              "section": "Remote Bleed - Standard Remote",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 37,
+              "score": 18.78267,
+              "section": "Test Function",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 28,
+              "score": 18.164422,
+              "section": "Remote and Seatpost Bleed",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 33,
+              "score": 16.162816,
+              "section": "Remote Bleed - Reverb\u2122 1x\u2122 Remote",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 26,
+              "score": 15.49457,
+              "section": "Remote Syringe Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                12
+              ],
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-hose-barb-sleeve-preparation",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb hose barb and barb sleeve preparation install sleeve o-ring",
+          "retrieved_evidence": [
+            {
+              "physical_page": 12,
+              "score": 24.258604,
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 4,
+              "score": 15.791202,
+              "section": "TABLE OF CONTENTS",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 16,
+              "score": 12.821397,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 14,
+              "score": 12.348541,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 11,
+              "score": 12.319267,
+              "section": "Hydraulic Hose Replacement",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                11
+              ],
+              "section": "L OWER L EG SEA L SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-reba-lower-leg-seal",
+          "path_id": "page-bm25-title-section",
+          "query": "Reba lower leg seal removal service",
+          "retrieved_evidence": [
+            {
+              "physical_page": 25,
+              "score": 17.129512,
+              "section": "MO T ION CON T RO L / BL A C KBOX MO T ION CON T RO L DA M PER SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 11,
+              "score": 16.885656,
+              "section": "L OWER L EG SEA L SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 21,
+              "score": 14.849981,
+              "section": "TURNKEY DA M PER SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 3,
+              "score": 14.80104,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 16,
+              "score": 13.277753,
+              "section": "A IR U -TURN SPRING SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                16
+              ],
+              "section": "5.3 Changing\t the\tbrake\tpads",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-gustav-change-brake-pads",
+          "path_id": "page-bm25-title-section",
+          "query": "MAGURA GUSTAV PRO changing the brake pads remove wheel locking screw",
+          "retrieved_evidence": [
+            {
+              "physical_page": 16,
+              "score": 38.690807,
+              "section": "5.3 Changing\tthe\tbrake\tpads",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 20,
+              "score": 30.318804,
+              "section": "5.5 Changing\tthe\tbrake\tlever\tblade",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 18,
+              "score": 28.600883,
+              "section": "When\tall\tbrake\tpistons\tare\tin\tthe\toutermost\tposi- Remove\tthe\tplug.",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 17,
+              "score": 23.088598,
+              "section": "Install the wheel with the disc brake rotor fitted 5.4\t Bleeding/filling the brakes",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 2,
+              "score": 22.343258,
+              "section": "Contents",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                30,
+                31,
+                32
+              ],
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-sram-axs-saddle-installation",
+          "path_id": "page-bm25-title-section",
+          "query": "Reverb AXS saddle installation rail clamps tighten bolt",
+          "retrieved_evidence": [
+            {
+              "physical_page": 31,
+              "score": 18.658833,
+              "section": "Install Installer Instalar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 36,
+              "score": 17.540495,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 30,
+              "score": 14.173332,
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 32,
+              "score": 14.03006,
+              "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 12,
+              "score": 12.708718,
+              "section": "Reverb AXS Seatpost Tige de selle Reverb AXS Espig\u00e3o do assento Reverb AXS",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                1,
+                2
+              ],
+              "section": "A REACH ADJUST",
+              "source_id": "magura-mt-a2-user-instructions-2023"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-mt-a2-reach-adjust",
+          "path_id": "page-bm25-title-section",
+          "query": "MAGURA MT A2 reach adjust brake lever",
+          "retrieved_evidence": [
+            {
+              "physical_page": 2,
+              "score": 20.603757,
+              "section": "A REACH ADJUST",
+              "source_id": "magura-mt-a2-user-instructions-2023"
+            },
+            {
+              "physical_page": 1,
+              "score": 20.39617,
+              "section": "A REACH ADJUST",
+              "source_id": "magura-mt-a2-user-instructions-2023"
+            },
+            {
+              "physical_page": 14,
+              "score": 16.342245,
+              "section": "Release\tthe\tMAGURA\tEasy\tlink\t3\tclip\tand\tcare- Carefully\t push\t the\t brake\t lever\t cover\t with\t the",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 2,
+              "score": 12.689819,
+              "section": "Contents",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 19,
+              "score": 11.972714,
+              "section": "Insert\tthe\tempty\tbleeding\tsyringe\tfirmly\tinto\tthe",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ]
+        }
+      ],
+      "passed": true,
+      "path_id": "page-bm25-title-section",
+      "recall_at_5": 1.0
+    },
+    {
+      "hit_count": 11,
+      "item_count": 16,
+      "items": [
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                36
+              ],
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-reverb-standard-remote-clamp-bolt",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb Standard Remote clamp bolt torque T25",
+          "retrieved_evidence": [
+            {
+              "physical_page": 36,
+              "score": 0.707107,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 9,
+              "score": 0.683763,
+              "section": "Bicycle Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 38,
+              "score": 0.624695,
+              "section": "Test Function",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 10,
+              "score": 0.533002,
+              "section": "Bicycle Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 18,
+              "score": 0.507093,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                32
+              ],
+              "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-reverb-axs-saddle-clamp-bolt",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb AXS saddle clamp bolt torque T25 12 N m",
+          "retrieved_evidence": [
+            {
+              "physical_page": 36,
+              "score": 0.824958,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 32,
+              "score": 0.741249,
+              "section": "T orque Serrage Momento de tor\u00e7\u00e3o",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 28,
+              "score": 0.737865,
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 29,
+              "score": 0.632456,
+              "section": "Quitar/Aflojar Verwijderen/Losmaken",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 30,
+              "score": 0.589506,
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                7
+              ],
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-reba-fork-fastener-torque",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reba fork torque tightening values fasteners",
+          "retrieved_evidence": [
+            {
+              "physical_page": 3,
+              "score": 0.452911,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 7,
+              "score": 0.39036,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 5,
+              "score": 0.319801,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 6,
+              "score": 0.263117,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 4,
+              "score": 0.25,
+              "section": "TABLE OF CONTENTS",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                22
+              ],
+              "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-gustav-calliper-retaining-screws",
+          "path_id": "page-token-overlap-title-section",
+          "query": "MAGURA GUSTAV PRO brake calliper retaining screws torque 5 mm",
+          "retrieved_evidence": [
+            {
+              "physical_page": 1,
+              "score": 1.224745,
+              "section": "GUSTAV Owner\u2019s manual",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 9,
+              "score": 0.75,
+              "section": "Use\ta\t5\tmm\tAllen\tkey\tto\ttighten\tthe\tretaining\tscrews",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 22,
+              "score": 0.668153,
+              "section": "Tightening torques 7 Liability and warranty 8\t On our own behalf",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 8,
+              "score": 0.662085,
+              "section": "4.3\t Fitting the brake calliper",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 13,
+              "score": 0.648886,
+              "section": "4.7\t Aligning\tthe\tbrake\tcalliper The\t entire\t surface\t of\t the\t brake\t pad\t must\t be\t in",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                1
+              ],
+              "section": "A REACH ADJUST",
+              "source_id": "magura-mt-a2-user-instructions-2023"
+            }
+          ],
+          "hit": false,
+          "item_id": "spec-mt-a2-calliper-bolt",
+          "path_id": "page-token-overlap-title-section",
+          "query": "MAGURA MT A2 T25 brake calliper bolt 6 N m",
+          "retrieved_evidence": [
+            {
+              "physical_page": 36,
+              "score": 0.589256,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 20,
+              "score": 0.53033,
+              "section": "Reverb\u2122 Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 28,
+              "score": 0.421637,
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 29,
+              "score": 0.421637,
+              "section": "Quitar/Aflojar Verwijderen/Losmaken",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 1,
+              "score": 0.408248,
+              "section": "GUSTAV Owner\u2019s manual",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ]
+        },
+        {
+          "evidence_type": "specification",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                1
+              ],
+              "section": "SRAM\u00ae Eagle\u2122, Flattop\u2122, and 11 speed Chain Compatible Tools GEN.0000000007151 Rev F \u00a9 2025 SRAM, LLC",
+              "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f"
+            }
+          ],
+          "hit": true,
+          "item_id": "spec-sram-chain-wear-tool",
+          "path_id": "page-token-overlap-title-section",
+          "query": "SRAM Eagle Flattop chain wear check tool Park Tool",
+          "retrieved_evidence": [
+            {
+              "physical_page": 1,
+              "score": 0.784465,
+              "section": "\u00ae",
+              "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f"
+            },
+            {
+              "physical_page": 4,
+              "score": 0.365148,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 1,
+              "score": 0.25,
+              "section": "\u00a9 2018 SRAM, LLC",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 5,
+              "score": 0.230089,
+              "section": "RockShox\u00ae Service",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 1,
+              "score": 0.213201,
+              "section": "95-6818-005-000 Rev L",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ]
+        },
+        {
+          "evidence_type": "compatibility",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                11
+              ],
+              "section": "Hydraulic Hose Replacement",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "compat-reverb-hose-barb-sleeve",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb Stealth hose barb with barb sleeve compatible A2 B1",
+          "retrieved_evidence": [
+            {
+              "physical_page": 7,
+              "score": 1.315192,
+              "section": "*Compatible with Reverb Stealth and Reverb",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 11,
+              "score": 1.202676,
+              "section": "Hydraulic Hose Replacement",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 8,
+              "score": 1.118034,
+              "section": "Reverb\u2122 - Exploded View",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 14,
+              "score": 0.816497,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 12,
+              "score": 0.790569,
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "compatibility",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                26
+              ],
+              "section": "Remote Syringe Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "compat-reverb-dot-contaminated-syringe",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb hydraulic system syringe DOT brake fluid not compatible",
+          "retrieved_evidence": [
+            {
+              "physical_page": 27,
+              "score": 0.92376,
+              "section": "Seatpost Syringe Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 28,
+              "score": 0.781133,
+              "section": "Remote and Seatpost Bleed",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 26,
+              "score": 0.755929,
+              "section": "Remote Syringe Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 1,
+              "score": 0.75,
+              "section": "\u00a9 2018 SRAM, LLC",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 10,
+              "score": 0.746203,
+              "section": "Bicycle Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "compatibility",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                13
+              ],
+              "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ],
+          "hit": true,
+          "item_id": "compat-reverb-axs-saddle-rails",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb AXS compatible saddle metal 7 mm rails composite 7x9 oval",
+          "retrieved_evidence": [
+            {
+              "physical_page": 40,
+              "score": 0.534522,
+              "section": "Adjust R\u00e9gler Ajustar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 20,
+              "score": 0.53033,
+              "section": "Reverb\u2122 Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 13,
+              "score": 0.521286,
+              "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 12,
+              "score": 0.474342,
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 36,
+              "score": 0.471405,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                21,
+                22
+              ],
+              "section": "Hose Sizing and Remote Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": false,
+          "item_id": "procedure-hose-sizing-remote-installation",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb hose sizing and remote installation steps",
+          "retrieved_evidence": [
+            {
+              "physical_page": 18,
+              "score": 1.014185,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 20,
+              "score": 0.883883,
+              "section": "Reverb\u2122 Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 12,
+              "score": 0.790569,
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 39,
+              "score": 0.784465,
+              "section": "TORX\u00ae is a registered trademark of Acument Intellectual Properties, LLC.",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 19,
+              "score": 0.780869,
+              "section": "Reverb\u2122 Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                30
+              ],
+              "section": "Remote Bleed - Standard Remote",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": false,
+          "item_id": "procedure-reverb-standard-remote-bleed",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb Standard Remote bleed procedure syringe actuator",
+          "retrieved_evidence": [
+            {
+              "physical_page": 8,
+              "score": 0.894427,
+              "section": "Reverb\u2122 - Exploded View",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 37,
+              "score": 0.83205,
+              "section": "Test Function",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 7,
+              "score": 0.821995,
+              "section": "*Compatible with Reverb Stealth and Reverb",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 28,
+              "score": 0.781133,
+              "section": "Remote and Seatpost Bleed",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 38,
+              "score": 0.780869,
+              "section": "Test Function",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                12
+              ],
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-hose-barb-sleeve-preparation",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb hose barb and barb sleeve preparation install sleeve o-ring",
+          "retrieved_evidence": [
+            {
+              "physical_page": 12,
+              "score": 1.264911,
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 8,
+              "score": 0.894427,
+              "section": "Reverb\u2122 - Exploded View",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 20,
+              "score": 0.883883,
+              "section": "Reverb\u2122 Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 7,
+              "score": 0.821995,
+              "section": "*Compatible with Reverb Stealth and Reverb",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 16,
+              "score": 0.768221,
+              "section": "Reverb\u2122 Stealth Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                11
+              ],
+              "section": "L OWER L EG SEA L SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            }
+          ],
+          "hit": false,
+          "item_id": "procedure-reba-lower-leg-seal",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reba lower leg seal removal service",
+          "retrieved_evidence": [
+            {
+              "physical_page": 25,
+              "score": 0.574696,
+              "section": "MO T ION CON T RO L / BL A C KBOX MO T ION CON T RO L DA M PER SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 21,
+              "score": 0.493197,
+              "section": "TURNKEY DA M PER SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 16,
+              "score": 0.469956,
+              "section": "A IR U -TURN SPRING SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 3,
+              "score": 0.452911,
+              "section": "GEN.0000000003212 REV A",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            },
+            {
+              "physical_page": 13,
+              "score": 0.399043,
+              "section": "D UA L A IR SPRING SERVI C E",
+              "source_id": "sram-rockshox-reba-2011-technical-manual"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                16
+              ],
+              "section": "5.3 Changing\t the\tbrake\tpads",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-gustav-change-brake-pads",
+          "path_id": "page-token-overlap-title-section",
+          "query": "MAGURA GUSTAV PRO changing the brake pads remove wheel locking screw",
+          "retrieved_evidence": [
+            {
+              "physical_page": 1,
+              "score": 1.224745,
+              "section": "GUSTAV Owner\u2019s manual",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 16,
+              "score": 1.048809,
+              "section": "5.3 Changing\tthe\tbrake\tpads",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 21,
+              "score": 0.881917,
+              "section": "Check\tthe\tlatch\ton\tthe\tbrake\tlever",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 18,
+              "score": 0.880451,
+              "section": "When\tall\tbrake\tpistons\tare\tin\tthe\toutermost\tposi- Remove\tthe\tplug.",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 20,
+              "score": 0.78326,
+              "section": "5.5 Changing\tthe\tbrake\tlever\tblade",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                30,
+                31,
+                32
+              ],
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            }
+          ],
+          "hit": true,
+          "item_id": "procedure-sram-axs-saddle-installation",
+          "path_id": "page-token-overlap-title-section",
+          "query": "Reverb AXS saddle installation rail clamps tighten bolt",
+          "retrieved_evidence": [
+            {
+              "physical_page": 36,
+              "score": 0.707107,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 40,
+              "score": 0.534522,
+              "section": "Adjust R\u00e9gler Ajustar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 20,
+              "score": 0.53033,
+              "section": "Reverb\u2122 Hose Removal and Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            },
+            {
+              "physical_page": 30,
+              "score": 0.505291,
+              "section": "Remove/Loosen Retirer/Desserrer Retirar/Desapertar",
+              "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l"
+            },
+            {
+              "physical_page": 12,
+              "score": 0.474342,
+              "section": "Hose Barb and Barb Sleeve Preparation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        },
+        {
+          "evidence_type": "procedure",
+          "expected_evidence": [
+            {
+              "physical_pages": [
+                1,
+                2
+              ],
+              "section": "A REACH ADJUST",
+              "source_id": "magura-mt-a2-user-instructions-2023"
+            }
+          ],
+          "hit": false,
+          "item_id": "procedure-mt-a2-reach-adjust",
+          "path_id": "page-token-overlap-title-section",
+          "query": "MAGURA MT A2 reach adjust brake lever",
+          "retrieved_evidence": [
+            {
+              "physical_page": 14,
+              "score": 0.5,
+              "section": "Release\tthe\tMAGURA\tEasy\tlink\t3\tclip\tand\tcare- Carefully\t push\t the\t brake\t lever\t cover\t with\t the",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 1,
+              "score": 0.408248,
+              "section": "GUSTAV Owner\u2019s manual",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 2,
+              "score": 0.392232,
+              "section": "Contents",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 21,
+              "score": 0.377964,
+              "section": "Check\tthe\tlatch\ton\tthe\tbrake\tlever",
+              "source_id": "magura-gustav-pro-owners-manual-2026"
+            },
+            {
+              "physical_page": 36,
+              "score": 0.353553,
+              "section": "Saddle, Remote, and Brake Installation",
+              "source_id": "sram-rockshox-reverb-hose-replacement-rev-c"
+            }
+          ]
+        }
+      ],
+      "passed": false,
+      "path_id": "page-token-overlap-title-section",
+      "recall_at_5": 0.6875
+    }
+  ],
+  "retrieval_config_sha256": "8cb13fe744ad0dcc5b73959f4cc286265e3272b9bc76d435b4f76b79fb8f7567",
+  "retrieval_configuration_id": "retrieval-smoke-paths-v1",
+  "smoke_set_id": "retrieval-smoke-v1-frozen",
+  "smoke_set_sha256": "b1195cd2d1077ad05399421012613af238e547a544412f297ee6875470c5ba0c",
+  "source_pack_id": "2026-11-23.3-frozen-1",
+  "source_pack_manifest_sha256": "8ca22cc463ffba28ab8ab0b55c1fa1a0133cdc28f06b2300b3ace0792ebcf1fe",
+  "threshold_decision": {
+    "minimum_passing_paths": 1,
+    "passed": true,
+    "passing_paths": [
+      "page-bm25-title-section"
+    ],
+    "required_recall_at_5": 0.85
+  },
+  "top_k": 5
+}

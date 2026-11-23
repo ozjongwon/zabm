@@ -1,0 +1,24 @@
+{
+  "configuration_id": "retrieval-smoke-paths-v1",
+  "minimum_passing_paths": 1,
+  "paths": [
+    {
+      "b": 0.75,
+      "id": "page-bm25-title-section",
+      "k1": 1.2,
+      "kind": "bm25",
+      "section_boost": 3.0,
+      "title_boost": 3.0
+    },
+    {
+      "b": 0.75,
+      "id": "page-token-overlap-title-section",
+      "k1": 1.2,
+      "kind": "token-overlap",
+      "section_boost": 3.0,
+      "title_boost": 3.0
+    }
+  ],
+  "required_recall_at_5": 0.85,
+  "top_k": 5
+}

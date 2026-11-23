@@ -1,4 +1,4 @@
-.PHONY: install install-runtime health download ingest lint typecheck test verify
+.PHONY: install install-runtime health download ingest smoke lint typecheck test verify
 
 PYTHON := .venv/bin/python
 RUFF := .venv/bin/ruff
@@ -18,6 +18,9 @@ download:
 
 ingest:
 	./scripts/ingest-sources.sh
+
+smoke:
+	$(PYTHON) -m zabm retrieval-smoke
 
 lint:
 	$(RUFF) check .

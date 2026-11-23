@@ -1,0 +1,545 @@
+{
+  "audit_id": "source-pack-candidates-v1",
+  "reviewed_at": "2026-11-23",
+  "reviewed_by": "repository-maintainer",
+  "scope": "Candidate review completed before any answer-accuracy baseline. Candidates were assessed only for source authority, public availability, evidence integrity, and retrieval-only usability.",
+  "inclusion_policy": {
+    "accepted_manufacturer_count_minimum": 2,
+    "included_source_count_maximum": 8,
+    "included_source_count_minimum": 4,
+    "retrieval_smoke_required_recall_at_5": 0.85,
+    "required_passing_paths": 1
+  },
+  "candidates": [
+    {
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "title": "Reverb Stealth & Reverb Hydraulic Hose Replacement Remote System Bleed",
+      "manufacturer": "SRAM (RockShox)",
+      "sha256": "680dac35afaa2ba04d37f8ca7d15932ef9cf7eb0ca7eade6f754925fa2cfcc5d",
+      "checks": {
+        "authority": {
+          "result": "pass",
+          "first_party": true,
+          "publisher_domain": "sram.com"
+        },
+        "public_availability": {
+          "result": "pass",
+          "direct_download": true,
+          "retrieval_date": "2026-11-23",
+          "revision": "GEN.0000000005105 Rev C, 2018"
+        },
+        "extraction": {
+          "result": "pass",
+          "physical_pages": 40,
+          "text_pages": 40,
+          "missing_text_pages": 0
+        },
+        "page_alignment": {
+          "result": "pass",
+          "parsed_pages": 40,
+          "aligned_pages": 40
+        },
+        "headings": {
+          "result": "pass",
+          "heading_blocks": 22
+        },
+        "tables": {
+          "result": "pass",
+          "table_rows": 32
+        },
+        "warnings": {
+          "result": "pass",
+          "warning_blocks": 21
+        },
+        "procedure_order": {
+          "result": "pass",
+          "procedure_candidates": 17,
+          "complete_source_defined_procedures": 2,
+          "note": "Retained procedure sections preserve ordered steps, warnings, and source-defined endings. Other candidate sections remain ineligible when completeness checks fail."
+        }
+      },
+      "retrieval_smoke": {
+        "items": 6,
+        "page-bm25-title-section": {
+          "hits": 6,
+          "recall_at_5": 1.0
+        },
+        "page-token-overlap-title-section": {
+          "hits": 4,
+          "recall_at_5": 0.666667
+        }
+      },
+      "decision": {
+        "included": true,
+        "reasons": [
+          "First-party SRAM/RockShox document.",
+          "Directly available from the manufacturer with pinned content and revision.",
+          "Passes extraction, page-alignment, heading, table, warning, and procedure-order review.",
+          "Reaches 100% source-level Recall@5 on the page BM25 path."
+        ]
+      }
+    },
+    {
+      "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "title": "Reverb AXS User Manual",
+      "manufacturer": "SRAM (RockShox)",
+      "sha256": "10a56014858cecc8e108860827b7e54c54acb2fc0eaec3fdf61208729df76244",
+      "checks": {
+        "authority": {
+          "result": "pass",
+          "first_party": true,
+          "publisher_domain": "sram.com"
+        },
+        "public_availability": {
+          "result": "pass",
+          "direct_download": true,
+          "retrieval_date": "2026-11-23",
+          "revision": "95-6818-005-000 Rev L, 2025"
+        },
+        "extraction": {
+          "result": "pass",
+          "physical_pages": 49,
+          "text_pages": 49,
+          "missing_text_pages": 0
+        },
+        "page_alignment": {
+          "result": "pass",
+          "parsed_pages": 49,
+          "aligned_pages": 49
+        },
+        "headings": {
+          "result": "pass",
+          "heading_blocks": 27
+        },
+        "tables": {
+          "result": "pass",
+          "table_rows": 296
+        },
+        "warnings": {
+          "result": "reviewed",
+          "warning_blocks": 0,
+          "note": "The multimodal manual contains warnings, but this extraction exposes them inside page text rather than warning blocks. It is retained for specification and compatibility retrieval evidence."
+        },
+        "procedure_order": {
+          "result": "reviewed",
+          "procedure_candidates": 13,
+          "complete_source_defined_procedures": 0,
+          "note": "No procedure from this document is currently eligible for an answer. The source is retained for non-procedure smoke evidence."
+        }
+      },
+      "retrieval_smoke": {
+        "items": 3,
+        "page-bm25-title-section": {
+          "hits": 3,
+          "recall_at_5": 1.0
+        },
+        "page-token-overlap-title-section": {
+          "hits": 3,
+          "recall_at_5": 1.0
+        }
+      },
+      "decision": {
+        "included": true,
+        "reasons": [
+          "First-party SRAM/RockShox document.",
+          "Directly available from the manufacturer with pinned content and revision.",
+          "Provides specification and compatibility evidence in the multilingual manual.",
+          "Reaches 100% source-level Recall@5 on both predeclared paths."
+        ]
+      }
+    },
+    {
+      "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+      "title": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools",
+      "manufacturer": "SRAM",
+      "sha256": "9444a59acebba1fd8bf6d893c4481a399e8630d81c33f697c47d5dfd7f68e235",
+      "checks": {
+        "authority": {
+          "result": "pass",
+          "first_party": true,
+          "publisher_domain": "sram.com"
+        },
+        "public_availability": {
+          "result": "pass",
+          "direct_download": true,
+          "retrieval_date": "2026-11-23",
+          "revision": "GEN.0000000007151 Rev F, 2025"
+        },
+        "extraction": {
+          "result": "pass",
+          "physical_pages": 1,
+          "text_pages": 1,
+          "missing_text_pages": 0
+        },
+        "page_alignment": {
+          "result": "pass",
+          "parsed_pages": 1,
+          "aligned_pages": 1
+        },
+        "headings": {
+          "result": "pass",
+          "heading_blocks": 1
+        },
+        "tables": {
+          "result": "pass",
+          "table_rows": 8
+        },
+        "warnings": {
+          "result": "not_applicable",
+          "warning_blocks": 0
+        },
+        "procedure_order": {
+          "result": "not_applicable",
+          "procedure_candidates": 0
+        }
+      },
+      "retrieval_smoke": {
+        "items": 1,
+        "page-bm25-title-section": {
+          "hits": 1,
+          "recall_at_5": 1.0
+        },
+        "page-token-overlap-title-section": {
+          "hits": 1,
+          "recall_at_5": 1.0
+        }
+      },
+      "decision": {
+        "included": true,
+        "reasons": [
+          "First-party SRAM document.",
+          "Directly available from the manufacturer with pinned content and revision.",
+          "Provides a compact, extraction-clean compatibility table.",
+          "Reaches 100% source-level Recall@5 on both predeclared paths."
+        ]
+      }
+    },
+    {
+      "source_id": "sram-rockshox-reba-2011-technical-manual",
+      "title": "2011 RockShox Technical Manual",
+      "manufacturer": "SRAM (RockShox)",
+      "sha256": "1c4a28a576f670002957f4bfe24e56df6a3beb58ae64095bf9a2d373b5d5576f",
+      "checks": {
+        "authority": {
+          "result": "pass",
+          "first_party": true,
+          "publisher_domain": "servicearchive.sram.com"
+        },
+        "public_availability": {
+          "result": "pass",
+          "direct_download": true,
+          "retrieval_date": "2026-11-23",
+          "revision": "2011"
+        },
+        "extraction": {
+          "result": "pass",
+          "physical_pages": 34,
+          "text_pages": 34,
+          "missing_text_pages": 0
+        },
+        "page_alignment": {
+          "result": "pass",
+          "parsed_pages": 34,
+          "aligned_pages": 34
+        },
+        "headings": {
+          "result": "pass",
+          "heading_blocks": 28
+        },
+        "tables": {
+          "result": "pass",
+          "table_rows": 13
+        },
+        "warnings": {
+          "result": "reviewed",
+          "warning_blocks": 0,
+          "note": "The PDF uses inline CAUTION text. Those passages remain page evidence but are not currently represented as structured warning blocks."
+        },
+        "procedure_order": {
+          "result": "reviewed",
+          "procedure_candidates": 21,
+          "complete_source_defined_procedures": 0,
+          "note": "No procedure from this document is currently eligible for an answer because source-defined endings and citation alignment do not all validate."
+        }
+      },
+      "retrieval_smoke": {
+        "items": 2,
+        "page-bm25-title-section": {
+          "hits": 2,
+          "recall_at_5": 1.0
+        },
+        "page-token-overlap-title-section": {
+          "hits": 1,
+          "recall_at_5": 0.5
+        }
+      },
+      "decision": {
+        "included": true,
+        "reasons": [
+          "First-party SRAM/RockShox document.",
+          "Directly available from the manufacturer archive with pinned content and revision.",
+          "Preserves torque and service evidence needed for specification and retrieval smoke coverage.",
+          "Reaches 100% source-level Recall@5 on the page BM25 path."
+        ]
+      }
+    },
+    {
+      "source_id": "magura-gustav-pro-owners-manual-2026",
+      "title": "MAGURA GUSTAV PRO Owner's Manual",
+      "manufacturer": "MAGURA",
+      "sha256": "85ab9379d0d474ffa3132930014ae2ef2a881b51d3a1bc57698bb3eb1f202e5d",
+      "checks": {
+        "authority": {
+          "result": "pass",
+          "first_party": true,
+          "publisher_domain": "magura.com"
+        },
+        "public_availability": {
+          "result": "pass",
+          "direct_download": true,
+          "retrieval_date": "2026-11-23",
+          "revision": "2026-01"
+        },
+        "extraction": {
+          "result": "pass",
+          "physical_pages": 23,
+          "text_pages": 23,
+          "missing_text_pages": 0
+        },
+        "page_alignment": {
+          "result": "pass",
+          "parsed_pages": 23,
+          "aligned_pages": 23
+        },
+        "headings": {
+          "result": "pass",
+          "heading_blocks": 23
+        },
+        "tables": {
+          "result": "pass",
+          "table_rows": 102
+        },
+        "warnings": {
+          "result": "reviewed",
+          "warning_blocks": 0,
+          "note": "Safety text is present but not represented as structured warning blocks. It remains retrieval evidence only."
+        },
+        "procedure_order": {
+          "result": "reviewed",
+          "procedure_candidates": 3,
+          "complete_source_defined_procedures": 0,
+          "note": "No procedure from this document is currently eligible for an answer."
+        }
+      },
+      "retrieval_smoke": {
+        "items": 2,
+        "page-bm25-title-section": {
+          "hits": 2,
+          "recall_at_5": 1.0
+        },
+        "page-token-overlap-title-section": {
+          "hits": 2,
+          "recall_at_5": 1.0
+        }
+      },
+      "decision": {
+        "included": true,
+        "reasons": [
+          "First-party MAGURA document.",
+          "Directly available from the manufacturer with pinned content and revision.",
+          "Provides brake torque, disassembly, and procedure evidence.",
+          "Reaches 100% source-level Recall@5 on both predeclared paths."
+        ]
+      }
+    },
+    {
+      "source_id": "magura-mt-a2-user-instructions-2023",
+      "title": "MAGURA MT A2 User Instructions",
+      "manufacturer": "MAGURA",
+      "sha256": "0c8f6389546c05033382cbc198d2be720badf7a06bd71b01413a82649f8c94eb",
+      "checks": {
+        "authority": {
+          "result": "pass",
+          "first_party": true,
+          "publisher_domain": "magura.com"
+        },
+        "public_availability": {
+          "result": "pass",
+          "direct_download": true,
+          "retrieval_date": "2026-11-23",
+          "revision": "0020165-2023"
+        },
+        "extraction": {
+          "result": "pass",
+          "physical_pages": 2,
+          "text_pages": 2,
+          "missing_text_pages": 0
+        },
+        "page_alignment": {
+          "result": "pass",
+          "parsed_pages": 2,
+          "aligned_pages": 2
+        },
+        "headings": {
+          "result": "pass",
+          "heading_blocks": 2
+        },
+        "tables": {
+          "result": "not_applicable",
+          "table_rows": 0,
+          "note": "The quick-reference document is diagram- and text-based rather than table-based."
+        },
+        "warnings": {
+          "result": "reviewed",
+          "warning_blocks": 0,
+          "note": "The document contains multilingual safety text that remains page-level retrieval evidence."
+        },
+        "procedure_order": {
+          "result": "reviewed",
+          "procedure_candidates": 1,
+          "complete_source_defined_procedures": 0,
+          "note": "No procedure from this document is currently eligible for an answer."
+        }
+      },
+      "retrieval_smoke": {
+        "items": 2,
+        "page-bm25-title-section": {
+          "hits": 2,
+          "recall_at_5": 1.0
+        },
+        "page-token-overlap-title-section": {
+          "hits": 0,
+          "recall_at_5": 0.0
+        }
+      },
+      "decision": {
+        "included": true,
+        "reasons": [
+          "First-party MAGURA document.",
+          "Directly available from the manufacturer with pinned content and revision.",
+          "Adds a second MAGURA model with reach-adjust and brake torque evidence.",
+          "Reaches 100% source-level Recall@5 on the page BM25 path."
+        ]
+      }
+    },
+    {
+      "source_id": "MAGURA-MT_Owners-manual_EN",
+      "title": "Manual de instrucciones – MT 2019",
+      "manufacturer": "MAGURA",
+      "sha256": "c53c9326804092a228e4188fa2e960e3513bc1bb3b259ed007106c0da5d0f820",
+      "checks": {
+        "authority": {
+          "result": "pass",
+          "first_party": true,
+          "publisher": "MAGURA"
+        },
+        "public_availability": {
+          "result": "fail",
+          "direct_download": false,
+          "url": "file:///home/jc/Projects/zabm/pdf-doc/MAGURA-MT_Owners-manual_EN.pdf",
+          "note": "The manifest had only a machine-local file URI and no public source URL."
+        },
+        "extraction": {
+          "result": "reviewed",
+          "physical_pages": 101,
+          "text_pages": 100,
+          "missing_text_pages": 1
+        },
+        "page_alignment": {
+          "result": "reviewed",
+          "parsed_pages": 101,
+          "aligned_pages": 100
+        },
+        "headings": {
+          "result": "reviewed",
+          "heading_blocks": 100
+        },
+        "tables": {
+          "result": "reviewed",
+          "table_rows": 124
+        },
+        "warnings": {
+          "result": "reviewed",
+          "warning_blocks": 0
+        },
+        "procedure_order": {
+          "result": "reviewed",
+          "procedure_candidates": 17,
+          "complete_source_defined_procedures": 0
+        }
+      },
+      "retrieval_smoke": {
+        "items": 0,
+        "note": "Not included in the fixed smoke set after the public-provenance exclusion."
+      },
+      "decision": {
+        "included": false,
+        "reasons": [
+          "The candidate cannot be acquired or rechecked from a public, direct manufacturer URL.",
+          "The manifest records a machine-local file URI, which is not defensible pack provenance.",
+          "One page has no extractable text and no procedure section currently passes completeness validation."
+        ]
+      }
+    },
+    {
+      "source_id": "MT-Caliper-Installation-Instruction",
+      "title": "MT Caliper Installation Instruction",
+      "manufacturer": "MAGURA",
+      "sha256": "4654584f552765e5e78398bc8eb719e7e9d9040692b4a90369822812f1d9fa86",
+      "checks": {
+        "authority": {
+          "result": "reviewed",
+          "first_party": "unconfirmed",
+          "note": "The local filename suggests MAGURA, but no authoritative source record was available."
+        },
+        "public_availability": {
+          "result": "fail",
+          "direct_download": false,
+          "note": "The file is a local PDF with no manifest record, public URL, or retrieval provenance."
+        },
+        "extraction": {
+          "result": "fail",
+          "file_size_bytes": 200564,
+          "note": "The encrypted PDF requires a password and the installed extraction profile cannot read it."
+        },
+        "page_alignment": {
+          "result": "not_checked",
+          "note": "No page text can be read from the encrypted source."
+        },
+        "headings": {
+          "result": "not_checked"
+        },
+        "tables": {
+          "result": "not_checked"
+        },
+        "warnings": {
+          "result": "not_checked"
+        },
+        "procedure_order": {
+          "result": "not_checked"
+        }
+      },
+      "retrieval_smoke": {
+        "items": 0
+      },
+      "decision": {
+        "included": false,
+        "reasons": [
+          "No public manufacturer provenance or manifest entry exists.",
+          "The encrypted PDF is not readable by the ingestion profile.",
+          "It cannot contribute reproducible retrieval evidence."
+        ]
+      }
+    }
+  ],
+  "final_decision": {
+    "included_source_count": 6,
+    "included_manufacturer_count": 3,
+    "excluded_candidate_count": 2,
+    "retrieval_only_threshold_met": true,
+    "passing_paths": [
+      "page-bm25-title-section"
+    ],
+    "frozen_before_answer_accuracy_baselines": true
+  }
+}

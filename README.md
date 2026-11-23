@@ -113,7 +113,7 @@ model access. Missing or ambiguous identity details return
 
 ## Candidate source pack
 
-The candidate pack is versioned by `data/manifests/source-pack-v1.json`. It
+The frozen pack is versioned by `data/manifests/source-pack-v1.json`. It
 contains six public, first-party manufacturer documents from SRAM, RockShox,
 and MAGURA:
 
@@ -126,7 +126,14 @@ and MAGURA:
 
 Together these sources provide specification values and conditions,
 compatibility tables, complete and partial procedure sections, warnings, and
-adjacent model or generation cases for later smoke and evaluation work.
+adjacent model or generation cases for evaluation work.
+
+The candidate review is recorded in
+`data/audits/source-pack-candidates-v1.json`. It records authority, public
+availability, extraction, page alignment, headings, tables, warnings, and
+procedure-order checks for every candidate. Two local-only candidates were
+excluded because they could not be reacquired from a public manufacturer URL;
+one was also encrypted and unreadable by the ingestion profile.
 
 Build the candidate pack from empty `pdf-doc/` and `.zabm/` directories:
 
@@ -146,6 +153,40 @@ provenance, page-alignment counts, table/warning/procedure counts, validation
 issues, and SHA-256 checksums for the three canonical generated artifacts.
 Re-running both commands from a clean generated-data state produces identical
 artifact bytes and checksums.
+
+## Retrieval-only freeze
+
+Retrieval usability is checked before answer-accuracy work with a fixed
+16-item smoke set covering specification, compatibility, and procedure
+evidence. The smoke set and paths are predeclared in
+`data/retrieval-smoke/`; they do not call an answer model or score answers.
+
+Run both paths and write the canonical report:
+
+```bash
+./.venv/bin/python -m zabm retrieval-smoke
+```
+
+The accepted `page-bm25-title-section` path reaches 100% Recall@5. The
+`page-token-overlap-title-section` comparison reaches 68.8%; both are recorded
+separately, and the threshold decision requires at least one path at or above
+85%.
+
+Freeze the manifest, smoke set, retrieval configuration, and report together:
+
+```bash
+./.venv/bin/python -m zabm retrieval-smoke \
+  --freeze data/manifests/source-pack-freeze-v1.json \
+  --candidate-audit data/audits/source-pack-candidates-v1.json \
+  --maintainer-review <review-reference>
+```
+
+`zabm ingest` verifies the frozen descriptor before writing derived evidence.
+Any change to the manifest, smoke inputs, report, or source hashes is rejected.
+Changing a frozen source therefore requires an explicit manifest version,
+maintainer review, and a complete evaluation rerun before a replacement freeze
+can be accepted. Do not remove an included source merely because a later
+answer baseline performs poorly.
 
 Register every unregistered PDF already present in `pdf-doc/`:
 

@@ -24,6 +24,14 @@ from zabm.procedures import (
 )
 from zabm.providers import ProviderError, configured_provider
 from zabm.response import CanonicalResponse
+from zabm.source_pack import (
+    FrozenSourcePackError,
+    freeze_source_pack,
+    run_retrieval_smoke,
+    verify_frozen_source_pack,
+    verify_source_freeze,
+    write_retrieval_smoke_report,
+)
 from zabm.specifications import (
     IngestionError,
     SourceIntegrityError,
@@ -39,6 +47,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = REPO_ROOT / "data" / "manifests" / "source-pack-v1.json"
 DEFAULT_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-specifications.json"
 DEFAULT_COMPATIBILITY_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-compatibility.json"
+DEFAULT_SMOKE_SET = REPO_ROOT / "data" / "retrieval-smoke" / "smoke-set-v1.json"
+DEFAULT_RETRIEVAL_CONFIG = REPO_ROOT / "data" / "retrieval-smoke" / "retrieval-config-v1.json"
+DEFAULT_SMOKE_REPORT = REPO_ROOT / "data" / "retrieval-smoke" / "report-v1.json"
+DEFAULT_SOURCE_FREEZE = REPO_ROOT / "data" / "manifests" / "source-pack-freeze-v1.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
 
@@ -128,9 +140,21 @@ def _ingest_command(
     compatibility_evidence: Path,
     pdf_dir: Path,
     data_dir: Path,
+    freeze_path: Path | None,
     as_json: bool,
 ) -> int:
     try:
+        source_freeze = freeze_path
+        if (
+            source_freeze is None
+            and manifest.resolve() == DEFAULT_MANIFEST.resolve()
+            and DEFAULT_SOURCE_FREEZE.is_file()
+        ):
+            source_freeze = DEFAULT_SOURCE_FREEZE
+        if source_freeze is not None:
+            if not source_freeze.is_file():
+                raise FrozenSourcePackError(f"source freeze {source_freeze} does not exist")
+            verify_frozen_source_pack(source_freeze, manifest)
         verify_source_files(manifest, pdf_dir)
         report = ingest_sources(manifest, evidence, pdf_dir, data_dir)
         compatibility_report = ingest_compatibility(
@@ -140,7 +164,7 @@ def _ingest_command(
             data_dir,
         )
         retrieval_report = ingest_retrieval(manifest, pdf_dir, data_dir)
-    except (OSError, IngestionError, ValueError) as exc:
+    except (OSError, FrozenSourcePackError, IngestionError, ValueError) as exc:
         print(f"zabm ingest: {exc}", file=sys.stderr)
         return 1
 
@@ -300,6 +324,90 @@ def _evidence_command(question: str, data_dir: Path, as_json: bool) -> int:
     return 0
 
 
+def _retrieval_smoke_command(
+    manifest: Path,
+    smoke_set: Path,
+    retrieval_config: Path,
+    pdf_dir: Path | None,
+    data_dir: Path,
+    report_path: Path,
+    freeze_path: Path | None,
+    maintainer_review: str | None,
+    candidate_audit: Path | None,
+    as_json: bool,
+) -> int:
+    try:
+        source_freeze = freeze_path
+        if (
+            source_freeze is None
+            and manifest.resolve() == DEFAULT_MANIFEST.resolve()
+            and report_path.resolve() == DEFAULT_SMOKE_REPORT.resolve()
+            and DEFAULT_SOURCE_FREEZE.is_file()
+        ):
+            source_freeze = DEFAULT_SOURCE_FREEZE
+        if source_freeze is not None and source_freeze.is_file():
+            verify_source_freeze(
+                source_freeze,
+                manifest,
+                smoke_set,
+                retrieval_config,
+                report_path,
+            )
+        verify_source_files(manifest, pdf_dir or data_dir.parent / "pdf-doc")
+        report = run_retrieval_smoke(
+            manifest,
+            smoke_set,
+            retrieval_config,
+            data_dir,
+        )
+        write_retrieval_smoke_report(report, report_path)
+    except (OSError, FrozenSourcePackError, SourceIntegrityError, ValueError) as exc:
+        print(f"zabm retrieval-smoke: {exc}", file=sys.stderr)
+        return 1
+
+    if as_json:
+        print(json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True))
+    else:
+        for result in report.path_results:
+            state = "passed" if result.passed else "failed"
+            print(
+                f"{result.path_id}: Recall@5 {result.recall_at_5:.1%} "
+                f"({result.hit_count}/{result.item_count}); {state}"
+            )
+        print(f"Threshold decision: {'passed' if report.threshold_decision.passed else 'failed'}")
+
+    if not report.threshold_decision.passed:
+        print(
+            "zabm retrieval-smoke: no retrieval path met the required Recall@5 threshold",
+            file=sys.stderr,
+        )
+        return 1
+
+    if freeze_path is not None:
+        if maintainer_review is None or not maintainer_review.strip():
+            print(
+                "zabm retrieval-smoke: --maintainer-review is required with --freeze",
+                file=sys.stderr,
+            )
+            return 1
+        try:
+            freeze_source_pack(
+                manifest,
+                smoke_set,
+                retrieval_config,
+                report_path,
+                freeze_path,
+                maintainer_review=maintainer_review,
+                candidate_audit_path=candidate_audit,
+            )
+        except (OSError, ValueError) as exc:
+            print(f"zabm retrieval-smoke: {exc}", file=sys.stderr)
+            return 1
+        if not as_json:
+            print(f"Frozen source pack: {freeze_path}")
+    return 0
+
+
 def _render_evidence(inspection: ProcedureEvidenceInspection) -> None:
     if not inspection.matches:
         print("No retrieval-evidence section matches this procedure question.")
@@ -386,6 +494,11 @@ def _parser() -> argparse.ArgumentParser:
         default=DEFAULT_DATA_DIR,
         help="Directory for generated evidence.",
     )
+    ingest.add_argument(
+        "--freeze",
+        type=Path,
+        help="Verify this source-pack freeze before writing derived evidence.",
+    )
     ingest.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
     ask = commands.add_parser(
@@ -439,6 +552,65 @@ def _parser() -> argparse.ArgumentParser:
         help="Directory for generated evidence.",
     )
     evidence.add_argument("--json", action="store_true", help="Emit the evidence report.")
+
+    retrieval_smoke = commands.add_parser(
+        "retrieval-smoke",
+        help="Run the retrieval-only source-pack smoke set and optionally freeze the pack.",
+    )
+    retrieval_smoke.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_MANIFEST,
+        help="Path to the source manifest.",
+    )
+    retrieval_smoke.add_argument(
+        "--smoke-set",
+        type=Path,
+        default=DEFAULT_SMOKE_SET,
+        help="Path to the fixed retrieval-only smoke set.",
+    )
+    retrieval_smoke.add_argument(
+        "--retrieval-config",
+        type=Path,
+        default=DEFAULT_RETRIEVAL_CONFIG,
+        help="Path to the frozen retrieval configuration.",
+    )
+    retrieval_smoke.add_argument(
+        "--data-dir",
+        type=Path,
+        default=DEFAULT_DATA_DIR,
+        help="Directory containing the generated retrieval evidence.",
+    )
+    retrieval_smoke.add_argument(
+        "--pdf-dir",
+        type=Path,
+        help="Directory containing the downloaded source PDFs.",
+    )
+    retrieval_smoke.add_argument(
+        "--report",
+        type=Path,
+        default=DEFAULT_SMOKE_REPORT,
+        help="Path for the retrieval-smoke report.",
+    )
+    retrieval_smoke.add_argument(
+        "--freeze",
+        type=Path,
+        help="Write a source-pack freeze record after the threshold passes.",
+    )
+    retrieval_smoke.add_argument(
+        "--maintainer-review",
+        help="Stable review reference recorded when freezing the source pack.",
+    )
+    retrieval_smoke.add_argument(
+        "--candidate-audit",
+        type=Path,
+        help="Candidate audit whose decisions and checks are bound to the freeze.",
+    )
+    retrieval_smoke.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the retrieval-smoke report.",
+    )
     return parser
 
 
@@ -457,6 +629,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.compatibility_evidence,
             args.pdf_dir,
             args.data_dir,
+            args.freeze,
             args.json,
         )
     if args.command == "ask":
@@ -472,4 +645,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "evidence":
         return _evidence_command(args.question, args.data_dir, args.json)
+    if args.command == "retrieval-smoke":
+        return _retrieval_smoke_command(
+            args.manifest,
+            args.smoke_set,
+            args.retrieval_config,
+            args.pdf_dir,
+            args.data_dir,
+            args.report,
+            args.freeze,
+            args.maintainer_review,
+            args.candidate_audit,
+            args.json,
+        )
     raise AssertionError(f"unhandled command: {args.command}")

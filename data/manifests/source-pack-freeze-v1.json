@@ -1,0 +1,37 @@
+{
+  "candidate_audit_path": "data/audits/source-pack-candidates-v1.json",
+  "candidate_audit_sha256": "8b7ba40efc96a53203b5d277834d2e38608b29921052cb286e9927afd8cc67fe",
+  "freeze_version": "frozen-2026-11-23.3-frozen-1",
+  "frozen_at": "2026-11-23",
+  "maintainer_review": "ticket-08-source-pack-audit-v1",
+  "manifest_path": "data/manifests/source-pack-v1.json",
+  "manifest_version": "2026-11-23.3-frozen-1",
+  "retrieval_config_path": "data/retrieval-smoke/retrieval-config-v1.json",
+  "retrieval_config_sha256": "8cb13fe744ad0dcc5b73959f4cc286265e3272b9bc76d435b4f76b79fb8f7567",
+  "retrieval_smoke_report_path": "data/retrieval-smoke/report-v1.json",
+  "retrieval_smoke_report_sha256": "355d85e0236c5026973be2b4fbc3acbd6632684e7b360ae13b1fa0364cdbec06",
+  "smoke_set_path": "data/retrieval-smoke/smoke-set-v1.json",
+  "smoke_set_sha256": "b1195cd2d1077ad05399421012613af238e547a544412f297ee6875470c5ba0c",
+  "source_hashes": {
+    "magura-gustav-pro-owners-manual-2026": "85ab9379d0d474ffa3132930014ae2ef2a881b51d3a1bc57698bb3eb1f202e5d",
+    "magura-mt-a2-user-instructions-2023": "0c8f6389546c05033382cbc198d2be720badf7a06bd71b01413a82649f8c94eb",
+    "sram-eagle-flattop-11-speed-compatible-tools-rev-f": "9444a59acebba1fd8bf6d893c4481a399e8630d81c33f697c47d5dfd7f68e235",
+    "sram-rockshox-reba-2011-technical-manual": "1c4a28a576f670002957f4bfe24e56df6a3beb58ae64095bf9a2d373b5d5576f",
+    "sram-rockshox-reverb-axs-user-manual-rev-l": "10a56014858cecc8e108860827b7e54c54acb2fc0eaec3fdf61208729df76244",
+    "sram-rockshox-reverb-hose-replacement-rev-c": "680dac35afaa2ba04d37f8ca7d15932ef9cf7eb0ca7eade6f754925fa2cfcc5d"
+  },
+  "source_pack_manifest_sha256": "8ca22cc463ffba28ab8ab0b55c1fa1a0133cdc28f06b2300b3ace0792ebcf1fe",
+  "threshold_decision": {
+    "minimum_passing_paths": 1,
+    "passed": true,
+    "passing_paths": [
+      "page-bm25-title-section"
+    ],
+    "required_recall_at_5": 0.85
+  },
+  "update_policy": {
+    "requires_complete_evaluation_rerun": true,
+    "requires_explicit_manifest_change": true,
+    "requires_maintainer_review": true
+  }
+}
