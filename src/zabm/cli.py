@@ -27,6 +27,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = REPO_ROOT / "data" / "manifests" / "source-pack-v1.json"
 DEFAULT_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-specifications.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
+DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
 
 
 class HealthReport(BaseModel):
@@ -87,9 +88,9 @@ def _health_command(as_json: bool) -> int:
     return 0
 
 
-def _download_command(manifest: Path, data_dir: Path, as_json: bool) -> int:
+def _download_command(manifest: Path, pdf_dir: Path, as_json: bool) -> int:
     try:
-        report = download_sources(manifest, data_dir)
+        report = download_sources(manifest, pdf_dir)
     except (OSError, SourceIntegrityError, ValueError) as exc:
         print(f"zabm download: {exc}", file=sys.stderr)
         return 1
@@ -109,11 +110,12 @@ def _download_command(manifest: Path, data_dir: Path, as_json: bool) -> int:
 def _ingest_command(
     manifest: Path,
     evidence: Path,
+    pdf_dir: Path,
     data_dir: Path,
     as_json: bool,
 ) -> int:
     try:
-        report = ingest_sources(manifest, evidence, data_dir)
+        report = ingest_sources(manifest, evidence, pdf_dir, data_dir)
     except (OSError, IngestionError, ValueError) as exc:
         print(f"zabm ingest: {exc}", file=sys.stderr)
         return 1
@@ -189,10 +191,10 @@ def _parser() -> argparse.ArgumentParser:
         help="Path to the source manifest.",
     )
     download.add_argument(
-        "--data-dir",
+        "--pdf-dir",
         type=Path,
-        default=DEFAULT_DATA_DIR,
-        help="Directory for downloaded sources and generated evidence.",
+        default=DEFAULT_PDF_DIR,
+        help="Directory for original downloaded PDFs.",
     )
     download.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
@@ -213,10 +215,16 @@ def _parser() -> argparse.ArgumentParser:
         help="Path to the human-verified structured evidence.",
     )
     ingest.add_argument(
+        "--pdf-dir",
+        type=Path,
+        default=DEFAULT_PDF_DIR,
+        help="Directory containing the downloaded source PDFs.",
+    )
+    ingest.add_argument(
         "--data-dir",
         type=Path,
         default=DEFAULT_DATA_DIR,
-        help="Directory for downloaded sources and generated evidence.",
+        help="Directory for generated evidence.",
     )
     ingest.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
@@ -229,7 +237,7 @@ def _parser() -> argparse.ArgumentParser:
         "--data-dir",
         type=Path,
         default=DEFAULT_DATA_DIR,
-        help="Directory for downloaded sources and generated evidence.",
+        help="Directory for generated evidence.",
     )
     ask.add_argument("--json", action="store_true", help="Emit the canonical response.")
     return parser
@@ -240,9 +248,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "health":
         return _health_command(args.json)
     if args.command == "download":
-        return _download_command(args.manifest, args.data_dir, args.json)
+        return _download_command(args.manifest, args.pdf_dir, args.json)
     if args.command == "ingest":
-        return _ingest_command(args.manifest, args.evidence, args.data_dir, args.json)
+        return _ingest_command(
+            args.manifest,
+            args.evidence,
+            args.pdf_dir,
+            args.data_dir,
+            args.json,
+        )
     if args.command == "ask":
         return _ask_command(args.question, args.data_dir, args.json)
     raise AssertionError(f"unhandled command: {args.command}")

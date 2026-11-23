@@ -44,7 +44,7 @@ Pyright type checking, and the automated test suite.
 
 ## Specification tracer
 
-Download the hash-verified source PDFs into the local `.zabm/sources`
+Download the original hash-verified source PDFs into the local `pdf-doc`
 directory, ingest the committed human-verified evidence, and ask a
 specification question:
 
@@ -55,9 +55,9 @@ specification question:
   "What torque should I use for the RockShox Reverb Standard Remote clamp bolt?"
 ```
 
-Add `--json` to any command for structured output. Downloaded PDFs and
-generated evidence are local build artifacts under `.zabm/`; they are never
-committed.
+Add `--json` to any command for structured output. Original PDFs are stored in
+`pdf-doc/` and generated evidence is stored under `.zabm/`. Both are local
+artifacts and are never committed.
 
 ## NVIDIA prerequisite
 

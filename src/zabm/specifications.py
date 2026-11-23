@@ -156,14 +156,13 @@ def load_verified_specifications(path: Path) -> VerifiedSpecificationFile:
     return VerifiedSpecificationFile.model_validate_json(path.read_text(encoding="utf-8"))
 
 
-def download_sources(manifest_path: Path, data_dir: Path) -> DownloadReport:
+def download_sources(manifest_path: Path, pdf_dir: Path) -> DownloadReport:
     manifest = load_source_manifest(manifest_path)
-    source_dir = data_dir / "sources"
-    source_dir.mkdir(parents=True, exist_ok=True)
+    pdf_dir.mkdir(parents=True, exist_ok=True)
     reports: list[dict[str, str]] = []
 
     for source in manifest.sources:
-        destination = source_dir / f"{source.id}.pdf"
+        destination = pdf_dir / f"{source.id}.pdf"
         temporary = destination.with_suffix(".pdf.part")
         request = Request(source.url, headers={"User-Agent": "zabm-source-downloader/0.1"})
 
@@ -203,6 +202,7 @@ def download_sources(manifest_path: Path, data_dir: Path) -> DownloadReport:
 def ingest_sources(
     manifest_path: Path,
     evidence_path: Path,
+    pdf_dir: Path,
     data_dir: Path,
 ) -> IngestReport:
     manifest = load_source_manifest(manifest_path)
@@ -211,7 +211,7 @@ def ingest_sources(
     page_texts: dict[str, list[str]] = {}
 
     for source in manifest.sources:
-        source_path = data_dir / "sources" / f"{source.id}.pdf"
+        source_path = pdf_dir / f"{source.id}.pdf"
         if not source_path.is_file():
             raise IngestionError(f"source {source.id} has not been downloaded")
         if _file_sha256(source_path) != source.sha256:

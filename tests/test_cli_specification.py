@@ -125,7 +125,7 @@ def test_cli_returns_a_verified_specification_with_complete_provenance(
     manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
     download_report = _download_and_ingest(manifest_path, evidence_path, data_dir)
     downloaded_source = Path(download_report["sources"][0]["path"])
-    assert downloaded_source.parent == data_dir / "sources"
+    assert downloaded_source.parent == tmp_path / "pdf-doc"
     assert downloaded_source.is_file()
 
     result = run_cli(
@@ -354,12 +354,13 @@ def test_cli_does_not_answer_from_an_unverified_extraction(tmp_path: Path) -> No
 def _download_and_ingest(
     manifest_path: Path, evidence_path: Path, data_dir: Path
 ) -> dict[str, Any]:
+    pdf_dir = data_dir.parent / "pdf-doc"
     download = run_cli(
         "download",
         "--manifest",
         str(manifest_path),
-        "--data-dir",
-        str(data_dir),
+        "--pdf-dir",
+        str(pdf_dir),
         "--json",
     )
     assert download.returncode == 0, download.stderr
@@ -370,6 +371,8 @@ def _download_and_ingest(
         str(manifest_path),
         "--evidence",
         str(evidence_path),
+        "--pdf-dir",
+        str(pdf_dir),
         "--data-dir",
         str(data_dir),
         "--json",
