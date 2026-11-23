@@ -1,4 +1,4 @@
-.PHONY: install install-runtime health lint typecheck test verify
+.PHONY: install install-runtime health download ingest lint typecheck test verify
 
 PYTHON := .venv/bin/python
 RUFF := .venv/bin/ruff
@@ -12,6 +12,12 @@ install-runtime:
 
 health:
 	$(PYTHON) -m zabm health
+
+download:
+	./scripts/download-sources.sh
+
+ingest:
+	./scripts/ingest-sources.sh
 
 lint:
 	$(RUFF) check .

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import platform
 import sys
@@ -26,7 +27,9 @@ from zabm.specifications import (
     IngestionError,
     SourceIntegrityError,
     download_sources,
+    file_sha256,
     ingest_sources,
+    verify_source_files,
 )
 
 PINNED_PYTHON = "3.13.5"
@@ -109,8 +112,10 @@ def _download_command(manifest: Path, pdf_dir: Path, as_json: bool) -> int:
     else:
         print(f"Downloaded and verified {report.source_count} source(s).")
         for source in report.sources:
+            print(f"- {source['id']}: {source['title']} ({source['manufacturer']})")
+            print(f"  {source['url']}")
             print(
-                f"- {source['id']}: {source['sha256']} "
+                f"  sha256: {source['sha256']} "
                 f"(retrieved {source['retrieval_date']}, {source['revision']})"
             )
     return 0
@@ -125,6 +130,7 @@ def _ingest_command(
     as_json: bool,
 ) -> int:
     try:
+        verify_source_files(manifest, pdf_dir)
         report = ingest_sources(manifest, evidence, pdf_dir, data_dir)
         compatibility_report = ingest_compatibility(
             manifest,
@@ -137,6 +143,12 @@ def _ingest_command(
         print(f"zabm ingest: {exc}", file=sys.stderr)
         return 1
 
+    artifact_paths = {
+        "specifications.json": data_dir / "generated" / "specifications.json",
+        "compatibility.json": data_dir / "generated" / "compatibility.json",
+        "retrieval.json": data_dir / "generated" / "retrieval.json",
+    }
+    artifact_checksums = {name: file_sha256(path) for name, path in artifact_paths.items()}
     if as_json:
         combined_report = {
             **report.model_dump(mode="json"),
@@ -145,10 +157,12 @@ def _ingest_command(
                 compatibility_report.eligible_compatibility_rule_count
             ),
             "retrieval_page_count": retrieval_report.page_count,
+            "page_alignment": retrieval_report.page_alignment.model_dump(mode="json"),
             "table_row_count": retrieval_report.table_row_count,
             "warning_count": retrieval_report.warning_count,
             "procedure_count": retrieval_report.procedure_count,
             "eligible_procedure_count": retrieval_report.eligible_procedure_count,
+            "artifact_checksums": artifact_checksums,
             "validation_issues": [
                 *report.validation_issues,
                 *compatibility_report.validation_issues,
@@ -159,7 +173,8 @@ def _ingest_command(
     else:
         print(
             f"Ingested {report.specification_count} specification(s) from "
-            f"{report.source_count} source(s); "
+            f"{report.source_count} source(s) from {report.manufacturer_count} "
+            f"manufacturer(s); "
             f"{report.eligible_specification_count} eligible."
         )
         print(
@@ -171,6 +186,14 @@ def _ingest_command(
             f"{retrieval_report.page_count} retrieval page(s); "
             f"{retrieval_report.eligible_procedure_count} complete."
         )
+        alignment = retrieval_report.page_alignment
+        print(
+            f"Page alignment: {alignment.parsed_page_count}/"
+            f"{alignment.physical_page_count} parsed, "
+            f"{alignment.text_page_count} with text."
+        )
+        for name, checksum in artifact_checksums.items():
+            print(f"- {name}: sha256 {checksum}")
         for issue in [
             *report.validation_issues,
             *compatibility_report.validation_issues,
@@ -419,6 +442,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    logging.getLogger("pypdf").setLevel(logging.ERROR)
     args = _parser().parse_args(argv)
     if args.command == "health":
         return _health_command(args.json)

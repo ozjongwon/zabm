@@ -88,12 +88,14 @@ class SpecificationCatalog(BaseModel):
 class DownloadReport(BaseModel):
     source_pack_id: str
     source_count: int
+    manufacturer_count: int
     sources: list[dict[str, str]]
 
 
 class IngestReport(BaseModel):
     source_pack_id: str
     source_count: int
+    manufacturer_count: int
     specification_count: int
     eligible_specification_count: int
     validation_issues: list[str]
@@ -111,12 +113,11 @@ def load_source_manifest(path: Path) -> SourceManifest:
     return SourceManifest.model_validate_json(path.read_text(encoding="utf-8"))
 
 
-def load_verified_specifications(path: Path) -> VerifiedSpecificationFile:
-    return VerifiedSpecificationFile.model_validate_json(path.read_text(encoding="utf-8"))
+def verify_source_files(manifest_path: Path, pdf_dir: Path) -> None:
+    verify_source_files_from_manifest(load_source_manifest(manifest_path), pdf_dir)
 
 
-def load_source_pages(manifest: SourceManifest, pdf_dir: Path) -> dict[str, list[str]]:
-    page_texts: dict[str, list[str]] = {}
+def verify_source_files_from_manifest(manifest: SourceManifest, pdf_dir: Path) -> None:
     for source in manifest.sources:
         source_path = pdf_dir / f"{source.id}.pdf"
         if not source_path.is_file():
@@ -124,6 +125,16 @@ def load_source_pages(manifest: SourceManifest, pdf_dir: Path) -> dict[str, list
         if file_sha256(source_path) != source.sha256:
             raise IngestionError(f"source {source.id} does not match the manifest hash")
 
+
+def load_verified_specifications(path: Path) -> VerifiedSpecificationFile:
+    return VerifiedSpecificationFile.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def load_source_pages(manifest: SourceManifest, pdf_dir: Path) -> dict[str, list[str]]:
+    verify_source_files_from_manifest(manifest, pdf_dir)
+    page_texts: dict[str, list[str]] = {}
+    for source in manifest.sources:
+        source_path = pdf_dir / f"{source.id}.pdf"
         reader = PdfReader(source_path)
         page_texts[source.id] = [
             unicodedata.normalize("NFKC", page.extract_text() or "") for page in reader.pages
@@ -182,6 +193,9 @@ def download_sources(manifest_path: Path, pdf_dir: Path) -> DownloadReport:
         reports.append(
             {
                 "id": source.id,
+                "title": source.title,
+                "manufacturer": source.manufacturer,
+                "url": source.url,
                 "path": str(destination),
                 "sha256": source.sha256,
                 "retrieval_date": source.retrieval_date.isoformat(),
@@ -192,6 +206,7 @@ def download_sources(manifest_path: Path, pdf_dir: Path) -> DownloadReport:
     return DownloadReport(
         source_pack_id=manifest.manifest_version,
         source_count=len(manifest.sources),
+        manufacturer_count=len({source.manufacturer for source in manifest.sources}),
         sources=reports,
     )
 
@@ -256,6 +271,7 @@ def ingest_sources(
     return IngestReport(
         source_pack_id=manifest.manifest_version,
         source_count=len(manifest.sources),
+        manufacturer_count=len({source.manufacturer for source in manifest.sources}),
         specification_count=len(stored),
         eligible_specification_count=sum(not item.validation_issues for item in stored),
         validation_issues=all_issues,

@@ -111,6 +111,42 @@ model access. Missing or ambiguous identity details return
 `clarification_required`; false-premise components and specifications return
 `not_found` without a nearby substitute.
 
+## Candidate source pack
+
+The candidate pack is versioned by `data/manifests/source-pack-v1.json`. It
+contains six public, first-party manufacturer documents from SRAM, RockShox,
+and MAGURA:
+
+- Reverb hydraulic hose replacement and remote bleed service manual.
+- Reverb AXS user manual.
+- SRAM Eagle, Flattop, and 11-speed chain-compatible tools map.
+- 2011 RockShox technical manual.
+- MAGURA GUSTAV PRO owner's manual.
+- MAGURA MT A2 user instructions.
+
+Together these sources provide specification values and conditions,
+compatibility tables, complete and partial procedure sections, warnings, and
+adjacent model or generation cases for later smoke and evaluation work.
+
+Build the candidate pack from empty `pdf-doc/` and `.zabm/` directories:
+
+```bash
+./scripts/download-sources.sh
+./scripts/ingest-sources.sh
+```
+
+The acquisition wrapper installs the pinned development environment when
+`.venv` is absent, then runs the `download` CLI. It verifies every pinned
+SHA-256 before moving a source into `pdf-doc/`. The ingestion wrapper verifies
+the source set again before creating any derived store. Add `--json` to either
+script to receive its canonical report.
+
+The JSON reports include source and manufacturer counts, source
+provenance, page-alignment counts, table/warning/procedure counts, validation
+issues, and SHA-256 checksums for the three canonical generated artifacts.
+Re-running both commands from a clean generated-data state produces identical
+artifact bytes and checksums.
+
 ## NVIDIA prerequisite
 
 The installer detects `nvidia-smi` but never installs, upgrades, or replaces the

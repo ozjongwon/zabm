@@ -124,9 +124,18 @@ class RetrievalCatalog(BaseModel):
     procedures: list[StoredProcedure]
 
 
+class PageAlignmentReport(BaseModel):
+    document_count: int
+    physical_page_count: int
+    parsed_page_count: int
+    text_page_count: int
+    missing_text_pages: list[str]
+
+
 class RetrievalIngestReport(BaseModel):
     source_pack_id: str
     page_count: int
+    page_alignment: PageAlignmentReport
     table_row_count: int
     warning_count: int
     procedure_count: int
@@ -256,6 +265,18 @@ def ingest_retrieval(manifest_path: Path, pdf_dir: Path, data_dir: Path) -> Retr
     return RetrievalIngestReport(
         source_pack_id=manifest.manifest_version,
         page_count=len(pages),
+        page_alignment=PageAlignmentReport(
+            document_count=len(sources),
+            physical_page_count=sum(len(source.pages) for source in sources),
+            parsed_page_count=len(pages),
+            text_page_count=sum(bool(page.text.strip()) for page in pages),
+            missing_text_pages=[
+                f"{source.document_id}:{page.physical_page}"
+                for source in sources
+                for page in source.pages
+                if not page.text.strip()
+            ],
+        ),
         table_row_count=sum(block.kind == "table" for page in pages for block in page.blocks),
         warning_count=sum(block.kind == "warning" for page in pages for block in page.blocks),
         procedure_count=len(procedures),

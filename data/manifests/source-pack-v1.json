@@ -1,5 +1,5 @@
 {
-  "manifest_version": "2026-11-23.1",
+  "manifest_version": "2026-11-23.2-candidate-1",
   "sources": [
     {
       "id": "sram-rockshox-reverb-hose-replacement-rev-c",
@@ -9,6 +9,51 @@
       "sha256": "680dac35afaa2ba04d37f8ca7d15932ef9cf7eb0ca7eade6f754925fa2cfcc5d",
       "retrieval_date": "2026-11-23",
       "revision": "GEN.0000000005105 Rev C, 2018"
+    },
+    {
+      "id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "title": "Reverb AXS User Manual",
+      "manufacturer": "SRAM (RockShox)",
+      "url": "https://www.sram.com/globalassets/document-hierarchy/user-manuals/rockshox/seatposts/reverb-axs-user-manual.pdf",
+      "sha256": "10a56014858cecc8e108860827b7e54c54acb2fc0eaec3fdf61208729df76244",
+      "retrieval_date": "2026-11-23",
+      "revision": "95-6818-005-000 Rev L, 2025"
+    },
+    {
+      "id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+      "title": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools",
+      "manufacturer": "SRAM",
+      "url": "https://www.sram.com/globalassets/document-hierarchy/compatibility-map/road/sram-eagle-flattop-and-11-speed-chain-compatible-tools.pdf",
+      "sha256": "9444a59acebba1fd8bf6d893c4481a399e8630d81c33f697c47d5dfd7f68e235",
+      "retrieval_date": "2026-11-23",
+      "revision": "GEN.0000000007151 Rev F, 2025"
+    },
+    {
+      "id": "sram-rockshox-reba-2011-technical-manual",
+      "title": "2011 RockShox Technical Manual",
+      "manufacturer": "SRAM (RockShox)",
+      "url": "https://www.servicearchive.sram.com/sites/default/files/techdocs/2011-reba-technical-manual.pdf",
+      "sha256": "1c4a28a576f670002957f4bfe24e56df6a3beb58ae64095bf9a2d373b5d5576f",
+      "retrieval_date": "2026-11-23",
+      "revision": "2011"
+    },
+    {
+      "id": "magura-gustav-pro-owners-manual-2026",
+      "title": "MAGURA GUSTAV PRO Owner's Manual",
+      "manufacturer": "MAGURA",
+      "url": "https://magura.com/wp-content/uploads/2026/01/MAGURA-GUSTAV-PRO-Owners-manual_EN.pdf",
+      "sha256": "85ab9379d0d474ffa3132930014ae2ef2a881b51d3a1bc57698bb3eb1f202e5d",
+      "retrieval_date": "2026-11-23",
+      "revision": "2026-01"
+    },
+    {
+      "id": "magura-mt-a2-user-instructions-2023",
+      "title": "MAGURA MT A2 User Instructions",
+      "manufacturer": "MAGURA",
+      "url": "https://magura.com/wp-content/uploads/2025/11/MAGURA-MT-A2-user-instructions_EN-.pdf",
+      "sha256": "0c8f6389546c05033382cbc198d2be720badf7a06bd71b01413a82649f8c94eb",
+      "retrieval_date": "2026-11-23",
+      "revision": "0020165-2023"
     }
   ]
 }
