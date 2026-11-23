@@ -295,6 +295,7 @@ def run_evaluation(
     data_dir: Path,
     evaluation_set_path: Path,
     provider_url: str | None = None,
+    debug: bool = False,
 ) -> tuple[subprocess.CompletedProcess[str], dict[str, Any], Path]:
     baseline_config_path = write_baseline_config(tmp_path)
     retrieval_config_path = tmp_path / "retrieval-config.json"
@@ -351,6 +352,7 @@ def run_evaluation(
         "--output",
         str(output_path),
         *provider_args,
+        *(["--debug"] if debug else []),
         "--json",
     )
     report = cast(dict[str, Any], json.loads(result.stdout)) if result.stdout else {}
@@ -555,6 +557,28 @@ def test_evaluation_grades_specification_value_qualifiers_and_procedure_checklis
     assert warning_check["result"] == "incorrect"
 
 
+def test_evaluation_debug_logs_rag_and_hybrid_combination(
+    tmp_path: Path,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+
+    result, _, _ = run_evaluation(
+        tmp_path=tmp_path,
+        manifest_path=manifest_path,
+        pdf_dir=pdf_dir,
+        data_dir=data_dir,
+        evaluation_set_path=evaluation_set_path,
+        debug=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "DEBUG zabm.rag retrieval-skip mode=none" in result.stderr
+    assert "DEBUG zabm.rag vector query=" in result.stderr
+    assert "DEBUG zabm.rag bm25 path=" in result.stderr
+    assert "DEBUG zabm.rag combine strategy=reciprocal-rank-fusion" in result.stderr
+
+
 def test_evaluation_reports_retrieval_failure_separately_from_answer_generation(
     tmp_path: Path,
 ) -> None:
@@ -604,6 +628,12 @@ def test_evaluation_uses_one_provider_budget_and_run_seed_for_every_baseline(
         "model": "local-test-model",
         "embedding_model": "local-test-embedding",
         "configuration": "evaluation-test-v1",
+    }
+    assert report["source_pack_id"] == "test-evaluation-1"
+    assert set(report["configurations"][0]["spread"]["latency_ms"]) == {
+        "minimum",
+        "median",
+        "maximum",
     }
     baseline_requests = [
         request

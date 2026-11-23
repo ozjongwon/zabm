@@ -756,31 +756,71 @@ def _download_and_ingest(
     return json.loads(download.stdout)
 
 
+def download_and_ingest(
+    manifest_path: Path,
+    evidence_path: Path,
+    data_dir: Path,
+) -> dict[str, Any]:
+    return _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+
 @contextmanager
 def provider_server(
-    generated: dict[str, Any],
+    generated: dict[str, Any] | None = None,
+    *,
+    response_body: bytes | None = None,
+    embedding_response_body: bytes | None = None,
+    embedding_status: int = 200,
 ) -> Generator[tuple[str, list[dict[str, Any]]]]:
+    if generated is None and response_body is None:
+        raise ValueError("provider_server requires generated content or a response body")
     requests: list[dict[str, Any]] = []
 
     class ProviderHandler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
             length = int(self.headers.get("Content-Length", "0"))
             body: dict[str, Any] = json.loads(self.rfile.read(length))
-            requests.append({"path": self.path, "body": body})
-            content = json.dumps(generated)
-            payload = json.dumps(
+            requests.append(
                 {
-                    "choices": [
-                        {
-                            "message": {
-                                "role": "assistant",
-                                "content": content,
-                            }
-                        }
-                    ]
+                    "path": self.path,
+                    "body": body,
+                    "authorization": self.headers.get("Authorization"),
                 }
-            ).encode()
-            self.send_response(200)
+            )
+            status = 200
+            if self.path.endswith("/embeddings"):
+                status = embedding_status
+                payload = (
+                    embedding_response_body
+                    if embedding_response_body is not None
+                    else json.dumps(
+                        {
+                            "data": [
+                                {
+                                    "embedding": [0.1, 0.2, 0.3],
+                                }
+                            ]
+                        }
+                    ).encode()
+                )
+            elif response_body is not None:
+                payload = response_body
+            else:
+                assert generated is not None
+                content = json.dumps(generated)
+                payload = json.dumps(
+                    {
+                        "choices": [
+                            {
+                                "message": {
+                                    "role": "assistant",
+                                    "content": content,
+                                }
+                            }
+                        ]
+                    }
+                ).encode()
+            self.send_response(status)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(payload)))
             self.end_headers()

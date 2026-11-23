@@ -111,9 +111,17 @@ selected procedure evidence with:
 ## Local grounded model path
 
 By default, `zabm ask` uses the deterministic local evidence renderer and needs
-no network service. To use a local open-weight model through an
-OpenAI-compatible server, configure both the chat and embedding model
-identifiers:
+no network service. Select one of four provider modes with `--provider`:
+
+| Provider | Purpose |
+| --- | --- |
+| `deterministic` | Offline evidence renderer; no model request. |
+| `openai-compatible` | Custom/local endpoint with an explicit URL and model. |
+| `openai` | OpenAI API preset using `OPENAI_API_KEY`. |
+| `deepseek` | DeepSeek API preset using `DEEPSEEK_API_KEY`. |
+
+To use a local open-weight model through an OpenAI-compatible server, configure
+both the chat and embedding model identifiers:
 
 ```bash
 ./.venv/bin/python -m zabm ask \
@@ -129,6 +137,115 @@ The same values can be supplied with `ZABM_PROVIDER`,
 `ZABM_PROVIDER_URL`, `ZABM_MODEL`, `ZABM_EMBEDDING_MODEL`, and
 `ZABM_PROVIDER_CONFIGURATION`. `ZABM_PROVIDER_API_KEY` is read only from the
 environment and is never written to a response.
+
+Use the DeepSeek preset with its default `deepseek-flash` model and
+`https://api.deepseek.com` endpoint:
+
+```bash
+export DEEPSEEK_API_KEY="..."
+
+./.venv/bin/python -m zabm ask \
+  "What torque should I use for the RockShox Reverb Standard Remote clamp bolt?" \
+  --provider deepseek
+```
+
+Override the DeepSeek endpoint or model with `--provider-url`/`DEEPSEEK_BASE_URL`
+and `--model`/`DEEPSEEK_MODEL`. The OpenAI preset similarly defaults to
+`https://api.openai.com/v1`, requires `OPENAI_API_KEY`, accepts
+`OPENAI_MODEL`, and defaults to the `text-embedding-3-small` embedding model.
+DeepSeek has no configured embedding model by default, so its identity records
+`not-configured`; current RAG evaluation uses the deterministic local page
+vectors and does not request DeepSeek embeddings.
+
+CLI values take precedence over provider-specific environment variables. The
+generic `ZABM_PROVIDER_API_KEY` can override either typed API key. Named
+provider identities, model, embedding model, and configuration are recorded in
+every canonical response.
+
+Enable interaction tracing with `--debug` or `ZABM_DEBUG=1`:
+
+```bash
+./.venv/bin/python -m zabm ask \
+  "What are the steps for Test Function?" \
+  --provider deepseek \
+  --model deepseek-flash \
+  --debug
+```
+
+Debug events are written to stderr so `--json` output remains machine-readable.
+They use three logger names:
+
+- `zabm.llm`: chat request messages, model/provider/seed, response content, and
+  embedding requests when used.
+- `zabm.agent`: question routing and canonical response summaries.
+- `zabm.rag`: procedure candidates, BM25/vector retrieval, and final
+  reciprocal-rank-fusion output during hybrid evaluation.
+
+API keys are never logged. A terminal evidence failure does not produce an LLM
+request, so a `not_found` response may show routing and RAG events without
+`zabm.llm` events.
+
+### Remote-provider smoke procedure
+
+Use the ignored local environment file for evaluator credentials; never put a
+key in a tracked profile or command transcript. `.env.example` lists every
+supported provider variable and is safe to copy:
+
+```bash
+cp .env.example .env.local
+# Fill OPENAI_API_KEY and OPENAI_MODEL in the ignored .env.local file.
+set -a
+. ./.env.local
+set +a
+```
+
+With the source pack downloaded and ingested, exercise the remote provider
+through the normal answer path and retain the canonical response:
+
+```bash
+./.venv/bin/python -m zabm ask \
+  "What torque should I use for the RockShox Reverb Standard Remote clamp bolt?" \
+  --provider openai \
+  --provider-configuration openai-live-smoke-v1 \
+  --json > /tmp/zabm-openai-smoke.json
+```
+
+The smoke passes when the command exits zero, the response has
+`"provider": "openai"`, the selected model and source-pack version are present,
+and the response contains citations for any supported claim. Authentication,
+timeout, and malformed-response failures exit nonzero with a
+`zabm ask: provider ...` error and do not print a fallback answer.
+
+Exercise both halves of the provider interface with the operational smoke
+command:
+
+```bash
+./.venv/bin/python -m zabm provider-smoke \
+  --provider openai \
+  --provider-configuration openai-live-smoke-v1 \
+  --json
+```
+
+It reports provider/model/configuration identity plus chat and embedding
+request latency. A timeout, unavailable endpoint, malformed completion, or
+embedding count/shape mismatch exits nonzero without printing a success report.
+
+For remote latency and provenance, run the deterministic evaluation fixture
+with the same provider profile. The artifact records the provider, model,
+configuration, source-pack version, and latency spread together:
+
+```bash
+./.venv/bin/python -m zabm evaluation \
+  --evaluation-set data/evaluation/baseline-fixture-v1.json \
+  --output /tmp/zabm-openai-evaluation-smoke.json \
+  --provider openai \
+  --provider-configuration openai-live-smoke-v1
+```
+
+The DeepSeek preset follows the same `ask` and evaluation procedure with
+`--provider deepseek` and `DEEPSEEK_API_KEY`. It records
+`embedding_model: "not-configured"` by default. Run the embedding smoke only
+when `DEEPSEEK_EMBEDDING_MODEL` names a model supported by that endpoint.
 
 The provider may phrase validated claims only. It must return one sentence for
 each supplied claim identifier; missing, extra, or malformed sentences and
@@ -274,16 +391,12 @@ item results identify retrieval failures separately from answer-generation
 failures. Provider, model, configuration versions, source-pack version,
 hardware, runtime, and latency are recorded in the artifact.
 
-To use the same OpenAI-compatible provider for the baseline prompts and full
-agent phrasing, pass the provider options accepted by `zabm ask`:
+Evaluation accepts the same provider profiles:
 
 ```bash
-./.venv/bin/python -m zabm evaluation \
-  --provider openai-compatible \
-  --provider-url http://127.0.0.1:8000/v1 \
-  --model local-open-weight-model \
-  --embedding-model local-embedding-model \
-  --provider-configuration local-evaluation-v1
+export DEEPSEEK_API_KEY="..."
+
+./.venv/bin/python -m zabm evaluation --provider deepseek
 ```
 
 LangSmith is not imported or required. The canonical local JSON artifact is

@@ -6,6 +6,7 @@ import logging
 import os
 import platform
 import sys
+import time
 from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -31,7 +32,7 @@ from zabm.procedures import (
     ingest_retrieval,
     inspect_procedure_evidence,
 )
-from zabm.providers import ProviderError, configured_provider
+from zabm.providers import PROVIDER_NAMES, ProviderError, configured_provider
 from zabm.response import CanonicalResponse
 from zabm.source_pack import (
     FrozenSourcePackError,
@@ -68,6 +69,7 @@ DEFAULT_BASELINE_CONFIG = REPO_ROOT / "data" / "evaluation" / "baseline-config-v
 DEFAULT_EVALUATION_RESULTS = REPO_ROOT / "data" / "evaluation" / "baseline-results-v1.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
+DEBUG_LOG_FORMAT = "%(levelname)s %(name)s %(message)s"
 
 
 class HealthReport(BaseModel):
@@ -83,6 +85,20 @@ def _installed_version(package: str) -> str:
         return version(package)
     except PackageNotFoundError:
         return "not-installed"
+
+
+def _debug_enabled_by_default() -> bool:
+    return os.getenv("ZABM_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _configure_debug_logging(debug: bool) -> None:
+    logging.basicConfig(
+        level=logging.WARNING,
+        format=DEBUG_LOG_FORMAT,
+        stream=sys.stderr,
+        force=True,
+    )
+    logging.getLogger("zabm").setLevel(logging.DEBUG if debug else logging.WARNING)
 
 
 def _build_health_report() -> HealthReport:
@@ -343,6 +359,67 @@ def _render_conflict_record(response: CanonicalResponse) -> str:
             f"retrieved {citation.retrieval_date.isoformat()}"
         )
     return "\n".join(lines)
+
+
+def _provider_smoke_command(
+    as_json: bool,
+    *,
+    provider: str | None,
+    provider_url: str | None,
+    model: str | None,
+    embedding_model: str | None,
+    provider_configuration: str | None,
+) -> int:
+    try:
+        model_provider = configured_provider(
+            provider=provider,
+            base_url=provider_url,
+            model=model,
+            embedding_model=embedding_model,
+            configuration=provider_configuration,
+        )
+        if model_provider is None:
+            raise ProviderError(
+                "provider-smoke requires a model provider; "
+                "select openai-compatible, openai, or deepseek"
+            )
+        started = time.perf_counter()
+        response = model_provider.complete(
+            [{"role": "user", "content": "Reply with OK."}],
+            seed=0,
+        )
+        chat_latency_ms = (time.perf_counter() - started) * 1000
+        started = time.perf_counter()
+        vectors = model_provider.embed(["bicycle clamp bolt torque"])
+        embedding_latency_ms = (time.perf_counter() - started) * 1000
+        if not vectors or not vectors[0]:
+            raise ProviderError("provider returned no embedding vector")
+    except ProviderError as exc:
+        print(f"zabm provider-smoke: {exc}", file=sys.stderr)
+        return 1
+
+    report = {
+        "provider": model_provider.identity.model_dump(mode="json"),
+        "chat": {
+            "response_characters": len(response),
+            "latency_ms": round(chat_latency_ms, 3),
+        },
+        "embeddings": {
+            "input_count": 1,
+            "vector_count": len(vectors),
+            "dimensions": len(vectors[0]),
+            "latency_ms": round(embedding_latency_ms, 3),
+        },
+    }
+    if as_json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        identity = model_provider.identity
+        print(
+            f"Provider smoke passed: {identity.provider}/{identity.model}, "
+            f"embedding {identity.embedding_model} ({len(vectors[0])} dimensions)."
+        )
+    return 0
 
 
 def _ask_command(
@@ -689,6 +766,41 @@ def _evaluation_command(
     return 0
 
 
+def _add_provider_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--provider",
+        choices=PROVIDER_NAMES,
+        default=os.getenv("ZABM_PROVIDER"),
+        help="Provider profile: deterministic, openai-compatible, openai, or deepseek.",
+    )
+    parser.add_argument(
+        "--provider-url",
+        default=os.getenv("ZABM_PROVIDER_URL"),
+        help="Override the provider base URL, including /v1 when required.",
+    )
+    parser.add_argument(
+        "--model",
+        default=os.getenv("ZABM_MODEL"),
+        help="Chat model identifier; defaults depend on the provider profile.",
+    )
+    parser.add_argument(
+        "--embedding-model",
+        default=os.getenv("ZABM_EMBEDDING_MODEL"),
+        help="Embedding model identifier; defaults depend on the provider profile.",
+    )
+    parser.add_argument(
+        "--provider-configuration",
+        default=os.getenv("ZABM_PROVIDER_CONFIGURATION"),
+        help="Stable provider configuration identifier recorded with results.",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        default=_debug_enabled_by_default(),
+        help="Log model, routing, and retrieval interactions to stderr.",
+    )
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="zabm",
@@ -777,33 +889,15 @@ def _parser() -> argparse.ArgumentParser:
         default=DEFAULT_DATA_DIR,
         help="Directory for generated evidence.",
     )
-    ask.add_argument(
-        "--provider",
-        choices=("deterministic", "openai-compatible"),
-        default=os.getenv("ZABM_PROVIDER"),
-        help="Model provider used for validated claim phrasing.",
-    )
-    ask.add_argument(
-        "--provider-url",
-        default=os.getenv("ZABM_PROVIDER_URL"),
-        help="Base URL of an OpenAI-compatible provider, including /v1 when required.",
-    )
-    ask.add_argument(
-        "--model",
-        default=os.getenv("ZABM_MODEL"),
-        help="Model identifier for an OpenAI-compatible provider.",
-    )
-    ask.add_argument(
-        "--embedding-model",
-        default=os.getenv("ZABM_EMBEDDING_MODEL"),
-        help="Embedding model identifier for an OpenAI-compatible provider.",
-    )
-    ask.add_argument(
-        "--provider-configuration",
-        default=os.getenv("ZABM_PROVIDER_CONFIGURATION"),
-        help="Stable configuration identifier recorded in the canonical response.",
-    )
+    _add_provider_arguments(ask)
     ask.add_argument("--json", action="store_true", help="Emit the canonical response.")
+
+    provider_smoke = commands.add_parser(
+        "provider-smoke",
+        help="Exercise the configured chat and embedding provider endpoints.",
+    )
+    _add_provider_arguments(provider_smoke)
+    provider_smoke.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
     evidence = commands.add_parser(
         "evidence",
@@ -946,32 +1040,7 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="Source-pack freeze to verify; defaults for the default source manifest.",
     )
-    evaluation.add_argument(
-        "--provider",
-        choices=("deterministic", "openai-compatible"),
-        default=os.getenv("ZABM_PROVIDER"),
-        help="Provider shared by every baseline configuration.",
-    )
-    evaluation.add_argument(
-        "--provider-url",
-        default=os.getenv("ZABM_PROVIDER_URL"),
-        help="Base URL of an OpenAI-compatible provider.",
-    )
-    evaluation.add_argument(
-        "--model",
-        default=os.getenv("ZABM_MODEL"),
-        help="Model identifier shared by every baseline configuration.",
-    )
-    evaluation.add_argument(
-        "--embedding-model",
-        default=os.getenv("ZABM_EMBEDDING_MODEL"),
-        help="Embedding model identifier shared by every baseline configuration.",
-    )
-    evaluation.add_argument(
-        "--provider-configuration",
-        default=os.getenv("ZABM_PROVIDER_CONFIGURATION"),
-        help="Stable provider configuration identifier.",
-    )
+    _add_provider_arguments(evaluation)
     evaluation.add_argument(
         "--json",
         action="store_true",
@@ -1040,9 +1109,10 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    logging.getLogger("pypdf").setLevel(logging.ERROR)
     overwrite_configuration(stream_parsing_work_maximum_count=20_000_000)
     args = _parser().parse_args(argv)
+    _configure_debug_logging(getattr(args, "debug", False))
+    logging.getLogger("pypdf").setLevel(logging.ERROR)
     if args.command == "health":
         return _health_command(args.json)
     if args.command == "download":
@@ -1061,6 +1131,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _ask_command(
             args.question,
             args.data_dir,
+            args.json,
+            provider=args.provider,
+            provider_url=args.provider_url,
+            model=args.model,
+            embedding_model=args.embedding_model,
+            provider_configuration=args.provider_configuration,
+        )
+    if args.command == "provider-smoke":
+        return _provider_smoke_command(
             args.json,
             provider=args.provider,
             provider_url=args.provider_url,

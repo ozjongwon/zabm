@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 from collections.abc import Iterable
@@ -30,6 +31,8 @@ from zabm.specifications import (
     load_source_manifest,
     write_json,
 )
+
+logger = logging.getLogger("zabm.rag")
 
 WARNING_HEADINGS: dict[str, Literal["warning", "notice"]] = {
     "NOTICE": "notice",
@@ -300,6 +303,20 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
         for procedure in catalog.procedures
         if _matches_question(procedure.title, question)
     ]
+    logger.debug(
+        "procedure-query question=%s match_count=%d matches=%s",
+        question,
+        len(matches),
+        [
+            (
+                procedure.procedure_id,
+                procedure.title,
+                procedure.page_numbers,
+                procedure.validation_issues,
+            )
+            for procedure in matches
+        ],
+    )
     if not matches:
         if not unknown_tokens(
             question,

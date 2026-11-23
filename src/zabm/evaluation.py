@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import math
 import os
 import platform
@@ -28,7 +29,7 @@ from zabm.evaluation_set import (
 )
 from zabm.matching import tokens
 from zabm.procedures import RetrievalCatalog
-from zabm.providers import ModelProvider, ProviderError
+from zabm.providers import ModelProvider
 from zabm.response import (
     CanonicalResponse,
     Claim,
@@ -72,6 +73,8 @@ REQUIRED_CONFIGURATION_IDS: tuple[ConfigurationId, ...] = (
     "full-agent",
 )
 VECTOR_DIMENSIONS = 256
+
+logger = logging.getLogger("zabm.rag")
 
 
 @dataclass(frozen=True)
@@ -522,7 +525,7 @@ def _run_configuration(
     return EvaluationRun(
         run=run_index + 1,
         seed=seed,
-        seed_supported=provider is not None,
+        seed_supported=provider.seed_supported if provider is not None else False,
         temperature=configuration.temperature,
         items=results,
         metrics=_run_metrics(results, elapsed_ms),
@@ -538,15 +541,54 @@ def _retrieve_for_configuration(
     top_k: int,
 ) -> list[RetrievedEvidence] | None:
     if baseline.retrieval_mode == "none":
+        logger.debug("retrieval-skip mode=none query=%s", query)
         return None
     if baseline.retrieval_mode == "vector":
-        return _vector_retrieve(query, vector_index, top_k)
+        results = _vector_retrieve(query, vector_index, top_k)
+        logger.debug(
+            "vector query=%s top_k=%d results=%s",
+            query,
+            top_k,
+            _evidence_trace(results),
+        )
+        return results
 
     bm25_paths = [path for path in configuration.paths if path.kind == "bm25"]
     bm25_path = bm25_paths[0] if bm25_paths else configuration.paths[0]
     lexical = retrieve_evidence(query, catalog, bm25_path, top_k)
     vector = _vector_retrieve(query, vector_index, top_k)
-    return _reciprocal_rank_fusion(lexical, vector, top_k)
+    combined = _reciprocal_rank_fusion(lexical, vector, top_k)
+    logger.debug(
+        "bm25 path=%s query=%s results=%s",
+        bm25_path.id,
+        query,
+        _evidence_trace(lexical),
+    )
+    logger.debug(
+        "vector query=%s results=%s",
+        query,
+        _evidence_trace(vector),
+    )
+    logger.debug(
+        "combine strategy=reciprocal-rank-fusion query=%s bm25=%s vector=%s fused=%s",
+        query,
+        _evidence_trace(lexical),
+        _evidence_trace(vector),
+        _evidence_trace(combined),
+    )
+    return combined
+
+
+def _evidence_trace(evidence: list[RetrievedEvidence]) -> list[tuple[str, int, str, float]]:
+    return [
+        (
+            item.source_id,
+            item.physical_page,
+            item.section,
+            item.score,
+        )
+        for item in evidence
+    ]
 
 
 def _answer_for_configuration(
@@ -564,21 +606,13 @@ def _answer_for_configuration(
     seed: int,
 ) -> CanonicalResponse:
     if baseline.answer_mode == "full-agent":
-        try:
-            return answer_question(
-                question,
-                data_dir,
-                provider,
-                seed=seed,
-                prompt_budget=prompt_budget.value,
-            )
-        except ProviderError as exc:
-            return _baseline_not_found(
-                expected_response_type,
-                f"Full-agent provider request failed: {exc}",
-                provider_identity,
-                manifest.manifest_version,
-            )
+        return answer_question(
+            question,
+            data_dir,
+            provider,
+            seed=seed,
+            prompt_budget=prompt_budget.value,
+        )
     if provider is not None:
         return _provider_baseline_answer(
             question,
@@ -756,7 +790,7 @@ def _provider_baseline_answer(
             seed=seed,
         )
         generated = GeneratedBaselineAnswer.model_validate_json(raw)
-    except (ProviderError, ValidationError, ValueError) as exc:
+    except (ValidationError, ValueError) as exc:
         return _baseline_not_found(
             expected_response_type,
             f"Baseline provider output was rejected: {exc}",

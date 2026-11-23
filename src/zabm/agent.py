@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 from datetime import UTC, datetime
@@ -21,6 +22,8 @@ from zabm.response import (
     default_provider_identity,
 )
 from zabm.specifications import answer_specification
+
+logger = logging.getLogger("zabm.agent")
 
 COMPATIBILITY_CUES = (
     "compatible",
@@ -230,8 +233,9 @@ def answer_question(
     prompt_budget: int | None = None,
 ) -> CanonicalResponse:
     response_type = classify_question(question)
+    logger.debug("route question=%s response_type=%s", question, response_type)
     if response_type == "out_of_scope":
-        return CanonicalResponse(
+        response = CanonicalResponse(
             request_id=os.urandom(16).hex(),
             timestamp=datetime.now(UTC),
             response_type="out_of_scope",
@@ -247,6 +251,8 @@ def answer_question(
             provider=provider.identity if provider is not None else default_provider_identity(),
             source_pack_id="not-consulted",
         )
+        _log_response(response)
+        return response
 
     if response_type == "compatibility":
         response = answer_compatibility(question, data_dir)
@@ -255,17 +261,21 @@ def answer_question(
     else:
         response = answer_specification(question, data_dir)
     if provider is None:
+        _log_response(response)
         return response
     response = response.model_copy(update={"provider": provider.identity})
     if response.status != "supported":
+        _log_response(response)
         return response
-    return _phrase_validated_claims(
+    phrased = _phrase_validated_claims(
         response,
         question,
         provider,
         seed=seed,
         prompt_budget=prompt_budget,
     )
+    _log_response(phrased)
+    return phrased
 
 
 def classify_question(
@@ -278,6 +288,16 @@ def classify_question(
     if _is_procedure_question(question):
         return "procedure"
     return "specification"
+
+
+def _log_response(response: CanonicalResponse) -> None:
+    logger.debug(
+        "response response_type=%s status=%s claims=%d citations=%d",
+        response.response_type,
+        response.status,
+        len(response.claims),
+        len(response.citations),
+    )
 
 
 def _phrase_validated_claims(
