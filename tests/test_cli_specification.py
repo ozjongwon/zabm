@@ -123,32 +123,10 @@ def test_cli_returns_a_verified_specification_with_complete_provenance(
     tmp_path: Path,
 ) -> None:
     manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
-
-    download = run_cli(
-        "download",
-        "--manifest",
-        str(manifest_path),
-        "--data-dir",
-        str(data_dir),
-        "--json",
-    )
-    assert download.returncode == 0, download.stderr
-    download_report = json.loads(download.stdout)
+    download_report = _download_and_ingest(manifest_path, evidence_path, data_dir)
     downloaded_source = Path(download_report["sources"][0]["path"])
     assert downloaded_source.parent == data_dir / "sources"
     assert downloaded_source.is_file()
-
-    ingest = run_cli(
-        "ingest",
-        "--manifest",
-        str(manifest_path),
-        "--evidence",
-        str(evidence_path),
-        "--data-dir",
-        str(data_dir),
-        "--json",
-    )
-    assert ingest.returncode == 0, ingest.stderr
 
     result = run_cli(
         "ask",
@@ -235,6 +213,28 @@ def test_cli_rejects_a_specification_value_not_in_its_evidence_excerpt(
     assert response["specification"] is None
     assert response["claims"] == []
     assert response["citations"] == []
+
+
+def test_cli_rejects_a_numeric_field_not_in_its_evidence_excerpt(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    update_specification(evidence_path, value={"minimum": 3.2})
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post Standard Remote clamp bolt torque?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert "numeric value" in response["failure"]["message"]
+    assert response["specification"] is None
 
 
 def test_cli_rejects_a_specification_with_an_invalid_citation(
@@ -351,7 +351,9 @@ def test_cli_does_not_answer_from_an_unverified_extraction(tmp_path: Path) -> No
     assert response["specification"] is None
 
 
-def _download_and_ingest(manifest_path: Path, evidence_path: Path, data_dir: Path) -> None:
+def _download_and_ingest(
+    manifest_path: Path, evidence_path: Path, data_dir: Path
+) -> dict[str, Any]:
     download = run_cli(
         "download",
         "--manifest",
@@ -373,3 +375,4 @@ def _download_and_ingest(manifest_path: Path, evidence_path: Path, data_dir: Pat
         "--json",
     )
     assert ingest.returncode == 0, ingest.stderr
+    return json.loads(download.stdout)

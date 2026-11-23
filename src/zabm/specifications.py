@@ -369,6 +369,10 @@ def _eligibility_issues(specification: VerifiedSpecification) -> list[str]:
     if not _numbers_match(
         specification.value.display,
         specification.evidence_excerpts,
+        [
+            specification.value.minimum,
+            *([specification.value.maximum] if specification.value.maximum is not None else []),
+        ],
     ):
         issues.append("a numeric value does not match the claim evidence excerpt")
     if (
@@ -397,8 +401,13 @@ def _citation_issues(specification: VerifiedSpecification, pages: list[str]) -> 
     return issues
 
 
-def _numbers_match(claim_text: str, evidence_excerpts: Iterable[str]) -> bool:
-    claim_numbers = NUMBER_PATTERN.findall(_normalize_unit_spelling(claim_text))
+def _numbers_match(
+    claim_text: str,
+    evidence_excerpts: Iterable[str],
+    claim_values: Iterable[float],
+) -> bool:
+    claim_numbers = set(NUMBER_PATTERN.findall(_normalize_unit_spelling(claim_text)))
+    claim_numbers.update(str(value) for value in claim_values)
     evidence_numbers = set(
         NUMBER_PATTERN.findall(_normalize_unit_spelling(" ".join(evidence_excerpts)))
     )
