@@ -18,6 +18,7 @@ from zabm import __version__
 from zabm.agent import answer_question
 from zabm.compatibility import ingest_compatibility
 from zabm.coverage import run_coverage
+from zabm.evaluation import run_evaluation, write_evaluation_artifact
 from zabm.evaluation_set import (
     build_evaluation_report,
     create_evaluation_freeze,
@@ -63,6 +64,8 @@ DEFAULT_SOURCE_FREEZE = REPO_ROOT / "data" / "manifests" / "source-pack-freeze-v
 DEFAULT_COVERAGE_SET = REPO_ROOT / "data" / "coverage" / "coverage-v1.json"
 DEFAULT_EVALUATION_SET = REPO_ROOT / "data" / "evaluation" / "evaluation-set-v1.json"
 DEFAULT_EVALUATION_FREEZE = REPO_ROOT / "data" / "evaluation" / "evaluation-freeze-v1.json"
+DEFAULT_BASELINE_CONFIG = REPO_ROOT / "data" / "evaluation" / "baseline-config-v1.json"
+DEFAULT_EVALUATION_RESULTS = REPO_ROOT / "data" / "evaluation" / "baseline-results-v1.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
 
@@ -608,6 +611,84 @@ def _evaluation_set_command(
     return 0
 
 
+def _evaluation_command(
+    evaluation_set_path: Path,
+    baseline_config_path: Path,
+    retrieval_config_path: Path,
+    manifest_path: Path,
+    pdf_dir: Path,
+    data_dir: Path,
+    output_path: Path,
+    evaluation_freeze_path: Path | None,
+    source_freeze_path: Path | None,
+    as_json: bool,
+    *,
+    provider: str | None,
+    provider_url: str | None,
+    model: str | None,
+    embedding_model: str | None,
+    provider_configuration: str | None,
+) -> int:
+    try:
+        effective_evaluation_freeze = evaluation_freeze_path
+        if (
+            effective_evaluation_freeze is None
+            and evaluation_set_path.resolve() == DEFAULT_EVALUATION_SET.resolve()
+        ):
+            effective_evaluation_freeze = DEFAULT_EVALUATION_FREEZE
+        if effective_evaluation_freeze is not None and effective_evaluation_freeze.is_file():
+            verify_evaluation_freeze(
+                effective_evaluation_freeze,
+                evaluation_set_path,
+                manifest_path,
+                source_freeze_path or DEFAULT_SOURCE_FREEZE,
+            )
+        effective_source_freeze = source_freeze_path
+        if (
+            effective_source_freeze is None
+            and manifest_path.resolve() == DEFAULT_MANIFEST.resolve()
+        ):
+            effective_source_freeze = DEFAULT_SOURCE_FREEZE
+        if effective_source_freeze is not None and effective_source_freeze.is_file():
+            verify_frozen_source_pack(effective_source_freeze, manifest_path)
+        model_provider = configured_provider(
+            provider=provider,
+            base_url=provider_url,
+            model=model,
+            embedding_model=embedding_model,
+            configuration=provider_configuration,
+        )
+        report = run_evaluation(
+            evaluation_set_path=evaluation_set_path,
+            baseline_config_path=baseline_config_path,
+            retrieval_config_path=retrieval_config_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            provider=model_provider,
+        )
+        write_evaluation_artifact(report, output_path)
+    except (OSError, ProviderError, ValueError) as exc:
+        print(f"zabm evaluation: {exc}", file=sys.stderr)
+        return 1
+
+    if as_json:
+        print(json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True))
+    else:
+        print(
+            f"Evaluation {report.evaluation_set_id} completed with "
+            f"{len(report.configurations)} configuration(s)."
+        )
+        for result in report.configurations:
+            spread = result.spread.accuracy
+            print(
+                f"- {result.id}: accuracy median {spread.median:.1%} "
+                f"(range {spread.minimum:.1%}-{spread.maximum:.1%})"
+            )
+        print(f"Results: {output_path}")
+    return 0
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="zabm",
@@ -809,6 +890,94 @@ def _parser() -> argparse.ArgumentParser:
         help="Emit the evaluation-set validation report.",
     )
 
+    evaluation = commands.add_parser(
+        "evaluation",
+        help="Run the four-configuration baseline ladder and write canonical local results.",
+    )
+    evaluation.add_argument(
+        "--evaluation-set",
+        type=Path,
+        default=DEFAULT_EVALUATION_SET,
+        help="Path to the frozen evaluation set or a deterministic fixture set.",
+    )
+    evaluation.add_argument(
+        "--config",
+        type=Path,
+        default=DEFAULT_BASELINE_CONFIG,
+        help="Path to the frozen baseline-ladder configuration.",
+    )
+    evaluation.add_argument(
+        "--retrieval-config",
+        type=Path,
+        default=DEFAULT_RETRIEVAL_CONFIG,
+        help="Path to the frozen retrieval configuration.",
+    )
+    evaluation.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_MANIFEST,
+        help="Path to the frozen source manifest.",
+    )
+    evaluation.add_argument(
+        "--pdf-dir",
+        type=Path,
+        default=DEFAULT_PDF_DIR,
+        help="Directory containing the frozen source PDFs.",
+    )
+    evaluation.add_argument(
+        "--data-dir",
+        type=Path,
+        default=DEFAULT_DATA_DIR,
+        help="Directory containing generated evidence.",
+    )
+    evaluation.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_EVALUATION_RESULTS,
+        help="Canonical local JSON artifact for every baseline and run.",
+    )
+    evaluation.add_argument(
+        "--evaluation-freeze",
+        type=Path,
+        help="Evaluation-set freeze to verify; defaults for the frozen scored set.",
+    )
+    evaluation.add_argument(
+        "--source-freeze",
+        type=Path,
+        help="Source-pack freeze to verify; defaults for the default source manifest.",
+    )
+    evaluation.add_argument(
+        "--provider",
+        choices=("deterministic", "openai-compatible"),
+        default=os.getenv("ZABM_PROVIDER"),
+        help="Provider shared by every baseline configuration.",
+    )
+    evaluation.add_argument(
+        "--provider-url",
+        default=os.getenv("ZABM_PROVIDER_URL"),
+        help="Base URL of an OpenAI-compatible provider.",
+    )
+    evaluation.add_argument(
+        "--model",
+        default=os.getenv("ZABM_MODEL"),
+        help="Model identifier shared by every baseline configuration.",
+    )
+    evaluation.add_argument(
+        "--embedding-model",
+        default=os.getenv("ZABM_EMBEDDING_MODEL"),
+        help="Embedding model identifier shared by every baseline configuration.",
+    )
+    evaluation.add_argument(
+        "--provider-configuration",
+        default=os.getenv("ZABM_PROVIDER_CONFIGURATION"),
+        help="Stable provider configuration identifier.",
+    )
+    evaluation.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the canonical evaluation artifact.",
+    )
+
     retrieval_smoke = commands.add_parser(
         "retrieval-smoke",
         help="Run the retrieval-only source-pack smoke set and optionally freeze the pack.",
@@ -918,6 +1087,24 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.verify_freeze,
             args.maintainer_review,
             args.json,
+        )
+    if args.command == "evaluation":
+        return _evaluation_command(
+            args.evaluation_set,
+            args.config,
+            args.retrieval_config,
+            args.manifest,
+            args.pdf_dir,
+            args.data_dir,
+            args.output,
+            args.evaluation_freeze,
+            args.source_freeze,
+            args.json,
+            provider=args.provider,
+            provider_url=args.provider_url,
+            model=args.model,
+            embedding_model=args.embedding_model,
+            provider_configuration=args.provider_configuration,
         )
     if args.command == "retrieval-smoke":
         return _retrieval_smoke_command(

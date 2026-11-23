@@ -1,0 +1,141 @@
+{
+  "evaluation_set_id": "bicycle-maintenance-baseline-fixture-v1",
+  "source_pack_id": "2026-11-23.3-frozen-1",
+  "frozen_at": "2026-11-24",
+  "maintainer_review": "ticket-11-deterministic-baseline-fixture",
+  "items": [
+    {
+      "id": "spec-fixture-001",
+      "category": "specification",
+      "question": "What is the T25 clamp bolt torque for a RockShox Reverb Standard Remote?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "specification": {
+          "value": {
+            "minimum": 2.8,
+            "maximum": 3.4,
+            "unit": "N·m",
+            "display": "2.8-3.4 N·m (25-30 in-lb)"
+          },
+          "required_qualifiers": [
+            "Remote: Standard Remote",
+            "Fastener: remote clamp bolt",
+            "Tool: T25 TORX wrench",
+            "Service: 50/200 Hour Service"
+          ]
+        }
+      }
+    },
+    {
+      "id": "compat-001",
+      "category": "compatibility",
+      "question": "Is the Reverb Stealth hose barb with barb sleeve compatible with a Reverb Stealth A2 seatpost?",
+      "edge_cases": [
+        "ambiguous_alias"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        }
+      ],
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "compatibility": {
+          "outcome": "compatible",
+          "required_qualifiers": [
+            "Bicycle model: Reverb Stealth",
+            "Revision: A2 and B1",
+            "Connection: hose barb with barb sleeve"
+          ]
+        }
+      }
+    },
+    {
+      "id": "procedure-fixture-001",
+      "category": "procedure",
+      "question": "What are the steps for Test Function?",
+      "edge_cases": [],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 37,
+          "printed_page": 37,
+          "section": "Test Function"
+        },
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 38,
+          "printed_page": 38,
+          "section": "Test Function"
+        }
+      ],
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "procedure": {
+          "title": "Test Function",
+          "steps": [
+            {
+              "number": 1,
+              "text": "Press the remote actuator and push the seatpost down by hand. The seatpost should compress when the remote actuator is depressed and weight is applied to the saddle. Press the remote actuator again. The seatpost should return to full extension when the remote actuator is depressed and weight is removed from the saddle. If the seatpost does not compress or extend, the remote hydraulic volume and pressure may be insufficient. Repeat the Remote and Seatpost Bleed procedure.",
+              "warnings": []
+            },
+            {
+              "number": 2,
+              "text": "Adjust the speed adjuster to the desired setting and repeat step 1. Adjust as desired. Reverb™ 1x™ Remote: Reinstall the boot onto the lever.",
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "not-found-001",
+      "category": "not_found",
+      "question": "What is the RockShox Reverb X1 remote clamp bolt torque?",
+      "edge_cases": [
+        "adjacent_model",
+        "false_premise"
+      ],
+      "evidence": [
+        {
+          "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+          "physical_page": 36,
+          "printed_page": 36,
+          "section": "Saddle, Remote, and Brake Installation"
+        }
+      ],
+      "expected": {
+        "response_type": "specification",
+        "status": "not_found",
+        "failure_contains": "No human-verified structured evidence matches"
+      }
+    },
+    {
+      "id": "oos-001",
+      "category": "out_of_scope",
+      "question": "Which carbon saddle should I buy for my road bike?",
+      "edge_cases": [],
+      "evidence": [],
+      "expected": {
+        "response_type": "out_of_scope",
+        "status": "out_of_scope",
+        "failure_contains": "only answers bicycle maintenance questions"
+      }
+    }
+  ]
+}

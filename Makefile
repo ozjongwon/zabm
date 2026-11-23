@@ -1,4 +1,4 @@
-.PHONY: install install-runtime health download ingest smoke coverage evaluation-set lint typecheck test verify
+.PHONY: install install-runtime health download ingest smoke coverage evaluation-set evaluation evaluation-fixture lint typecheck test verify
 
 PYTHON := .venv/bin/python
 RUFF := .venv/bin/ruff
@@ -27,6 +27,14 @@ coverage:
 
 evaluation-set:
 	$(PYTHON) -m zabm evaluation-set
+
+evaluation:
+	$(PYTHON) -m zabm evaluation
+
+evaluation-fixture:
+	$(PYTHON) -m zabm evaluation \
+		--evaluation-set data/evaluation/baseline-fixture-v1.json \
+		--output data/evaluation/baseline-fixture-results-v1.json
 
 lint:
 	$(RUFF) check .

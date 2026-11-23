@@ -5,6 +5,7 @@ import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -224,8 +225,12 @@ def answer_question(
     question: str,
     data_dir: Path,
     provider: ModelProvider | None = None,
+    *,
+    seed: int = 0,
+    prompt_budget: int | None = None,
 ) -> CanonicalResponse:
-    if _is_out_of_scope(question):
+    response_type = classify_question(question)
+    if response_type == "out_of_scope":
         return CanonicalResponse(
             request_id=os.urandom(16).hex(),
             timestamp=datetime.now(UTC),
@@ -243,9 +248,9 @@ def answer_question(
             source_pack_id="not-consulted",
         )
 
-    if _is_compatibility_question(question):
+    if response_type == "compatibility":
         response = answer_compatibility(question, data_dir)
-    elif _is_procedure_question(question):
+    elif response_type == "procedure":
         response = answer_procedure(question, data_dir)
     else:
         response = answer_specification(question, data_dir)
@@ -254,13 +259,34 @@ def answer_question(
     response = response.model_copy(update={"provider": provider.identity})
     if response.status != "supported":
         return response
-    return _phrase_validated_claims(response, question, provider)
+    return _phrase_validated_claims(
+        response,
+        question,
+        provider,
+        seed=seed,
+        prompt_budget=prompt_budget,
+    )
+
+
+def classify_question(
+    question: str,
+) -> Literal["specification", "compatibility", "procedure", "out_of_scope"]:
+    if _is_out_of_scope(question):
+        return "out_of_scope"
+    if _is_compatibility_question(question):
+        return "compatibility"
+    if _is_procedure_question(question):
+        return "procedure"
+    return "specification"
 
 
 def _phrase_validated_claims(
     response: CanonicalResponse,
     question: str,
     provider: ModelProvider,
+    *,
+    seed: int,
+    prompt_budget: int | None,
 ) -> CanonicalResponse:
     prompt = {
         "question": question,
@@ -273,22 +299,25 @@ def _phrase_validated_claims(
             for claim in response.claims
         ],
     }
+    system_content = (
+        "Phrase every supplied validated claim once. Do not add advice, "
+        "causes, assurances, substitutions, citations, statuses, or numbers "
+        "that are absent from the claim. Return only JSON with a sentences "
+        "array; each sentence must contain claim_id and text."
+    )
+    user_content = json.dumps(prompt, ensure_ascii=False)
+    if prompt_budget is not None and len(system_content) + len(user_content) > prompt_budget:
+        return _reject_generated_answer(
+            response,
+            "Generated answer was not requested because the phrasing prompt exceeded "
+            "the frozen prompt budget.",
+        )
     raw = provider.complete(
         [
-            {
-                "role": "system",
-                "content": (
-                    "Phrase every supplied validated claim once. Do not add advice, "
-                    "causes, assurances, substitutions, citations, statuses, or numbers "
-                    "that are absent from the claim. Return only JSON with a sentences "
-                    "array; each sentence must contain claim_id and text."
-                ),
-            },
-            {
-                "role": "user",
-                "content": json.dumps(prompt, ensure_ascii=False),
-            },
-        ]
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_content},
+        ],
+        seed=seed,
     )
     try:
         generated = GeneratedProse.model_validate_json(raw)

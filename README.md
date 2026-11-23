@@ -239,6 +239,56 @@ requires a reviewed replacement freeze and a complete evaluation rerun:
 
 No answer-accuracy baseline is run by this command.
 
+## Baseline ladder
+
+Run LLM-only, plain RAG, hybrid retrieval, and the full agent under the same
+frozen questions, provider, prompt budget, decoding settings, and runtime:
+
+```bash
+make evaluation
+```
+
+The command verifies the default evaluation-set and source-pack freezes,
+runs every configuration three times at temperature zero with recorded seeds,
+and writes `data/evaluation/baseline-results-v1.json`. Every run remains in the
+artifact. Accuracy and latency spreads are calculated from those runs rather
+than replacing them with a best result.
+
+Run the small deterministic fixture suite for a quicker end-to-end check:
+
+```bash
+make evaluation-fixture
+```
+
+The fixture is `data/evaluation/baseline-fixture-v1.json`; its canonical output
+is `data/evaluation/baseline-fixture-results-v1.json`. The fixture covers a
+supported specification, compatibility result, complete procedure, not-found
+case, and out-of-scope request across all four configurations and three runs.
+
+The report grades specification values, ranges, units, and qualifiers;
+compatibility outcomes and statuses exactly; and procedures through a
+reviewable per-step and per-warning checklist with deterministic pass/fail.
+Every supported response also records citation validity and any unsupported
+numbers. Recall@5 and MRR are reported independently from answer accuracy, and
+item results identify retrieval failures separately from answer-generation
+failures. Provider, model, configuration versions, source-pack version,
+hardware, runtime, and latency are recorded in the artifact.
+
+To use the same OpenAI-compatible provider for the baseline prompts and full
+agent phrasing, pass the provider options accepted by `zabm ask`:
+
+```bash
+./.venv/bin/python -m zabm evaluation \
+  --provider openai-compatible \
+  --provider-url http://127.0.0.1:8000/v1 \
+  --model local-open-weight-model \
+  --embedding-model local-embedding-model \
+  --provider-configuration local-evaluation-v1
+```
+
+LangSmith is not imported or required. The canonical local JSON artifact is
+written before any optional remote mirroring.
+
 ## Retrieval-only freeze
 
 Retrieval usability is checked before answer-accuracy work with a fixed

@@ -17,7 +17,12 @@ class ProviderError(RuntimeError):
 class ModelProvider(Protocol):
     identity: ProviderIdentity
 
-    def complete(self, messages: Sequence[dict[str, str]]) -> str: ...
+    def complete(
+        self,
+        messages: Sequence[dict[str, str]],
+        *,
+        seed: int = 0,
+    ) -> str: ...
 
     def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
 
@@ -43,14 +48,19 @@ class OpenAICompatibleProvider:
             configuration=configuration,
         )
 
-    def complete(self, messages: Sequence[dict[str, str]]) -> str:
+    def complete(
+        self,
+        messages: Sequence[dict[str, str]],
+        *,
+        seed: int = 0,
+    ) -> str:
         payload = self._post(
             "/chat/completions",
             {
                 "model": self.identity.model,
                 "messages": list(messages),
                 "temperature": 0,
-                "seed": 0,
+                "seed": seed,
             },
         )
         try:

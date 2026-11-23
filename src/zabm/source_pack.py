@@ -266,6 +266,15 @@ def run_retrieval_smoke(
     )
 
 
+def retrieve_evidence(
+    query: str,
+    catalog: RetrievalCatalog,
+    path: RetrievalPath,
+    top_k: int,
+) -> list[RetrievedEvidence]:
+    return _retrieve(query, _retrieval_units(catalog), path, top_k)
+
+
 def write_retrieval_smoke_report(report: RetrievalSmokeReport, report_path: Path) -> None:
     report_path.parent.mkdir(parents=True, exist_ok=True)
     write_json(report_path, report.model_dump(mode="json"))

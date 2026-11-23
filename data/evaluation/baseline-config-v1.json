@@ -1,0 +1,40 @@
+{
+  "configuration_id": "baseline-ladder-v1",
+  "frozen_at": "2026-11-24",
+  "maintainer_review": "ticket-11-baseline-ladder-review",
+  "prompt_version": "baseline-prompts-v1",
+  "configurations": [
+    {
+      "answer_mode": "no-evidence",
+      "id": "llm-only",
+      "retrieval_mode": "none"
+    },
+    {
+      "answer_mode": "retrieval",
+      "id": "plain-rag",
+      "retrieval_mode": "vector"
+    },
+    {
+      "answer_mode": "retrieval",
+      "id": "hybrid-retrieval",
+      "retrieval_mode": "hybrid"
+    },
+    {
+      "answer_mode": "full-agent",
+      "id": "full-agent",
+      "retrieval_mode": "hybrid"
+    }
+  ],
+  "prompt_budget": {
+    "unit": "characters",
+    "value": 12000
+  },
+  "retrieval_top_k": 5,
+  "runs_per_configuration": 3,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "temperature": 0
+}
