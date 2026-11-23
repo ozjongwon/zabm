@@ -355,6 +355,11 @@ def _download_and_ingest(
     manifest_path: Path, evidence_path: Path, data_dir: Path
 ) -> dict[str, Any]:
     pdf_dir = data_dir.parent / "pdf-doc"
+    compatibility_evidence_path = evidence_path.with_name("verified-compatibility.json")
+    compatibility_evidence_path.write_text(
+        json.dumps({"compatibility_rules": []}),
+        encoding="utf-8",
+    )
     download = run_cli(
         "download",
         "--manifest",
@@ -371,6 +376,8 @@ def _download_and_ingest(
         str(manifest_path),
         "--evidence",
         str(evidence_path),
+        "--compatibility-evidence",
+        str(compatibility_evidence_path),
         "--pdf-dir",
         str(pdf_dir),
         "--data-dir",

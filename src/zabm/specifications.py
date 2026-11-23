@@ -8,11 +8,19 @@ import unicodedata
 from collections.abc import Iterable
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Literal
 from urllib.request import Request, urlopen
 
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
+
+from zabm.response import (
+    CanonicalResponse,
+    Claim,
+    Failure,
+    SpecificationAnswer,
+    SpecificationValue,
+    StoredCitation,
+)
 
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 NUMBER_PATTERN = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
@@ -31,13 +39,6 @@ class SourceRecord(BaseModel):
 class SourceManifest(BaseModel):
     manifest_version: str
     sources: list[SourceRecord]
-
-
-class SpecificationValue(BaseModel):
-    minimum: float
-    maximum: float | None = None
-    unit: str
-    display: str
 
 
 class CitationTarget(BaseModel):
@@ -71,17 +72,6 @@ class VerifiedSpecificationFile(BaseModel):
     specifications: list[VerifiedSpecification]
 
 
-class StoredCitation(BaseModel):
-    document_id: str
-    title: str
-    manufacturer: str
-    printed_page: int
-    physical_page: int
-    section: str
-    retrieval_date: date
-    source_manifest_version: str
-
-
 class StoredSpecification(BaseModel):
     specification: VerifiedSpecification
     citation: StoredCitation
@@ -107,39 +97,6 @@ class IngestReport(BaseModel):
     validation_issues: list[str]
 
 
-class Failure(BaseModel):
-    code: Literal["not_found"]
-    message: str
-
-
-class Claim(BaseModel):
-    claim_id: str
-    text: str
-    evidence_ids: list[str]
-
-
-class SpecificationAnswer(BaseModel):
-    manufacturer: str
-    model: str
-    component: str
-    attribute: str
-    value: SpecificationValue
-    conditions: list[str]
-
-
-class CanonicalResponse(BaseModel):
-    request_id: str
-    timestamp: datetime
-    response_type: Literal["specification"]
-    language: Literal["en"]
-    status: Literal["supported", "not_found"]
-    failure: Failure | None = None
-    claims: list[Claim] = Field(default_factory=list[Claim])
-    specification: SpecificationAnswer | None = None
-    citations: list[StoredCitation] = Field(default_factory=list[StoredCitation])
-    source_pack_id: str
-
-
 class SourceIntegrityError(RuntimeError):
     pass
 
@@ -154,6 +111,44 @@ def load_source_manifest(path: Path) -> SourceManifest:
 
 def load_verified_specifications(path: Path) -> VerifiedSpecificationFile:
     return VerifiedSpecificationFile.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def load_source_pages(manifest: SourceManifest, pdf_dir: Path) -> dict[str, list[str]]:
+    page_texts: dict[str, list[str]] = {}
+    for source in manifest.sources:
+        source_path = pdf_dir / f"{source.id}.pdf"
+        if not source_path.is_file():
+            raise IngestionError(f"source {source.id} has not been downloaded")
+        if file_sha256(source_path) != source.sha256:
+            raise IngestionError(f"source {source.id} does not match the manifest hash")
+
+        reader = PdfReader(source_path)
+        page_texts[source.id] = [
+            unicodedata.normalize("NFKC", page.extract_text() or "") for page in reader.pages
+        ]
+    return page_texts
+
+
+def citation_issues(
+    citation: CitationTarget,
+    evidence_excerpts: Iterable[str],
+    pages: list[str],
+) -> list[str]:
+    issues: list[str] = []
+    physical_page = citation.physical_page
+    if physical_page < 1 or physical_page > len(pages):
+        issues.append(f"physical page {physical_page} is outside the document")
+        return issues
+
+    page_text = normalize_text(pages[physical_page - 1])
+    if normalize_text(str(citation.printed_page)) not in page_text:
+        issues.append("printed page number is not present on the cited physical page")
+    if normalize_text(citation.section) not in page_text:
+        issues.append("cited section is not present on the physical page")
+    for excerpt in evidence_excerpts:
+        if normalize_text(excerpt) not in page_text:
+            issues.append("evidence excerpt is not present on the cited physical page")
+    return issues
 
 
 def download_sources(manifest_path: Path, pdf_dir: Path) -> DownloadReport:
@@ -208,19 +203,7 @@ def ingest_sources(
     manifest = load_source_manifest(manifest_path)
     evidence = load_verified_specifications(evidence_path)
     sources = {source.id: source for source in manifest.sources}
-    page_texts: dict[str, list[str]] = {}
-
-    for source in manifest.sources:
-        source_path = pdf_dir / f"{source.id}.pdf"
-        if not source_path.is_file():
-            raise IngestionError(f"source {source.id} has not been downloaded")
-        if _file_sha256(source_path) != source.sha256:
-            raise IngestionError(f"source {source.id} does not match the manifest hash")
-
-        reader = PdfReader(source_path)
-        page_texts[source.id] = [
-            unicodedata.normalize("NFKC", page.extract_text() or "") for page in reader.pages
-        ]
+    page_texts = load_source_pages(manifest, pdf_dir)
 
     stored: list[StoredSpecification] = []
     all_issues: list[str] = []
@@ -232,7 +215,13 @@ def ingest_sources(
             pages: list[str] = []
         else:
             pages = page_texts[specification.source_id]
-            issues.extend(_citation_issues(specification, pages))
+            issues.extend(
+                citation_issues(
+                    specification.citation,
+                    specification.evidence_excerpts,
+                    pages,
+                )
+            )
 
         issues.extend(_eligibility_issues(specification))
         citation = StoredCitation(
@@ -260,7 +249,7 @@ def ingest_sources(
     )
     generated_dir = data_dir / "generated"
     generated_dir.mkdir(parents=True, exist_ok=True)
-    _write_json(generated_dir / "specifications.json", catalog.model_dump(mode="json"))
+    write_json(generated_dir / "specifications.json", catalog.model_dump(mode="json"))
 
     return IngestReport(
         source_pack_id=manifest.manifest_version,
@@ -383,24 +372,6 @@ def _eligibility_issues(specification: VerifiedSpecification) -> list[str]:
     return issues
 
 
-def _citation_issues(specification: VerifiedSpecification, pages: list[str]) -> list[str]:
-    issues: list[str] = []
-    physical_page = specification.citation.physical_page
-    if physical_page < 1 or physical_page > len(pages):
-        issues.append(f"physical page {physical_page} is outside the document")
-        return issues
-
-    page_text = _normalize_text(pages[physical_page - 1])
-    if _normalize_text(str(specification.citation.printed_page)) not in page_text:
-        issues.append("printed page number is not present on the cited physical page")
-    if _normalize_text(specification.citation.section) not in page_text:
-        issues.append("cited section is not present on the physical page")
-    for excerpt in specification.evidence_excerpts:
-        if _normalize_text(excerpt) not in page_text:
-            issues.append("evidence excerpt is not present on the cited physical page")
-    return issues
-
-
 def _numbers_match(
     claim_text: str,
     evidence_excerpts: Iterable[str],
@@ -427,28 +398,28 @@ def _normalize_unit_spelling(text: str) -> str:
     return normalized
 
 
-def _normalize_text(text: str) -> str:
+def normalize_text(text: str) -> str:
     normalized = _normalize_unit_spelling(text).casefold()
     return " ".join(normalized.split())
 
 
 def _matches_question(specification: VerifiedSpecification, question: str) -> bool:
-    normalized_question = _normalize_text(question)
+    normalized_question = normalize_text(question)
     required_terms = [
         specification.model,
         specification.component,
         specification.attribute,
     ]
-    if all(_normalize_text(term) in normalized_question for term in required_terms):
+    if all(normalize_text(term) in normalized_question for term in required_terms):
         return True
     return any(
-        _normalize_text(alias) in normalized_question
+        normalize_text(alias) in normalized_question
         for alias in specification.aliases
         if alias.strip()
     )
 
 
-def _file_sha256(path: Path) -> str:
+def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as source:
         while chunk := source.read(DOWNLOAD_CHUNK_SIZE):
@@ -456,7 +427,7 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _write_json(path: Path, payload: object) -> None:
+def write_json(path: Path, payload: object) -> None:
     temporary = path.with_suffix(f"{path.suffix}.part")
     temporary.write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n",

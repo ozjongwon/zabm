@@ -1,0 +1,84 @@
+{
+  "compatibility_rules": [
+    {
+      "id": "sram-reverb-stealth-barb-sleeve-a2-b1",
+      "component_a": {
+        "manufacturer": "SRAM (RockShox)",
+        "name": "Reverb Stealth hose barb with barb sleeve",
+        "aliases": [
+          "hose barb with barb sleeve",
+          "Reverb Stealth hose barb and barb sleeve"
+        ]
+      },
+      "component_b": {
+        "manufacturer": "SRAM (RockShox)",
+        "name": "Reverb Stealth A2 or B1 seatpost",
+        "aliases": [
+          "Reverb Stealth A2 seatpost",
+          "Reverb Stealth B1 seatpost"
+        ]
+      },
+      "outcome": "compatible",
+      "conditions": [
+        "Bicycle model: Reverb Stealth",
+        "Revision: A2 and B1",
+        "Connection: hose barb with barb sleeve"
+      ],
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "citation": {
+        "printed_page": 11,
+        "physical_page": 11,
+        "section": "Hydraulic Hose Replacement"
+      },
+      "evidence_excerpts": [
+        "There are three Reverb™ Stealth hydraulic hose connection types. Verify compatibility before beginning hose replacement process.",
+        "1. Hose barb with barb sleeve (compatible with Reverb Stealth A2 and B1)"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
+    },
+    {
+      "id": "sram-reverb-hydraulic-system-dot-contaminated-syringe",
+      "component_a": {
+        "manufacturer": "SRAM (RockShox)",
+        "name": "RockShox Reverb hydraulic system",
+        "aliases": [
+          "Reverb hydraulic system",
+          "RockShox Reverb seatpost hydraulic system"
+        ]
+      },
+      "component_b": {
+        "manufacturer": "Unspecified",
+        "name": "syringe previously exposed to DOT brake fluid",
+        "aliases": [
+          "DOT-contaminated syringe",
+          "syringe used with DOT brake fluid"
+        ]
+      },
+      "outcome": "not_compatible",
+      "conditions": [
+        "Fluid: DOT brake fluid",
+        "Seatpost: RockShox Reverb",
+        "Component: syringe that has contacted DOT brake fluid"
+      ],
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "citation": {
+        "printed_page": 26,
+        "physical_page": 26,
+        "section": "Remote Syringe Preparation"
+      },
+      "evidence_excerpts": [
+        "Do not use syringes that have been in contact with DOT brake fluid.",
+        "DOT brake fluid will permanently damage the seals and cause the seatpost to malfunction."
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
+    }
+  ]
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import re
 import sys
 from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, version
@@ -12,8 +13,9 @@ from typing import Literal
 from pydantic import BaseModel
 
 from zabm import __version__
+from zabm.compatibility import answer_compatibility, ingest_compatibility
+from zabm.response import CanonicalResponse
 from zabm.specifications import (
-    CanonicalResponse,
     IngestionError,
     SourceIntegrityError,
     answer_specification,
@@ -26,8 +28,17 @@ PINNED_DEPENDENCIES = {"pydantic": "2.14.3", "pypdf": "6.21.4"}
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = REPO_ROOT / "data" / "manifests" / "source-pack-v1.json"
 DEFAULT_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-specifications.json"
+DEFAULT_COMPATIBILITY_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-compatibility.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
+COMPATIBILITY_CUES = (
+    "compatible",
+    "compatibility",
+    "fit together",
+    "use together",
+    "used together",
+    "work together",
+)
 
 
 class HealthReport(BaseModel):
@@ -110,25 +121,50 @@ def _download_command(manifest: Path, pdf_dir: Path, as_json: bool) -> int:
 def _ingest_command(
     manifest: Path,
     evidence: Path,
+    compatibility_evidence: Path,
     pdf_dir: Path,
     data_dir: Path,
     as_json: bool,
 ) -> int:
     try:
         report = ingest_sources(manifest, evidence, pdf_dir, data_dir)
+        compatibility_report = ingest_compatibility(
+            manifest,
+            compatibility_evidence,
+            pdf_dir,
+            data_dir,
+        )
     except (OSError, IngestionError, ValueError) as exc:
         print(f"zabm ingest: {exc}", file=sys.stderr)
         return 1
 
     if as_json:
-        print(json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True))
+        combined_report = {
+            **report.model_dump(mode="json"),
+            "compatibility_rule_count": compatibility_report.compatibility_rule_count,
+            "eligible_compatibility_rule_count": (
+                compatibility_report.eligible_compatibility_rule_count
+            ),
+            "validation_issues": [
+                *report.validation_issues,
+                *compatibility_report.validation_issues,
+            ],
+        }
+        print(json.dumps(combined_report, indent=2, sort_keys=True))
     else:
         print(
             f"Ingested {report.specification_count} specification(s) from "
             f"{report.source_count} source(s); "
             f"{report.eligible_specification_count} eligible."
         )
-        for issue in report.validation_issues:
+        print(
+            f"Ingested {compatibility_report.compatibility_rule_count} compatibility "
+            f"rule(s); {compatibility_report.eligible_compatibility_rule_count} eligible."
+        )
+        for issue in [
+            *report.validation_issues,
+            *compatibility_report.validation_issues,
+        ]:
             print(f"- rejected: {issue}", file=sys.stderr)
     return 0
 
@@ -137,6 +173,22 @@ def _render_response(response: CanonicalResponse) -> str:
     if response.status == "not_found":
         assert response.failure is not None
         return f"not_found: {response.failure.message}"
+
+    if response.response_type == "compatibility":
+        assert response.compatibility is not None
+        compatibility = response.compatibility
+        assert compatibility.component_a is not None
+        assert compatibility.component_b is not None
+        citation = response.citations[0]
+        conditions = "; ".join(compatibility.conditions)
+        return (
+            f"{compatibility.component_a.name} with {compatibility.component_b.name}: "
+            f"{compatibility.outcome}\n"
+            f"Conditions: {conditions}\n"
+            f"Source: {citation.title}, printed page {citation.printed_page}, "
+            f"physical page {citation.physical_page}, {citation.section}, "
+            f"retrieved {citation.retrieval_date.isoformat()}"
+        )
 
     assert response.specification is not None
     specification = response.specification
@@ -154,12 +206,28 @@ def _render_response(response: CanonicalResponse) -> str:
 
 
 def _ask_command(question: str, data_dir: Path, as_json: bool) -> int:
-    response = answer_specification(question, data_dir)
+    response = (
+        answer_compatibility(question, data_dir)
+        if _is_compatibility_question(question)
+        else answer_specification(question, data_dir)
+    )
     if as_json:
         print(json.dumps(response.model_dump(mode="json"), indent=2, sort_keys=True))
     else:
         print(_render_response(response))
     return 0
+
+
+def _is_compatibility_question(question: str) -> bool:
+    normalized_question = question.casefold()
+    if any(cue in normalized_question for cue in COMPATIBILITY_CUES):
+        return True
+    return bool(
+        re.search(
+            r"\b(?:can|could|may|should)\b[^?]*\buse(?:d)?\b[^?]*\bwith\b",
+            normalized_question,
+        )
+    )
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -215,6 +283,12 @@ def _parser() -> argparse.ArgumentParser:
         help="Path to the human-verified structured evidence.",
     )
     ingest.add_argument(
+        "--compatibility-evidence",
+        type=Path,
+        default=DEFAULT_COMPATIBILITY_EVIDENCE,
+        help="Path to the human-verified compatibility evidence.",
+    )
+    ingest.add_argument(
         "--pdf-dir",
         type=Path,
         default=DEFAULT_PDF_DIR,
@@ -253,6 +327,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _ingest_command(
             args.manifest,
             args.evidence,
+            args.compatibility_evidence,
             args.pdf_dir,
             args.data_dir,
             args.json,
