@@ -6,6 +6,25 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class ProviderIdentity(BaseModel):
+    provider: str
+    model: str
+    embedding_model: str
+    configuration: str
+
+
+DEFAULT_PROVIDER_IDENTITY = ProviderIdentity(
+    provider="local-deterministic",
+    model="evidence-renderer-v1",
+    embedding_model="canonical-alias-index-v1",
+    configuration="offline-v1",
+)
+
+
+def default_provider_identity() -> ProviderIdentity:
+    return DEFAULT_PROVIDER_IDENTITY.model_copy()
+
+
 class SpecificationValue(BaseModel):
     minimum: float
     maximum: float | None = None
@@ -25,8 +44,13 @@ class StoredCitation(BaseModel):
 
 
 class Failure(BaseModel):
-    code: Literal["not_found"]
+    code: Literal["not_found", "out_of_scope"]
     message: str
+
+
+class Clarification(BaseModel):
+    message: str
+    missing_information: list[str]
 
 
 class Claim(BaseModel):
@@ -78,13 +102,15 @@ class ProcedureAnswer(BaseModel):
 class CanonicalResponse(BaseModel):
     request_id: str
     timestamp: datetime
-    response_type: Literal["specification", "compatibility", "procedure"]
+    response_type: Literal["specification", "compatibility", "procedure", "out_of_scope"]
     language: Literal["en"]
-    status: Literal["supported", "not_found"]
+    status: Literal["supported", "clarification_required", "not_found", "out_of_scope"]
     failure: Failure | None = None
+    clarification: Clarification | None = None
     claims: list[Claim] = Field(default_factory=list[Claim])
     specification: SpecificationAnswer | None = None
     compatibility: CompatibilityAnswer | None = None
     procedure: ProcedureAnswer | None = None
     citations: list[StoredCitation] = Field(default_factory=list[StoredCitation])
+    provider: ProviderIdentity = Field(default_factory=default_provider_identity)
     source_pack_id: str

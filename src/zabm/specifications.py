@@ -13,9 +13,11 @@ from urllib.request import Request, urlopen
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
+from zabm.matching import identity_matches, tokens, unknown_tokens
 from zabm.response import (
     CanonicalResponse,
     Claim,
+    Clarification,
     Failure,
     SpecificationAnswer,
     SpecificationValue,
@@ -273,13 +275,23 @@ def answer_specification(question: str, data_dir: Path) -> CanonicalResponse:
         item for item in catalog.specifications if _matches_question(item.specification, question)
     ]
     if not matches:
+        missing = [
+            fields
+            for item in catalog.specifications
+            if (fields := _missing_identity_fields(item.specification, question))
+        ]
+        if missing:
+            return _clarification_response(
+                min(missing, key=len),
+                source_pack_id=catalog.source_pack_id,
+            )
         return _not_found(
             "No human-verified structured evidence matches this specification.",
             source_pack_id=catalog.source_pack_id,
         )
     if len(matches) > 1:
-        return _not_found(
-            "More than one verified specification matches; a narrower component is required.",
+        return _clarification_required(
+            [item.specification for item in matches],
             source_pack_id=catalog.source_pack_id,
         )
 
@@ -331,6 +343,92 @@ def _not_found(message: str, source_pack_id: str) -> CanonicalResponse:
         language="en",
         status="not_found",
         failure=Failure(code="not_found", message=message),
+        source_pack_id=source_pack_id,
+    )
+
+
+def _clarification_required(
+    specifications: list[VerifiedSpecification],
+    *,
+    source_pack_id: str,
+) -> CanonicalResponse:
+    missing: list[str] = []
+    if len({item.model for item in specifications}) > 1:
+        missing.append("model")
+    if len({item.component for item in specifications}) > 1:
+        missing.append("component")
+    if len({item.attribute for item in specifications}) > 1:
+        missing.append("attribute")
+    sides = {
+        next(
+            (
+                condition.split(":", maxsplit=1)[1].strip().casefold()
+                for condition in item.conditions
+                if condition.casefold().startswith("side:")
+            ),
+            "",
+        )
+        for item in specifications
+    }
+    if len(sides) > 1:
+        missing.append("side")
+    if not missing:
+        missing.append("component")
+    return _clarification_response(missing, source_pack_id=source_pack_id)
+
+
+def _missing_identity_fields(
+    specification: VerifiedSpecification,
+    question: str,
+) -> list[str]:
+    supporting = [
+        specification.manufacturer,
+        specification.value.unit,
+        specification.value.display,
+        *specification.conditions,
+    ]
+    unknown = unknown_tokens(
+        question,
+        identifiers=[
+            specification.model,
+            specification.component,
+            specification.attribute,
+        ],
+        aliases=specification.aliases,
+        supporting=supporting,
+    )
+    if unknown:
+        return []
+
+    question_tokens = set(tokens(question))
+    alias_tokens = [set(tokens(alias)) for alias in specification.aliases if alias.strip()]
+    alias_matched = any(tokens_for_alias <= question_tokens for tokens_for_alias in alias_tokens)
+    missing: list[str] = []
+    if not alias_matched and not set(tokens(specification.model)) <= question_tokens:
+        missing.append("model")
+    if not alias_matched and not set(tokens(specification.component)) <= question_tokens:
+        missing.append("component")
+    if not alias_matched and not set(tokens(specification.attribute)) <= question_tokens:
+        missing.append("attribute")
+    return missing
+
+
+def _clarification_response(
+    missing: list[str],
+    *,
+    source_pack_id: str,
+) -> CanonicalResponse:
+    message = f"Please identify the exact {' and '.join(missing)}."
+    return CanonicalResponse(
+        request_id=os.urandom(16).hex(),
+        timestamp=datetime.now(UTC),
+        response_type="specification",
+        language="en",
+        status="clarification_required",
+        clarification=Clarification(
+            message=message,
+            missing_information=missing,
+        ),
         source_pack_id=source_pack_id,
     )
 
@@ -404,18 +502,20 @@ def normalize_text(text: str) -> str:
 
 
 def _matches_question(specification: VerifiedSpecification, question: str) -> bool:
-    normalized_question = normalize_text(question)
-    required_terms = [
-        specification.model,
-        specification.component,
-        specification.attribute,
-    ]
-    if all(normalize_text(term) in normalized_question for term in required_terms):
-        return True
-    return any(
-        normalize_text(alias) in normalized_question
-        for alias in specification.aliases
-        if alias.strip()
+    return identity_matches(
+        question,
+        identifiers=[
+            specification.model,
+            specification.component,
+            specification.attribute,
+        ],
+        aliases=specification.aliases,
+        supporting=[
+            specification.manufacturer,
+            specification.value.unit,
+            specification.value.display,
+            *specification.conditions,
+        ],
     )
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
@@ -7,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+from test_cli_specification import provider_server
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -340,6 +343,54 @@ def test_cli_returns_compatible_for_an_explicit_manufacturer_rule(tmp_path: Path
     ]
 
 
+def test_cli_uses_the_local_provider_for_compatibility_phrasing(tmp_path: Path) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-barb-trail-post-a2",
+                "text": (
+                    "The hose barb with barb sleeve is compatible with the "
+                    "Trail Post A2 or B1 seatpost."
+                ),
+            }
+        ]
+    }
+
+    with provider_server(generated) as (provider_url, requests):
+        result = run_cli(
+            "ask",
+            "Is the hose barb with barb sleeve compatible with the Trail Post A2 seatpost?",
+            "--data-dir",
+            str(data_dir),
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["compatibility"]["outcome"] == "compatible"
+    assert response["provider"]["provider"] == "openai-compatible"
+    assert response["claims"][0]["text"].endswith("Trail Post A2 or B1 seatpost.")
+    assert len(requests) == 1
+
+
 def test_cli_returns_not_compatible_for_an_explicit_manufacturer_prohibition(
     tmp_path: Path,
 ) -> None:
@@ -480,6 +531,142 @@ def test_cli_does_not_infer_compatibility_from_matching_dimensions(
     assert response["failure"]["code"] == "not_found"
     assert response["claims"] == []
     assert response["citations"] == []
+
+
+def test_cli_refuses_a_false_premise_connector_without_a_nearby_substitute(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Is a hose barb with barb sleeve V2 compatible with the Trail Post A2 seatpost?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert response["compatibility"]["outcome"] == "not_found"
+    assert response["compatibility"]["component_a"] is None
+    assert response["compatibility"]["component_b"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
+
+
+def test_cli_asks_for_the_component_when_a_compatibility_alias_is_ambiguous(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    payload = json.loads(compatibility_evidence_path.read_text(encoding="utf-8"))
+    first = payload["compatibility_rules"][0]
+    first["component_a"]["aliases"].append("Trail Post hose connector")
+    second = copy.deepcopy(first)
+    second["id"] = "test-barb-type-b-trail-post-a2"
+    second["component_a"]["name"] = "hose barb with barb sleeve Type B"
+    second["component_a"]["aliases"] = ["Trail Post hose connector"]
+    payload["compatibility_rules"].append(second)
+    compatibility_evidence_path.write_text(json.dumps(payload), encoding="utf-8")
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Is the Trail Post hose connector compatible with the Trail Post A2 seatpost?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
+    assert response["clarification"] == {
+        "message": "Please identify the exact component.",
+        "missing_information": ["component"],
+    }
+    assert response["compatibility"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
+
+
+def test_cli_asks_for_the_missing_component_of_a_compatibility_pair(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Is the hose barb with barb sleeve compatible?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
+    assert response["clarification"] == {
+        "message": "Please identify the exact component.",
+        "missing_information": ["component"],
+    }
+    assert response["compatibility"] is None
+    assert response["claims"] == []
+
+
+def test_cli_asks_for_a_component_when_the_compatibility_request_has_no_subject(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Is it compatible?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
+    assert response["clarification"] == {
+        "message": "Please identify the exact component.",
+        "missing_information": ["component"],
+    }
+    assert response["compatibility"] is None
 
 
 def test_cli_rejects_dimension_only_evidence_labelled_as_compatible(

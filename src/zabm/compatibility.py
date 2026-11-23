@@ -7,9 +7,11 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from zabm.matching import identity_matches, tokens, unknown_tokens
 from zabm.response import (
     CanonicalResponse,
     Claim,
+    Clarification,
     CompatibilityAnswer,
     CompatibilityComponent,
     Failure,
@@ -135,14 +137,26 @@ def answer_compatibility(question: str, data_dir: Path) -> CanonicalResponse:
         item for item in catalog.compatibility_rules if _matches_question(item.rule, question)
     ]
     if not matches:
+        if any(
+            _has_partial_component_match(item.rule, question)
+            for item in catalog.compatibility_rules
+        ):
+            return _clarification_response(
+                ["component"],
+                source_pack_id=catalog.source_pack_id,
+            )
+        if not unknown_tokens(question, identifiers=[], supporting=[]):
+            return _clarification_response(
+                ["component"],
+                source_pack_id=catalog.source_pack_id,
+            )
         return _not_found(
             "No human-verified manufacturer compatibility rule matches this pair.",
             source_pack_id=catalog.source_pack_id,
         )
     if len(matches) > 1:
-        return _not_found(
-            "More than one verified compatibility rule matches; narrower component "
-            "identification is required.",
+        return _clarification_required(
+            [item.rule for item in matches],
             source_pack_id=catalog.source_pack_id,
         )
 
@@ -197,6 +211,70 @@ def _not_found(message: str, source_pack_id: str) -> CanonicalResponse:
     )
 
 
+def _clarification_required(
+    rules: list[VerifiedCompatibilityRule],
+    *,
+    source_pack_id: str,
+) -> CanonicalResponse:
+    missing = (
+        ["component pair"] if len({rule.component_b.name for rule in rules}) > 1 else ["component"]
+    )
+    return _clarification_response(missing, source_pack_id=source_pack_id)
+
+
+def _clarification_response(
+    missing: list[str],
+    *,
+    source_pack_id: str,
+) -> CanonicalResponse:
+    return CanonicalResponse(
+        request_id=os.urandom(16).hex(),
+        timestamp=datetime.now(UTC),
+        response_type="compatibility",
+        language="en",
+        status="clarification_required",
+        clarification=Clarification(
+            message=f"Please identify the exact {' and '.join(missing)}.",
+            missing_information=missing,
+        ),
+        source_pack_id=source_pack_id,
+    )
+
+
+def _has_partial_component_match(rule: VerifiedCompatibilityRule, question: str) -> bool:
+    supporting = [
+        rule.component_a.manufacturer,
+        rule.component_b.manufacturer,
+        *rule.conditions,
+    ]
+    if unknown_tokens(
+        question,
+        identifiers=[rule.component_a.name, rule.component_b.name],
+        aliases=[*rule.component_a.aliases, *rule.component_b.aliases],
+        supporting=supporting,
+    ):
+        return False
+    question_tokens = set(tokens(question))
+    present = [
+        _component_tokens_match(component, question_tokens)
+        for component in (rule.component_a, rule.component_b)
+    ]
+    return any(present) and not all(present)
+
+
+def _component_tokens_match(
+    component: CompatibilityComponent,
+    question_tokens: set[str],
+) -> bool:
+    if set(tokens(component.name)) <= question_tokens:
+        return True
+    return any(
+        alias_tokens <= question_tokens
+        for alias in component.aliases
+        if (alias_tokens := set(tokens(alias)))
+    )
+
+
 def _eligibility_issues(rule: VerifiedCompatibilityRule) -> list[str]:
     issues: list[str] = []
     verification = rule.verification
@@ -243,17 +321,15 @@ def _explicit_rule_evidence(rule: VerifiedCompatibilityRule) -> bool:
 
 
 def _matches_question(rule: VerifiedCompatibilityRule, question: str) -> bool:
-    normalized_question = normalize_text(question)
-    return _component_matches(rule.component_a, normalized_question) and _component_matches(
-        rule.component_b, normalized_question
-    )
-
-
-def _component_matches(component: CompatibilityComponent, normalized_question: str) -> bool:
-    candidates = [component.name, *component.aliases]
-    return any(
-        candidate.strip() and normalize_text(candidate) in normalized_question
-        for candidate in candidates
+    return identity_matches(
+        question,
+        identifiers=[rule.component_a.name, rule.component_b.name],
+        aliases=[*rule.component_a.aliases, *rule.component_b.aliases],
+        supporting=[
+            rule.component_a.manufacturer,
+            rule.component_b.manufacturer,
+            *rule.conditions,
+        ],
     )
 
 

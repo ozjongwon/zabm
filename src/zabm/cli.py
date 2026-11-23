@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
-import re
 import sys
 from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, version
@@ -13,18 +13,18 @@ from typing import Literal
 from pydantic import BaseModel
 
 from zabm import __version__
-from zabm.compatibility import answer_compatibility, ingest_compatibility
+from zabm.agent import answer_question
+from zabm.compatibility import ingest_compatibility
 from zabm.procedures import (
     ProcedureEvidenceInspection,
-    answer_procedure,
     ingest_retrieval,
     inspect_procedure_evidence,
 )
+from zabm.providers import ProviderError, configured_provider
 from zabm.response import CanonicalResponse
 from zabm.specifications import (
     IngestionError,
     SourceIntegrityError,
-    answer_specification,
     download_sources,
     ingest_sources,
 )
@@ -37,32 +37,6 @@ DEFAULT_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-specifications.js
 DEFAULT_COMPATIBILITY_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-compatibility.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
-COMPATIBILITY_CUES = (
-    "compatible",
-    "compatibility",
-    "fit together",
-    "use together",
-    "used together",
-    "work together",
-)
-PROCEDURE_CUES = (
-    "how do i ",
-    "how to ",
-    "procedure",
-    "service steps",
-    "steps",
-    "walk me through",
-)
-PROCEDURE_ACTIONS = {
-    "adjust",
-    "assemble",
-    "bleed",
-    "disassemble",
-    "install",
-    "prepare",
-    "remove",
-    "replace",
-}
 
 
 class HealthReport(BaseModel):
@@ -207,9 +181,13 @@ def _ingest_command(
 
 
 def _render_response(response: CanonicalResponse) -> str:
-    if response.status == "not_found":
+    if response.status in {"not_found", "out_of_scope"}:
         assert response.failure is not None
-        return f"not_found: {response.failure.message}"
+        return f"{response.status}: {response.failure.message}"
+
+    if response.status == "clarification_required":
+        assert response.clarification is not None
+        return f"clarification_required: {response.clarification.message}"
 
     if response.response_type == "compatibility":
         assert response.compatibility is not None
@@ -259,13 +237,29 @@ def _render_response(response: CanonicalResponse) -> str:
     )
 
 
-def _ask_command(question: str, data_dir: Path, as_json: bool) -> int:
-    if _is_compatibility_question(question):
-        response = answer_compatibility(question, data_dir)
-    elif _is_procedure_question(question):
-        response = answer_procedure(question, data_dir)
-    else:
-        response = answer_specification(question, data_dir)
+def _ask_command(
+    question: str,
+    data_dir: Path,
+    as_json: bool,
+    *,
+    provider: str | None,
+    provider_url: str | None,
+    model: str | None,
+    embedding_model: str | None,
+    provider_configuration: str | None,
+) -> int:
+    try:
+        model_provider = configured_provider(
+            provider=provider,
+            base_url=provider_url,
+            model=model,
+            embedding_model=embedding_model,
+            configuration=provider_configuration,
+        )
+        response = answer_question(question, data_dir, model_provider)
+    except ProviderError as exc:
+        print(f"zabm ask: {exc}", file=sys.stderr)
+        return 1
     if as_json:
         print(json.dumps(response.model_dump(mode="json"), indent=2, sort_keys=True))
     else:
@@ -296,26 +290,6 @@ def _render_evidence(inspection: ProcedureEvidenceInspection) -> None:
             print(f"{step.number}. {step.text}")
             for warning in step.warnings:
                 print(f"   {warning.severity.upper()}: {warning.text}")
-
-
-def _is_compatibility_question(question: str) -> bool:
-    normalized_question = question.casefold()
-    if any(cue in normalized_question for cue in COMPATIBILITY_CUES):
-        return True
-    return bool(
-        re.search(
-            r"\b(?:can|could|may|should)\b[^?]*\buse(?:d)?\b[^?]*\bwith\b",
-            normalized_question,
-        )
-    )
-
-
-def _is_procedure_question(question: str) -> bool:
-    normalized_question = question.casefold()
-    if any(cue in normalized_question for cue in PROCEDURE_CUES):
-        return True
-    first_word = normalized_question.strip().split(maxsplit=1)[0].rstrip(".,:;?!")
-    return first_word in PROCEDURE_ACTIONS
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -401,6 +375,32 @@ def _parser() -> argparse.ArgumentParser:
         default=DEFAULT_DATA_DIR,
         help="Directory for generated evidence.",
     )
+    ask.add_argument(
+        "--provider",
+        choices=("deterministic", "openai-compatible"),
+        default=os.getenv("ZABM_PROVIDER"),
+        help="Model provider used for validated claim phrasing.",
+    )
+    ask.add_argument(
+        "--provider-url",
+        default=os.getenv("ZABM_PROVIDER_URL"),
+        help="Base URL of an OpenAI-compatible provider, including /v1 when required.",
+    )
+    ask.add_argument(
+        "--model",
+        default=os.getenv("ZABM_MODEL"),
+        help="Model identifier for an OpenAI-compatible provider.",
+    )
+    ask.add_argument(
+        "--embedding-model",
+        default=os.getenv("ZABM_EMBEDDING_MODEL"),
+        help="Embedding model identifier for an OpenAI-compatible provider.",
+    )
+    ask.add_argument(
+        "--provider-configuration",
+        default=os.getenv("ZABM_PROVIDER_CONFIGURATION"),
+        help="Stable configuration identifier recorded in the canonical response.",
+    )
     ask.add_argument("--json", action="store_true", help="Emit the canonical response.")
 
     evidence = commands.add_parser(
@@ -434,7 +434,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.json,
         )
     if args.command == "ask":
-        return _ask_command(args.question, args.data_dir, args.json)
+        return _ask_command(
+            args.question,
+            args.data_dir,
+            args.json,
+            provider=args.provider,
+            provider_url=args.provider_url,
+            model=args.model,
+            embedding_model=args.embedding_model,
+            provider_configuration=args.provider_configuration,
+        )
     if args.command == "evidence":
         return _evidence_command(args.question, args.data_dir, args.json)
     raise AssertionError(f"unhandled command: {args.command}")

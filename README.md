@@ -78,6 +78,39 @@ selected procedure evidence with:
   "What are the steps for hose sizing and remote installation?"
 ```
 
+## Local grounded model path
+
+By default, `zabm ask` uses the deterministic local evidence renderer and needs
+no network service. To use a local open-weight model through an
+OpenAI-compatible server, configure both the chat and embedding model
+identifiers:
+
+```bash
+./.venv/bin/python -m zabm ask \
+  "What torque should I use for the RockShox Reverb Standard Remote clamp bolt?" \
+  --provider openai-compatible \
+  --provider-url http://127.0.0.1:8000/v1 \
+  --model local-open-weight-model \
+  --embedding-model local-embedding-model \
+  --provider-configuration local-v1
+```
+
+The same values can be supplied with `ZABM_PROVIDER`,
+`ZABM_PROVIDER_URL`, `ZABM_MODEL`, `ZABM_EMBEDDING_MODEL`, and
+`ZABM_PROVIDER_CONFIGURATION`. `ZABM_PROVIDER_API_KEY` is read only from the
+environment and is never written to a response.
+
+The provider may phrase validated claims only. It must return one sentence for
+each supplied claim identifier; missing, extra, or malformed sentences and
+numbers absent from the claim evidence cause the response to be rejected.
+Provider, model, embedding model, configuration, and source-pack identifiers
+are recorded in every canonical response.
+
+Questions outside bicycle maintenance return `out_of_scope` before evidence or
+model access. Missing or ambiguous identity details return
+`clarification_required`; false-premise components and specifications return
+`not_found` without a nearby substitute.
+
 ## NVIDIA prerequisite
 
 The installer detects `nvidia-smi` but never installs, upgrades, or replaces the

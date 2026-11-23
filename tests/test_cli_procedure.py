@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from pypdf import PdfReader
+from test_cli_specification import provider_server
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -212,6 +213,69 @@ def test_cli_returns_every_ordered_step_and_warning_with_citations(tmp_path: Pat
         assert " ".join(step["text"].split()) in source_text
 
 
+def test_cli_uses_the_local_provider_for_complete_procedure_phrasing(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(tmp_path, complete_procedure_lines())
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+    procedure_id = "test-manual#trail-post-spring-replacement-p1"
+    generated = {
+        "sentences": [
+            {
+                "claim_id": f"{procedure_id}#step-1",
+                "text": "Step 1: Remove the spring cap.",
+            },
+            {
+                "claim_id": f"{procedure_id}#step-1-warning-1",
+                "text": "Notice: Hold the spring under compression.",
+            },
+            {
+                "claim_id": f"{procedure_id}#step-2",
+                "text": "Step 2: Replace the spring.",
+            },
+            {
+                "claim_id": f"{procedure_id}#step-3",
+                "text": "Step 3: Install the spring cap.",
+            },
+        ]
+    }
+
+    with provider_server(generated) as (provider_url, requests):
+        result = run_cli(
+            "ask",
+            "What are the steps to replace the Trail Post spring?",
+            "--data-dir",
+            str(data_dir),
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Trail Post spring replacement"
+    assert [step["number"] for step in response["procedure"]["steps"]] == [1, 2, 3]
+    assert response["provider"]["provider"] == "openai-compatible"
+    assert [claim["claim_id"] for claim in response["claims"]] == [
+        sentence["claim_id"] for sentence in generated["sentences"]
+    ]
+    assert len(requests) == 1
+
+
 def test_cli_refuses_a_truncated_procedure_without_returning_steps(tmp_path: Path) -> None:
     lines = [
         "17 Trail Post spring replacement",
@@ -390,6 +454,33 @@ def test_cli_refuses_a_procedure_without_a_source_defined_end(tmp_path: Path) ->
     assert "procedure end" in response["failure"]["message"]
     assert response["procedure"] is None
     assert response["claims"] == []
+
+
+def test_cli_refuses_an_adjacent_model_without_reusing_a_procedure(tmp_path: Path) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(tmp_path, complete_procedure_lines())
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps to replace the Trail Post X1 spring?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert response["procedure"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
 
 
 def test_cli_rejects_an_end_marker_that_precedes_the_procedure_steps(
@@ -600,3 +691,78 @@ def test_cli_keeps_repeated_section_titles_as_separate_evidence(tmp_path: Path) 
         ["Remove the road spring.", "Install the road spring."],
         ["Remove the trail spring.", "Install the trail spring."],
     ]
+
+
+def test_cli_asks_for_the_task_when_two_procedures_share_an_identity(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "17 Trail Post service procedures",
+        "50 Hour Service Spring replacement",
+        "1 Remove the road spring.",
+        "2 Install the road spring.",
+        "This concludes the Spring replacement procedure.",
+        "50 Hour Service Spring replacement",
+        "1 Remove the trail spring.",
+        "2 Install the trail spring.",
+        "This concludes the Spring replacement procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(tmp_path, lines)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps for spring replacement?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
+    assert response["clarification"] == {
+        "message": "Please identify the exact task.",
+        "missing_information": ["task"],
+    }
+    assert response["procedure"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
+
+
+def test_cli_asks_for_a_task_when_the_procedure_request_has_no_subject(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(tmp_path, complete_procedure_lines())
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
+    assert response["clarification"] == {
+        "message": "Please identify the exact task.",
+        "missing_information": ["task"],
+    }
+    assert response["procedure"] is None

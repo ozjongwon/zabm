@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import base64
+import copy
 import hashlib
 import json
 import os
 import subprocess
 import sys
+from collections.abc import Generator
+from contextlib import contextmanager
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from threading import Thread
+from typing import Any, cast
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -140,6 +145,12 @@ def test_cli_returns_a_verified_specification_with_complete_provenance(
     response = json.loads(result.stdout)
     assert response["status"] == "supported"
     assert response["response_type"] == "specification"
+    assert response["provider"] == {
+        "provider": "local-deterministic",
+        "model": "evidence-renderer-v1",
+        "embedding_model": "canonical-alias-index-v1",
+        "configuration": "offline-v1",
+    }
     assert response["specification"]["value"] == {
         "minimum": 2.8,
         "maximum": 3.4,
@@ -163,6 +174,363 @@ def test_cli_returns_a_verified_specification_with_complete_provenance(
             "source_manifest_version": "test-1",
         }
     ]
+
+
+def test_cli_uses_and_records_a_configured_openai_compatible_provider(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-clamp-torque",
+                "text": (
+                    "Test Manufacturer Trail Post remote clamp bolt torque is "
+                    "2.8-3.4 N·m (25-30 in-lb)."
+                ),
+            }
+        ]
+    }
+
+    with provider_server(generated) as (provider_url, requests):
+        result = run_cli(
+            "ask",
+            "What is the Trail Post Standard Remote clamp bolt torque?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["provider"] == {
+        "provider": "openai-compatible",
+        "model": "local-open-weight-model",
+        "embedding_model": "local-embedding-model",
+        "configuration": "local-test-v1",
+    }
+    assert len(requests) == 1
+    assert requests[0]["path"] == "/v1/chat/completions"
+    assert requests[0]["body"]["model"] == "local-open-weight-model"
+    assert requests[0]["body"]["temperature"] == 0
+
+
+def test_cli_rejects_generated_prose_without_a_validated_claim(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-clamp-torque",
+                "text": "Trail Post remote clamp bolt torque is 2.8-3.4 N·m.",
+            },
+            {
+                "claim_id": "invented-claim",
+                "text": "Apply thread-locking compound before installation.",
+            },
+        ]
+    }
+
+    with provider_server(generated) as (provider_url, _):
+        result = run_cli(
+            "ask",
+            "What is the Trail Post Standard Remote clamp bolt torque?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert "every validated claim" in response["failure"]["message"]
+    assert response["specification"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
+    assert response["provider"]["model"] == "local-open-weight-model"
+
+
+def test_cli_rejects_a_generated_number_absent_from_the_validated_claim(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-clamp-torque",
+                "text": "Trail Post remote clamp bolt torque is 9 N·m.",
+            }
+        ]
+    }
+
+    with provider_server(generated) as (provider_url, _):
+        result = run_cli(
+            "ask",
+            "What is the Trail Post Standard Remote clamp bolt torque?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert "unsupported number" in response["failure"]["message"]
+    assert response["specification"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
+
+
+def test_cli_rejects_extra_advice_attached_to_a_validated_claim_id(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-clamp-torque",
+                "text": (
+                    "Trail Post remote clamp bolt torque is 2.8-3.4 N·m. "
+                    "Apply grease before installation."
+                ),
+            }
+        ]
+    }
+
+    with provider_server(generated) as (provider_url, _):
+        result = run_cli(
+            "ask",
+            "What is the Trail Post Standard Remote clamp bolt torque?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert "unsupported content" in response["failure"]["message"]
+    assert response["specification"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
+
+
+def test_generated_output_cannot_set_response_status_or_citations(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-clamp-torque",
+                "text": "Trail Post remote clamp bolt torque is 2.8-3.4 N·m.",
+            }
+        ],
+        "status": "out_of_scope",
+        "citations": [],
+        "response_type": "out_of_scope",
+    }
+
+    with provider_server(generated) as (provider_url, _):
+        result = run_cli(
+            "ask",
+            "What is the Trail Post Standard Remote clamp bolt torque?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert response["response_type"] == "specification"
+    assert response["citations"] == []
+
+
+def test_cli_asks_for_the_missing_detail_when_an_alias_is_ambiguous(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    first = payload["specifications"][0]
+    first["aliases"] = ["Trail Post remote torque"]
+    second = copy.deepcopy(first)
+    second["id"] = "test-clamp-torque-left"
+    second["component"] = "left remote clamp bolt"
+    second["conditions"] = [
+        "Remote: Standard Remote",
+        "Side: left",
+        "Fastener: left remote clamp bolt",
+    ]
+    payload["specifications"].append(second)
+    evidence_path.write_text(json.dumps(payload), encoding="utf-8")
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post remote torque?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
+    assert response["failure"] is None
+    assert response["clarification"]["message"] == ("Please identify the exact component and side.")
+    assert response["clarification"]["missing_information"] == ["component", "side"]
+    assert response["specification"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
+
+
+def test_cli_resolves_a_reordered_part_number_alias(tmp_path: Path) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    update_specification(
+        evidence_path,
+        specification_updates={
+            "aliases": ["clamp bolt torque T25 Trail Post Standard Remote"],
+        },
+    )
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the T25 Trail Post Standard Remote clamp bolt torque?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["specification"]["component"] == "remote clamp bolt"
+    assert response["claims"][0]["claim_id"] == "test-clamp-torque"
+
+
+def test_cli_asks_for_a_missing_component_instead_of_treating_it_as_not_found(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post torque?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
+    assert response["clarification"] == {
+        "message": "Please identify the exact component.",
+        "missing_information": ["component"],
+    }
+    assert response["specification"] is None
+    assert response["claims"] == []
+
+
+def test_cli_renders_a_clarification_request_without_a_traceback(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post torque?",
+        "--data-dir",
+        str(data_dir),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "clarification_required: Please identify the exact component.\n"
+
+
+def test_cli_refuses_an_adjacent_model_without_substituting_a_specification(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post V9 Standard Remote clamp bolt torque?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert response["failure"]["code"] == "not_found"
+    assert response["specification"] is None
+    assert response["claims"] == []
+    assert response["citations"] == []
+    assert "Trail Post" not in response["failure"]["message"]
 
 
 def test_cli_returns_not_found_for_a_specification_outside_the_source_pack(
@@ -386,3 +754,48 @@ def _download_and_ingest(
     )
     assert ingest.returncode == 0, ingest.stderr
     return json.loads(download.stdout)
+
+
+@contextmanager
+def provider_server(
+    generated: dict[str, Any],
+) -> Generator[tuple[str, list[dict[str, Any]]]]:
+    requests: list[dict[str, Any]] = []
+
+    class ProviderHandler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:
+            length = int(self.headers.get("Content-Length", "0"))
+            body: dict[str, Any] = json.loads(self.rfile.read(length))
+            requests.append({"path": self.path, "body": body})
+            content = json.dumps(generated)
+            payload = json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "role": "assistant",
+                                "content": content,
+                            }
+                        }
+                    ]
+                }
+            ).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def log_message(self, format: str, *args: object) -> None:
+            del format, args
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), ProviderHandler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = cast(tuple[str, int], server.server_address)
+    try:
+        yield f"http://{host}:{port}/v1", requests
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)

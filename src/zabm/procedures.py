@@ -12,9 +12,11 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
+from zabm.matching import identity_matches, tokens, unknown_tokens
 from zabm.response import (
     CanonicalResponse,
     Claim,
+    Clarification,
     Failure,
     ProcedureAnswer,
     ProcedureStep,
@@ -26,7 +28,6 @@ from zabm.specifications import (
     citation_issues,
     file_sha256,
     load_source_manifest,
-    normalize_text,
     write_json,
 )
 
@@ -72,6 +73,10 @@ PROCEDURE_STOPWORDS = {
     "the",
     "to",
 }
+PROCEDURE_QUERY_VOCAB = (
+    "adjust assemble bleed disassemble how install installation perform prepare procedure "
+    "remove removal replace replacement service step steps task walk through"
+)
 
 
 class EvidenceBlock(BaseModel):
@@ -275,14 +280,18 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
         if _matches_question(procedure.title, question)
     ]
     if not matches:
+        if not unknown_tokens(
+            question,
+            identifiers=[],
+            supporting=[PROCEDURE_QUERY_VOCAB],
+        ):
+            return _clarification_required(source_pack_id=catalog.source_pack_id)
         return _not_found(
             "No complete source-defined service procedure matches this task.",
             source_pack_id=catalog.source_pack_id,
         )
     if len(matches) > 1:
-        return _not_found(
-            "More than one retrieval-evidence section matches; identify the exact service "
-            "procedure.",
+        return _clarification_required(
             source_pack_id=catalog.source_pack_id,
         )
 
@@ -799,17 +808,14 @@ def _completeness_issues(procedure: StoredProcedure) -> list[str]:
 
 
 def _matches_question(title: str, question: str) -> bool:
-    normalized_title = normalize_text(title)
-    normalized_question = normalize_text(question)
-    if normalized_title in normalized_question:
-        return True
-    title_tokens = set(_tokens(normalized_title)) - PROCEDURE_STOPWORDS
-    question_tokens = set(_tokens(normalized_question))
-    return bool(title_tokens) and title_tokens <= question_tokens
-
-
-def _tokens(text: str) -> list[str]:
-    return re.findall(r"[a-z0-9]+", text)
+    title_tokens = [token for token in tokens(title) if token not in PROCEDURE_STOPWORDS]
+    if not title_tokens:
+        return False
+    return identity_matches(
+        question,
+        identifiers=[" ".join(title_tokens)],
+        supporting=[title, PROCEDURE_QUERY_VOCAB],
+    )
 
 
 def _unique_citations(citations: Iterable[StoredCitation]) -> list[StoredCitation]:
@@ -835,5 +841,20 @@ def _not_found(message: str, source_pack_id: str) -> CanonicalResponse:
         language="en",
         status="not_found",
         failure=Failure(code="not_found", message=message),
+        source_pack_id=source_pack_id,
+    )
+
+
+def _clarification_required(*, source_pack_id: str) -> CanonicalResponse:
+    return CanonicalResponse(
+        request_id=os.urandom(16).hex(),
+        timestamp=datetime.now(UTC),
+        response_type="procedure",
+        language="en",
+        status="clarification_required",
+        clarification=Clarification(
+            message="Please identify the exact task.",
+            missing_information=["task"],
+        ),
         source_pack_id=source_pack_id,
     )
