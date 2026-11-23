@@ -11,7 +11,7 @@ install-runtime:
 	./scripts/install-dev.sh --profile runtime
 
 health:
-	PYTHONPATH=src $(PYTHON) -m zabm health
+	$(PYTHON) -m zabm health
 
 lint:
 	$(RUFF) check .
@@ -21,6 +21,6 @@ typecheck:
 	$(PYRIGHT)
 
 test:
-	PYTHONPATH=src $(PYTHON) -m pytest
+	$(PYTHON) -m pytest
 
 verify: health lint typecheck test

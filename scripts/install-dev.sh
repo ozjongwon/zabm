@@ -9,7 +9,6 @@ readonly PYTHON_VERSION="3.13.5"
 readonly OS_RELEASE_FILE="${ZABM_OS_RELEASE_FILE:-/etc/os-release}"
 readonly UV_INSTALL_DIR="${HOME:?HOME must be set}/.local/bin"
 readonly VENV_DIR="${REPO_ROOT}/.venv"
-readonly SRC_DIR="${REPO_ROOT}/src"
 readonly REQUIREMENTS_DIR="${REPO_ROOT}/requirements"
 
 readonly APT_PACKAGES=(
@@ -306,15 +305,23 @@ install_python_dependencies() {
   run "${UV_BIN}" pip check --python "${VENV_PYTHON}"
 }
 
+install_application() {
+  log "installing the zabm application and CLI into the virtual environment"
+  run "${UV_BIN}" pip install \
+    --python "${VENV_PYTHON}" \
+    --no-deps \
+    --no-build-isolation \
+    --editable "${REPO_ROOT}"
+  run "${UV_BIN}" pip check --python "${VENV_PYTHON}"
+}
+
 run_smoke_checks() {
   log "running the CLI health check"
-  PYTHONPATH="${SRC_DIR}" PYTHONDONTWRITEBYTECODE=1 \
-    "${VENV_PYTHON}" -m zabm health
+  "${VENV_PYTHON}" -m zabm health
 
   if [[ "${PROFILE}" == "development" ]]; then
     log "running the automated test suite"
-    PYTHONPATH="${SRC_DIR}" PYTHONDONTWRITEBYTECODE=1 \
-      "${VENV_PYTHON}" -m pytest -q
+    "${VENV_PYTHON}" -m pytest -q
   fi
 }
 
@@ -351,6 +358,7 @@ main() {
   ensure_uv
   ensure_python_environment
   install_python_dependencies
+  install_application
   run_smoke_checks
 
   log "development environment is ready"

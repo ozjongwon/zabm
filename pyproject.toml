@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools==84.2.1"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "zabm"
 version = "0.1.0"
@@ -6,6 +10,9 @@ requires-python = "==3.13.5"
 dependencies = [
   "pydantic==2.14.3",
 ]
+
+[project.scripts]
+zabm = "zabm.cli:main"
 
 [dependency-groups]
 dev = [
@@ -17,12 +24,11 @@ test = [
 ]
 eval = []
 
-[tool.uv]
-package = false
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
-pythonpath = ["src"]
 testpaths = ["tests"]
 
 [tool.ruff]
