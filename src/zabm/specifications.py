@@ -491,11 +491,14 @@ def _numbers_match(
     evidence_excerpts: Iterable[str],
     claim_values: Iterable[float],
 ) -> bool:
-    claim_numbers = set(NUMBER_PATTERN.findall(_normalize_unit_spelling(claim_text)))
-    claim_numbers.update(str(value) for value in claim_values)
-    evidence_numbers = set(
-        NUMBER_PATTERN.findall(_normalize_unit_spelling(" ".join(evidence_excerpts)))
-    )
+    claim_numbers = {
+        float(number) for number in NUMBER_PATTERN.findall(_normalize_unit_spelling(claim_text))
+    }
+    claim_numbers.update(float(value) for value in claim_values)
+    evidence_numbers = {
+        float(number)
+        for number in NUMBER_PATTERN.findall(_normalize_unit_spelling(" ".join(evidence_excerpts)))
+    }
     return bool(claim_numbers) and all(number in evidence_numbers for number in claim_numbers)
 
 

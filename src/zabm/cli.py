@@ -17,6 +17,7 @@ from pypdf._configuration import overwrite_configuration
 from zabm import __version__
 from zabm.agent import answer_question
 from zabm.compatibility import ingest_compatibility
+from zabm.coverage import run_coverage
 from zabm.procedures import (
     ProcedureEvidenceInspection,
     ingest_retrieval,
@@ -51,6 +52,7 @@ DEFAULT_SMOKE_SET = REPO_ROOT / "data" / "retrieval-smoke" / "smoke-set-v1.json"
 DEFAULT_RETRIEVAL_CONFIG = REPO_ROOT / "data" / "retrieval-smoke" / "retrieval-config-v1.json"
 DEFAULT_SMOKE_REPORT = REPO_ROOT / "data" / "retrieval-smoke" / "report-v1.json"
 DEFAULT_SOURCE_FREEZE = REPO_ROOT / "data" / "manifests" / "source-pack-freeze-v1.json"
+DEFAULT_COVERAGE_SET = REPO_ROOT / "data" / "coverage" / "coverage-v1.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
 
@@ -424,6 +426,50 @@ def _render_evidence(inspection: ProcedureEvidenceInspection) -> None:
                 print(f"   {warning.severity.upper()}: {warning.text}")
 
 
+def _coverage_command(
+    manifest: Path,
+    coverage_set: Path,
+    data_dir: Path,
+    as_json: bool,
+) -> int:
+    try:
+        report = run_coverage(manifest, coverage_set, data_dir)
+    except (OSError, ValueError) as exc:
+        print(f"zabm coverage: {exc}", file=sys.stderr)
+        return 1
+
+    if as_json:
+        print(json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True))
+    else:
+        accepted = sum(result.observed_status == "supported" for result in report.case_results)
+        rejected = sum(result.observed_status == "not_found" for result in report.case_results)
+        print(
+            f"Coverage {'passed' if report.passed else 'failed'} across "
+            f"{len(report.sources)} source(s): {accepted} accepted, {rejected} rejected, "
+            f"{len(report.unanswerable_content)} explicitly unanswerable."
+        )
+        for source in report.sources:
+            print(
+                f"- {source.source_id}: {source.accepted_case_count} accepted, "
+                f"{source.unanswerable_count} unavailable; "
+                f"{source.eligible_specification_count}/"
+                f"{source.specification_count} specifications, "
+                f"{source.eligible_compatibility_rule_count}/"
+                f"{source.compatibility_rule_count} compatibility rules, "
+                f"{source.complete_procedure_count}/{source.procedure_count} "
+                "procedures complete"
+            )
+        for issue in report.issues:
+            print(f"- coverage issue: {issue}", file=sys.stderr)
+        for result in report.case_results:
+            for issue in result.issues:
+                print(f"- {result.id}: {issue}", file=sys.stderr)
+        for result in report.unanswerable_content:
+            for issue in result.issues:
+                print(f"- {result.id}: {issue}", file=sys.stderr)
+    return 0 if report.passed else 1
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="zabm",
@@ -553,6 +599,30 @@ def _parser() -> argparse.ArgumentParser:
     )
     evidence.add_argument("--json", action="store_true", help="Emit the evidence report.")
 
+    coverage = commands.add_parser(
+        "coverage",
+        help="Audit representative CLI coverage across every frozen source document.",
+    )
+    coverage.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_MANIFEST,
+        help="Path to the source manifest.",
+    )
+    coverage.add_argument(
+        "--coverage-set",
+        type=Path,
+        default=DEFAULT_COVERAGE_SET,
+        help="Path to representative accepted and unanswerable coverage cases.",
+    )
+    coverage.add_argument(
+        "--data-dir",
+        type=Path,
+        default=DEFAULT_DATA_DIR,
+        help="Directory containing generated evidence.",
+    )
+    coverage.add_argument("--json", action="store_true", help="Emit the coverage report.")
+
     retrieval_smoke = commands.add_parser(
         "retrieval-smoke",
         help="Run the retrieval-only source-pack smoke set and optionally freeze the pack.",
@@ -645,6 +715,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     if args.command == "evidence":
         return _evidence_command(args.question, args.data_dir, args.json)
+    if args.command == "coverage":
+        return _coverage_command(
+            args.manifest,
+            args.coverage_set,
+            args.data_dir,
+            args.json,
+        )
     if args.command == "retrieval-smoke":
         return _retrieval_smoke_command(
             args.manifest,

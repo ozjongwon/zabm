@@ -79,6 +79,89 @@
         "verified_by": "project-maintainer",
         "verified_at": "2026-11-23"
       }
+    },
+    {
+      "id": "sram-reverb-axs-metal-7mm-saddle-rails",
+      "component_a": {
+        "manufacturer": "SRAM (RockShox)",
+        "name": "Reverb AXS seatpost",
+        "aliases": [
+          "RockShox Reverb AXS dropper post",
+          "Reverb AXS"
+        ]
+      },
+      "component_b": {
+        "manufacturer": "Unspecified",
+        "name": "saddle with metal 7 mm diameter rails",
+        "aliases": [
+          "saddle with metal 7 mm rails",
+          "metal 7 mm saddle rails"
+        ]
+      },
+      "outcome": "compatible",
+      "conditions": [
+        "Seatpost: Reverb AXS",
+        "Saddle rail material: metal",
+        "Saddle rail diameter: 7 mm",
+        "Rail condition: seated squarely on the inner rail clamps"
+      ],
+      "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "citation": {
+        "printed_page": 13,
+        "physical_page": 13,
+        "section": "Compatibility Compatibilité Compatibilidade"
+      },
+      "evidence_excerpts": [
+        "Reverb AXS seatposts are compatible with saddles with metal 7 mm diameter rails"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
+    },
+    {
+      "id": "sram-eagle-flattop-park-tool-cc4-2",
+      "component_a": {
+        "manufacturer": "SRAM",
+        "name": "SRAM Eagle or Flattop chain",
+        "aliases": [
+          "Eagle chain",
+          "Flattop chain",
+          "11 speed SRAM chain"
+        ]
+      },
+      "component_b": {
+        "manufacturer": "Park Tool",
+        "name": "Park Tool CC-4.2 chain wear check tool",
+        "aliases": [
+          "CC-4.2",
+          "Park Tool chain wear indicator"
+        ]
+      },
+      "outcome": "compatible",
+      "conditions": [
+        "Chain families: SRAM Eagle, Flattop, and 11 speed",
+        "Task: chain wear measurement",
+        "Tool: Park Tool CC-4.2"
+      ],
+      "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+      "citation": {
+        "printed_page": 1,
+        "physical_page": 1,
+        "section": "SRAM® Eagle™, Flattop™, and 11 speed Chain Compatible Tools GEN.0000000007151 Rev F © 2025 SRAM, LLC"
+      },
+      "evidence_excerpts": [
+        "and 11 speed Chain Compatible Tools",
+        "Chain Wear Measurement",
+        "Park Tool",
+        "CC-4.2"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
     }
   ]
 }

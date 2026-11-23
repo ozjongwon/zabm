@@ -38,6 +38,159 @@
         "verified_by": "project-maintainer",
         "verified_at": "2026-11-23"
       }
+    },
+    {
+      "id": "sram-reverb-axs-saddle-clamp-bolt-torque",
+      "manufacturer": "SRAM (RockShox)",
+      "model": "Reverb AXS",
+      "component": "saddle clamp bolt",
+      "attribute": "torque",
+      "aliases": [
+        "Reverb AXS saddle clamp fastener torque",
+        "RockShox Reverb AXS saddle bolt tightening torque"
+      ],
+      "value": {
+        "minimum": 12,
+        "maximum": 12,
+        "unit": "N·m",
+        "display": "12 N·m (106 in-lb)"
+      },
+      "conditions": [
+        "Seatpost: Reverb AXS",
+        "Fastener: saddle clamp bolt",
+        "Tool: T25 TORX wrench",
+        "Assembly state: saddle rails seated squarely on the inner rail clamps"
+      ],
+      "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "citation": {
+        "printed_page": 32,
+        "physical_page": 32,
+        "section": "T orque Serrage Momento de torção"
+      },
+      "evidence_excerpts": [
+        "Tighten the saddle clamp bolt to the specified torque.",
+        "12 N·m",
+        "(106 in-lb)"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
+    },
+    {
+      "id": "sram-rockshox-reba-post-mount-brake-caliper-bolt-torque",
+      "manufacturer": "SRAM (RockShox)",
+      "model": "Reba",
+      "component": "brake caliper mounting bolts",
+      "attribute": "torque",
+      "aliases": [
+        "2011 RockShox Reba brake caliper mounting bolt torque",
+        "Reba post mount brake bolt tightening value"
+      ],
+      "value": {
+        "minimum": 10.2,
+        "maximum": 10.2,
+        "unit": "N·m",
+        "display": "10.2 N·m (90 in-lb)"
+      },
+      "conditions": [
+        "Fork: 2011 RockShox Reba",
+        "Mount: Post Mount",
+        "Fastener: brake caliper mounting bolts"
+      ],
+      "source_id": "sram-rockshox-reba-2011-technical-manual",
+      "citation": {
+        "printed_page": 7,
+        "physical_page": 7,
+        "section": "GEN.0000000003212 REV A"
+      },
+      "evidence_excerpts": [
+        "TORQUE TIGHTENING VALUES",
+        "Brake Caliper Mounting Bolts (Post Mount) 10.2 N·m (90 in-lb)"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
+    },
+    {
+      "id": "magura-gustav-pro-brake-calliper-retaining-screw-torque",
+      "manufacturer": "MAGURA",
+      "model": "GUSTAV PRO",
+      "component": "brake calliper retaining screws",
+      "attribute": "torque",
+      "aliases": [
+        "GUSTAV PRO brake caliper retaining screw torque",
+        "MAGURA GUSTAV PRO brake caliper bolt tightening value"
+      ],
+      "value": {
+        "minimum": 6,
+        "maximum": 6,
+        "unit": "N·m",
+        "display": "6 N·m (53.1 lbf in)"
+      },
+      "conditions": [
+        "Brake model: MAGURA GUSTAV PRO",
+        "Fastener: brake calliper retaining screws",
+        "Tool: 5 mm",
+        "Manual revision: 2026-01"
+      ],
+      "source_id": "magura-gustav-pro-owners-manual-2026",
+      "citation": {
+        "printed_page": 22,
+        "physical_page": 22,
+        "section": "6 Tightening torques"
+      },
+      "evidence_excerpts": [
+        "6 Tightening torques",
+        "Brake calliper retaining screws 5 mm 6 Nm (53.1 lbf in)"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
+    },
+    {
+      "id": "magura-mt-a2-brake-calliper-mounting-screw-torque",
+      "manufacturer": "MAGURA",
+      "model": "MT A2",
+      "component": "brake calliper mounting screws",
+      "attribute": "torque",
+      "aliases": [
+        "MAGURA MT A2 brake caliper bolt torque",
+        "MT A2 calliper retaining screw tightening value"
+      ],
+      "value": {
+        "minimum": 6,
+        "maximum": 6,
+        "unit": "N·m",
+        "display": "6 N·m maximum"
+      },
+      "conditions": [
+        "Brake model: MAGURA MT A2",
+        "Fastener: brake calliper mounting screws (13)",
+        "Tool: 5 mm",
+        "Constraint: maximum torque",
+        "Check interval: regular maintenance"
+      ],
+      "source_id": "magura-mt-a2-user-instructions-2023",
+      "citation": {
+        "printed_page": 1,
+        "physical_page": 1,
+        "section": "REACH ADJUST"
+      },
+      "evidence_excerpts": [
+        "6N m max.",
+        "tightened to 6 Nm."
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-23"
+      }
     }
   ]
 }

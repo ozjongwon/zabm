@@ -1,0 +1,236 @@
+{
+  "coverage_set_id": "frozen-pack-coverage-v1",
+  "cases": [
+    {
+      "id": "accepted-reverb-standard-remote-torque",
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "evidence_type": "specification",
+      "question": "What torque should I use for the RockShox Reverb Standard Remote clamp bolt?",
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "claim_ids": [
+          "sram-reverb-standard-remote-clamp-bolt-torque"
+        ],
+        "citations": [
+          {
+            "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+            "physical_page": 36
+          }
+        ]
+      }
+    },
+    {
+      "id": "accepted-reverb-axs-saddle-clamp-torque",
+      "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "evidence_type": "specification",
+      "question": "What is the Reverb AXS saddle clamp bolt torque?",
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "claim_ids": [
+          "sram-reverb-axs-saddle-clamp-bolt-torque"
+        ],
+        "citations": [
+          {
+            "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+            "physical_page": 32
+          }
+        ]
+      }
+    },
+    {
+      "id": "accepted-sram-chain-compatible-tool",
+      "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+      "evidence_type": "compatibility",
+      "question": "Is an SRAM Eagle chain compatible with a Park Tool CC-4.2 chain wear check tool?",
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "claim_ids": [
+          "sram-eagle-flattop-park-tool-cc4-2"
+        ],
+        "citations": [
+          {
+            "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+            "physical_page": 1
+          }
+        ],
+        "compatibility_outcome": "compatible"
+      }
+    },
+    {
+      "id": "accepted-reba-brake-caliper-torque",
+      "source_id": "sram-rockshox-reba-2011-technical-manual",
+      "evidence_type": "specification",
+      "question": "What torque should I use for the 2011 RockShox Reba post mount brake caliper mounting bolts?",
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "claim_ids": [
+          "sram-rockshox-reba-post-mount-brake-caliper-bolt-torque"
+        ],
+        "citations": [
+          {
+            "document_id": "sram-rockshox-reba-2011-technical-manual",
+            "physical_page": 7
+          }
+        ]
+      }
+    },
+    {
+      "id": "accepted-gustav-pro-calliper-torque",
+      "source_id": "magura-gustav-pro-owners-manual-2026",
+      "evidence_type": "specification",
+      "question": "What is the torque for the MAGURA GUSTAV PRO brake calliper retaining screws?",
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "claim_ids": [
+          "magura-gustav-pro-brake-calliper-retaining-screw-torque"
+        ],
+        "citations": [
+          {
+            "document_id": "magura-gustav-pro-owners-manual-2026",
+            "physical_page": 22
+          }
+        ]
+      }
+    },
+    {
+      "id": "accepted-mt-a2-calliper-torque",
+      "source_id": "magura-mt-a2-user-instructions-2023",
+      "evidence_type": "specification",
+      "question": "What is the maximum torque for the MAGURA MT A2 brake calliper mounting screws?",
+      "expected": {
+        "response_type": "specification",
+        "status": "supported",
+        "claim_ids": [
+          "magura-mt-a2-brake-calliper-mounting-screw-torque"
+        ],
+        "citations": [
+          {
+            "document_id": "magura-mt-a2-user-instructions-2023",
+            "physical_page": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "accepted-reverb-axs-saddle-compatibility",
+      "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "evidence_type": "compatibility",
+      "question": "Is the Reverb AXS seatpost compatible with a saddle with metal 7 mm diameter rails?",
+      "expected": {
+        "response_type": "compatibility",
+        "status": "supported",
+        "claim_ids": [
+          "sram-reverb-axs-metal-7mm-saddle-rails"
+        ],
+        "citations": [
+          {
+            "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+            "physical_page": 13
+          }
+        ],
+        "compatibility_outcome": "compatible"
+      }
+    },
+    {
+      "id": "accepted-reverb-hose-sizing-procedure",
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "evidence_type": "procedure",
+      "question": "What are the steps for hose sizing and remote installation?",
+      "expected": {
+        "response_type": "procedure",
+        "status": "supported",
+        "claim_ids": [
+          "sram-rockshox-reverb-hose-replacement-rev-c#hose-sizing-and-remote-installation-p21#step-1",
+          "sram-rockshox-reverb-hose-replacement-rev-c#hose-sizing-and-remote-installation-p21#step-2",
+          "sram-rockshox-reverb-hose-replacement-rev-c#hose-sizing-and-remote-installation-p21#step-3",
+          "sram-rockshox-reverb-hose-replacement-rev-c#hose-sizing-and-remote-installation-p21#step-4",
+          "sram-rockshox-reverb-hose-replacement-rev-c#hose-sizing-and-remote-installation-p21#step-5",
+          "sram-rockshox-reverb-hose-replacement-rev-c#hose-sizing-and-remote-installation-p21#step-2-warning-1",
+          "sram-rockshox-reverb-hose-replacement-rev-c#hose-sizing-and-remote-installation-p21#step-4-warning-1",
+          "sram-rockshox-reverb-hose-replacement-rev-c#hose-sizing-and-remote-installation-p21#step-5-warning-1"
+        ],
+        "citations": [
+          {
+            "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+            "physical_page": 21
+          },
+          {
+            "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+            "physical_page": 22
+          }
+        ]
+      }
+    },
+    {
+      "id": "rejected-reverb-adjacent-model",
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "evidence_type": "specification",
+      "question": "What is the Reverb X1 clamp bolt torque?",
+      "expected": {
+        "response_type": "specification",
+        "status": "not_found",
+        "failure_contains": "No human-verified structured evidence matches"
+      }
+    },
+    {
+      "id": "rejected-chain-procedure-without-complete-section",
+      "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+      "evidence_type": "procedure",
+      "question": "What are the steps for chain wear measurement with a Park Tool CC-4.2?",
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "No complete source-defined service procedure matches"
+      }
+    },
+    {
+      "id": "rejected-reba-compatibility-without-manufacturer-rule",
+      "source_id": "sram-rockshox-reba-2011-technical-manual",
+      "evidence_type": "compatibility",
+      "question": "Is a RockShox Reba 2011 fork compatible with a 29 inch wheel?",
+      "expected": {
+        "response_type": "compatibility",
+        "status": "not_found",
+        "failure_contains": "No human-verified manufacturer compatibility rule matches"
+      }
+    },
+    {
+      "id": "rejected-gustav-pro-unsupported-specification",
+      "source_id": "magura-gustav-pro-owners-manual-2026",
+      "evidence_type": "specification",
+      "question": "What is the MAGURA GUSTAV PRO brake hose torque?",
+      "expected": {
+        "response_type": "specification",
+        "status": "not_found",
+        "failure_contains": "No human-verified structured evidence matches"
+      }
+    },
+    {
+      "id": "rejected-mt-a2-partial-reach-procedure",
+      "source_id": "magura-mt-a2-user-instructions-2023",
+      "evidence_type": "procedure",
+      "question": "What are the steps for reach adjust?",
+      "expected": {
+        "response_type": "procedure",
+        "status": "not_found",
+        "failure_contains": "only partial procedure evidence was available"
+      }
+    }
+  ],
+  "unanswerable_content": [
+    {
+      "id": "untranscribed-reverb-axs-tool-figure",
+      "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "evidence_type": "specification",
+      "physical_page": 6,
+      "question": "What is the Reverb AXS friction paste torque?",
+      "reason": "The tool and torque markings on physical page 6 are figure-only extraction data. No human transcription with an exact citation has been verified.",
+      "expected_failure_contains": "No human-verified structured evidence matches"
+    }
+  ]
+}

@@ -296,7 +296,7 @@ def _eligibility_issues(rule: VerifiedCompatibilityRule) -> list[str]:
 def _explicit_rule_evidence(rule: VerifiedCompatibilityRule) -> bool:
     evidence = normalize_text(" ".join(rule.evidence_excerpts))
     if rule.outcome == "compatible":
-        return "compatible with" in evidence
+        return "compatible with" in evidence or "chain compatible tools" in evidence
     if rule.outcome == "not_compatible":
         return any(
             cue in evidence

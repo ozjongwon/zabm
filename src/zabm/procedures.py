@@ -259,7 +259,7 @@ def ingest_retrieval(manifest_path: Path, pdf_dir: Path, data_dir: Path) -> Retr
 
     pages = [page for source in sources for page in source.pages]
     complete_procedure_count = sum(
-        not procedure.validation_issues and not _completeness_issues(procedure)
+        not procedure.validation_issues and not procedure_completeness_issues(procedure)
         for procedure in procedures
     )
     return RetrievalIngestReport(
@@ -317,7 +317,7 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
         )
 
     procedure = matches[0]
-    issues = procedure.validation_issues + _completeness_issues(procedure)
+    issues = procedure.validation_issues + procedure_completeness_issues(procedure)
     if issues:
         return _not_found(
             f"only partial procedure evidence was available: {issues[0]}",
@@ -378,7 +378,7 @@ def inspect_procedure_evidence(question: str, data_dir: Path) -> ProcedureEviden
     for procedure in catalog.procedures:
         if not _matches_question(procedure.title, question):
             continue
-        issues = procedure.validation_issues + _completeness_issues(procedure)
+        issues = procedure.validation_issues + procedure_completeness_issues(procedure)
         matches.append(
             ProcedureEvidenceMatch(
                 procedure_id=procedure.procedure_id,
@@ -803,7 +803,7 @@ def _group_procedures(parsed_pages: list[_PageParse]) -> list[StoredProcedure]:
     return procedures
 
 
-def _completeness_issues(procedure: StoredProcedure) -> list[str]:
+def procedure_completeness_issues(procedure: StoredProcedure) -> list[str]:
     issues = list(procedure.validation_issues)
     numbers = [step.number for step in procedure.steps]
     if not numbers:

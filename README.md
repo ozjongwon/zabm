@@ -154,6 +154,29 @@ issues, and SHA-256 checksums for the three canonical generated artifacts.
 Re-running both commands from a clean generated-data state produces identical
 artifact bytes and checksums.
 
+## Verified coverage
+
+The coverage set in `data/coverage/coverage-v1.json` exercises the CLI across
+every document in the frozen source pack. It contains accepted specification,
+compatibility, and complete-procedure questions plus per-document rejection
+cases. Run it after ingestion:
+
+```bash
+./.venv/bin/python -m zabm coverage
+```
+
+The command exits nonzero unless every frozen source has at least one accepted
+case that returns a supported claim and citation, and at least one rejected or
+explicitly unanswerable case. `--json` emits the full report, including observed
+claim IDs, physical page locators, rejection messages, structured-evidence
+eligibility, and every rejected or incomplete procedure candidate.
+
+Figure-only material is listed under `unanswerable_content` with its source
+page and reason. It remains answerable only after a human transcribes the
+content, attaches an exact citation, and records verification in the structured
+evidence file. Incomplete procedures remain `not_found`; the coverage inventory
+keeps their completeness or citation defects inspectable.
+
 ## Retrieval-only freeze
 
 Retrieval usability is checked before answer-accuracy work with a fixed
