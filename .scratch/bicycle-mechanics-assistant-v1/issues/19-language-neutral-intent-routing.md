@@ -29,3 +29,9 @@
   paraphrase, German routing, ambiguity, early scope refusal, malformed route
   output, and fake-provider diagnostics. Verified with 211 tests, Ruff, and
   strict Pyright.
+- 2026-11-25: Added a deterministic fallback when a model route reaches
+  evidence retrieval and returns `not_found`. The application retries the
+  original question with prototype routing and only replaces the response if
+  deterministic evidence gates produce a supported answer. The fallback is
+  recorded with routing strategy `prototype`, while the remote provider still
+  phrases the validated claims.

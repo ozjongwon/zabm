@@ -549,6 +549,44 @@ printf 'kind=%s provider=%s\\n' "$PROVIDER_KIND" "$RUNTIME_PROVIDER_NAME"
     assert "kind=deepseek provider=deepseek" in result.stdout
 
 
+def test_runtime_smoke_reports_route_and_failure_when_no_answer_is_found(
+    tmp_path: Path,
+) -> None:
+    response_file = tmp_path / "response.json"
+    response_file.write_text(
+        """
+{
+  "status": "not_found",
+  "failure": {"code": "not_found", "message": "No matching evidence."},
+  "routing": {
+    "intent": "procedure",
+    "normalized_question": "Service the component."
+  }
+}
+""",
+        encoding="utf-8",
+    )
+    command = f"""
+source {shlex.quote(str(RUNTIME_INSTALLER))}
+validate_supported_response {shlex.quote(str(response_file))} CLI
+"""
+
+    result = subprocess.run(
+        ["bash", "-c", command],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "CLI: expected supported, got not_found" in result.stderr
+    assert "failure=No matching evidence." in result.stderr
+    assert "intent=procedure" in result.stderr
+    assert "normalized_question=Service the component." in result.stderr
+    assert "Traceback" not in result.stderr
+
+
 def test_runtime_installer_prints_ollama_setup_instructions_when_service_is_inactive(
     tmp_path: Path,
 ) -> None:

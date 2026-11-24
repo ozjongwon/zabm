@@ -202,6 +202,63 @@ def test_cli_routes_a_non_english_request_through_a_semantic_route(
     )
 
 
+def test_cli_falls_back_to_prototype_routing_when_a_model_route_finds_no_evidence(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    download_and_ingest(manifest_path, evidence_path, data_dir)
+    route: dict[str, object] = {
+        "intent": "procedure",
+        "normalized_question": "Service the component.",
+        "entities": [],
+        "missing_fields": [],
+        "ambiguous_fields": [],
+        "candidate_intents": [],
+    }
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-clamp-torque",
+                "text": (
+                    "Test Manufacturer Trail Post remote clamp bolt torque is "
+                    "2.8-3.4 N·m (25-30 in-lb)."
+                ),
+            }
+        ]
+    }
+
+    with provider_server(generated, route_response=route) as (provider_url, requests):
+        result = run_cli(
+            "ask",
+            "What torque should I use for the Trail Post Standard Remote clamp bolt?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "weak-routing-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["routing"]["strategy"] == "prototype"
+    assert response["routing"]["intent"] == "specification"
+    assert response["provider"]["model"] == "weak-routing-model"
+    assert len(requests) == 2
+    assert (
+        "What torque should I use for the Trail Post"
+        in requests[1]["body"]["messages"][-1]["content"]
+    )
+
+
 def test_cli_requests_clarification_when_the_request_family_is_ambiguous(
     tmp_path: Path,
 ) -> None:

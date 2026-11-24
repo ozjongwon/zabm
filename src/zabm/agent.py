@@ -28,6 +28,7 @@ from zabm.routing import (
     IntentRouter,
     ModelIntentRouter,
     PrototypeIntentRouter,
+    RequestRoute,
     routing_metadata,
 )
 from zabm.specifications import answer_specification
@@ -79,6 +80,7 @@ def answer_question(
     prompt_budget: int | None = None,
     router: IntentRouter | None = None,
 ) -> CanonicalResponse:
+    original_question = question
     if router is None:
         router = PrototypeIntentRouter() if provider is None else ModelIntentRouter(provider)
     route = router.route(question)
@@ -145,13 +147,35 @@ def answer_question(
         _log_response(response)
         return response
 
-    if response_type == "compatibility":
-        response = answer_compatibility(question, data_dir)
-    elif response_type == "procedure":
-        response = answer_procedure(question, data_dir)
-    else:
-        response = answer_specification(question, data_dir)
+    response = _answer_from_valid_route(route, question, data_dir)
     response = response.model_copy(update={"routing": metadata})
+    if response.status == "not_found" and router.strategy == "model":
+        fallback_router = PrototypeIntentRouter()
+        fallback_route = fallback_router.route(original_question)
+        if (
+            fallback_route.intent not in {"ambiguous", "out_of_scope"}
+            and not fallback_route.missing_fields
+            and not fallback_route.ambiguous_fields
+        ):
+            fallback_response = _answer_from_valid_route(
+                fallback_route,
+                fallback_route.normalized_question,
+                data_dir,
+            )
+            if fallback_response.status == "supported":
+                response = fallback_response
+                question = fallback_route.normalized_question
+                metadata = routing_metadata(
+                    fallback_route,
+                    fallback_router.strategy,
+                )
+                response = response.model_copy(update={"routing": metadata})
+                logger.debug(
+                    "route-fallback model_intent=%s fallback_intent=%s question=%s",
+                    response_type,
+                    fallback_route.intent,
+                    fallback_route.normalized_question,
+                )
     if provider is None:
         _log_response(response)
         return response
@@ -168,6 +192,18 @@ def answer_question(
     )
     _log_response(phrased)
     return phrased
+
+
+def _answer_from_valid_route(
+    route: RequestRoute,
+    question: str,
+    data_dir: Path,
+) -> CanonicalResponse:
+    if route.intent == "compatibility":
+        return answer_compatibility(question, data_dir)
+    if route.intent == "procedure":
+        return answer_procedure(question, data_dir)
+    return answer_specification(question, data_dir)
 
 
 def _routing_clarification(

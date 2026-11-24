@@ -314,6 +314,11 @@ numeric acceptance, or procedure completeness. Every response records the
 `structured-intent-v1` routing strategy alongside the provider, model, and
 configuration identity.
 
+If a model-produced route reaches evidence retrieval but returns `not_found`,
+the application retries the original question with the deterministic prototype
+router. A supported fallback is recorded with routing strategy `prototype`;
+otherwise the original model-routed `not_found` response is returned.
+
 Use the DeepSeek preset with its default `deepseek-flash` model and
 `https://api.deepseek.com` endpoint:
 

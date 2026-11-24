@@ -834,7 +834,17 @@ import sys
 
 payload = json.loads(open(sys.argv[1], encoding="utf-8").read())
 label = sys.argv[2]
-assert payload["status"] == "supported", f"{label}: {payload['status']}"
+if payload["status"] != "supported":
+    failure = payload.get("failure") or {}
+    routing = payload.get("routing") or {}
+    print(
+        f"{label}: expected supported, got {payload['status']}; "
+        f"failure={failure.get('message', 'none')}; "
+        f"intent={routing.get('intent', 'unknown')}; "
+        f"normalized_question={routing.get('normalized_question', 'unknown')}",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
 assert payload["claims"], f"{label}: no supported claims"
 assert payload["citations"], f"{label}: no citations"
 PY
