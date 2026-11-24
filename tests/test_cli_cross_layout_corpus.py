@@ -450,6 +450,26 @@ def test_page_furniture_is_retained_but_not_classified_as_steps(
     )
 
 
+def test_repeated_running_header_continues_one_procedure_across_pages(
+    corpus_workspace: CorpusWorkspace,
+) -> None:
+    catalog = read_catalog(corpus_workspace)
+    procedure = next(
+        procedure
+        for procedure in catalog["procedures"]
+        if procedure["document_id"] == "single-column"
+    )
+
+    assert procedure["page_numbers"] == [1, 2]
+    assert procedure["grouping_decisions"] == [
+        {
+            "decision": "merged",
+            "reason": "continued step numbering on the adjacent page",
+            "pages": [1, 2],
+        }
+    ]
+
+
 def test_two_column_completion_requires_the_declarative_profile(
     tmp_path: Path,
 ) -> None:

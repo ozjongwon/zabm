@@ -165,6 +165,13 @@ def test_cli_keeps_repeated_section_titles_as_distinct_heading_paths(
         "50 Hour Service Spring replacement",
         "200 Hour Service Spring replacement",
     ]
+    assert catalog["procedures"][1]["grouping_decisions"] == [
+        {
+            "decision": "kept-separate",
+            "reason": "heading path differs from the repeated title",
+            "pages": [1],
+        }
+    ]
 
 
 def test_cli_continues_numbered_heading_hierarchy_across_pages(tmp_path: Path) -> None:

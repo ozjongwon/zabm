@@ -71,6 +71,8 @@ from zabm.specifications import (
 
 logger = logging.getLogger("zabm.rag")
 
+_ProcedureGroupingKey = tuple[str, str, tuple[str, ...], int]
+
 WARNING_HEADINGS: dict[str, Literal["warning", "notice"]] = {
     "NOTICE": "notice",
     "WARNING": "warning",
@@ -268,6 +270,12 @@ class TranscriptionEvidence(BaseModel):
     verification: HumanTranscriptionVerification
 
 
+class ProcedureGroupingDecision(BaseModel):
+    decision: Literal["merged", "kept-separate", "rejected"]
+    reason: str
+    pages: list[int] = Field(min_length=1)
+
+
 class StoredProcedure(BaseModel):
     procedure_id: str
     document_id: str
@@ -281,6 +289,9 @@ class StoredProcedure(BaseModel):
     end_evidence: list[ProcedureEndEvidence] = Field(default_factory=list[ProcedureEndEvidence])
     completeness_notes: list[str] = Field(default_factory=list[str])
     validation_issues: list[str] = Field(default_factory=list[str])
+    grouping_decisions: list[ProcedureGroupingDecision] = Field(
+        default_factory=list[ProcedureGroupingDecision]
+    )
     evidence_plane: EvidencePlane = "pdf-text"
     verified_transcription: TranscriptionEvidence | None = None
 
@@ -330,6 +341,9 @@ class ProcedureEvidenceMatch(BaseModel):
     heading_path: list[str]
     complete: bool
     validation_issues: list[str]
+    grouping_decisions: list[ProcedureGroupingDecision] = Field(
+        default_factory=list[ProcedureGroupingDecision]
+    )
     pages: list[RetrievalPage]
     steps: list[StoredProcedureStep]
 
@@ -1225,6 +1239,7 @@ def inspect_procedure_evidence(question: str, data_dir: Path) -> ProcedureEviden
                 heading_path=procedure.heading_path,
                 complete=not issues,
                 validation_issues=issues,
+                grouping_decisions=resolved.grouping_decisions,
                 pages=[
                     pages_by_source[procedure.document_id][page_number]
                     for page_number in procedure.page_numbers
@@ -2425,23 +2440,67 @@ def _looks_like_table_cells(cells: list[str]) -> bool:
     return numeric_cells >= 2 or all(len(cell.split()) <= 6 for cell in cells)
 
 
+def _heading_follows_position(
+    heading_lines_by_page: dict[int, list[int]],
+    position: tuple[int, int],
+) -> bool:
+    physical_page, line_index = position
+    return any(
+        heading_line > line_index for heading_line in heading_lines_by_page.get(physical_page, [])
+    )
+
+
+def _heading_between_positions(
+    heading_lines_by_page: dict[int, list[int]],
+    after: tuple[int, int],
+    before: tuple[int, int],
+) -> bool:
+    return any(
+        after < (physical_page, line_index) < before
+        for physical_page, line_indexes in heading_lines_by_page.items()
+        for line_index in line_indexes
+    )
+
+
+def _section_start_position(
+    parsed_pages: Sequence[_PageParse],
+    *,
+    after: tuple[int, int],
+    heading_path: list[str],
+    fallback: tuple[int, int],
+) -> tuple[int, int]:
+    candidates = [
+        (event.physical_page, event.line_index)
+        for parsed in parsed_pages
+        for event in parsed.heading_events
+        if (event.physical_page, event.line_index) > after
+        and event.heading_path == heading_path[: len(event.heading_path)]
+    ]
+    return min(candidates, default=fallback)
+
+
 def _group_procedures(
     parsed_pages: list[_PageParse],
     end_profile: EndBoundaryProfile,
 ) -> list[StoredProcedure]:
-    grouped: dict[tuple[str, str, int], list[StoredProcedureStep]] = {}
-    paths: dict[tuple[str, str, int], list[str]] = {}
-    page_numbers: dict[tuple[str, str, int], list[int]] = {}
-    step_issues: dict[tuple[str, str, int], list[str]] = {}
-    end_evidence: dict[tuple[str, str, int], list[ProcedureEndEvidence]] = {}
-    completeness_notes: dict[tuple[str, str, int], list[str]] = {}
-    section_levels: dict[tuple[str, str, int], int] = {}
-    final_positions: dict[tuple[str, str, int], tuple[int, int]] = {}
-    order: list[tuple[str, str, int]] = []
-    active_key: tuple[str, str, int] | None = None
-    active_title: str | None = None
+    grouped: dict[_ProcedureGroupingKey, list[StoredProcedureStep]] = {}
+    paths: dict[_ProcedureGroupingKey, list[str]] = {}
+    page_numbers: dict[_ProcedureGroupingKey, list[int]] = {}
+    step_issues: dict[_ProcedureGroupingKey, list[str]] = {}
+    end_evidence: dict[_ProcedureGroupingKey, list[ProcedureEndEvidence]] = {}
+    completeness_notes: dict[_ProcedureGroupingKey, list[str]] = {}
+    section_levels: dict[_ProcedureGroupingKey, int] = {}
+    final_positions: dict[_ProcedureGroupingKey, tuple[int, int]] = {}
+    grouping_decisions: dict[_ProcedureGroupingKey, list[ProcedureGroupingDecision]] = {}
+    previous_key_by_title: dict[tuple[str, str], _ProcedureGroupingKey] = {}
+    order: list[_ProcedureGroupingKey] = []
+    active_key: _ProcedureGroupingKey | None = None
     previous_page: int | None = None
     section_run = 0
+    heading_lines_by_page: dict[int, list[int]] = {}
+    for parsed in parsed_pages:
+        for event in parsed.heading_events:
+            heading_lines_by_page.setdefault(event.physical_page, []).append(event.line_index)
 
     for parsed in parsed_pages:
         page_sections: list[int] = []
@@ -2456,27 +2515,107 @@ def _group_procedures(
                 if parsed_step.section_sequence == sequence
             ]
             title = section_steps[0].section_title
+            heading_path = section_steps[0].heading_path
+            first_step_number = section_steps[0].step.number
+            current_section_position = (parsed.page.physical_page, section_steps[0].line_index)
+            for event in parsed.heading_events:
+                if event.line_index < section_steps[0].line_index:
+                    current_section_position = (event.physical_page, event.line_index)
+            active_last_step = (
+                grouped[active_key][-1].number
+                if active_key is not None and grouped[active_key]
+                else None
+            )
+            active_ended = (
+                active_key is not None
+                and active_last_step is not None
+                and any(
+                    evidence.after_step == active_last_step for evidence in end_evidence[active_key]
+                )
+            )
+            active_interrupted = active_key is not None and _heading_follows_position(
+                heading_lines_by_page,
+                final_positions[active_key],
+            )
             continues = (
                 position == 0
-                and active_title == title
+                and active_key is not None
+                and active_key[0] == parsed.document_id
+                and active_key[1] == title
+                and paths[active_key] == heading_path
                 and previous_page is not None
                 and parsed.page.physical_page == previous_page + 1
-                and active_key is not None
+                and not active_ended
+                and not active_interrupted
+                and active_last_step is not None
+                and first_step_number > 1
             )
             if continues:
                 key = active_key
                 assert key is not None
+                assert active_last_step is not None
+                continuation_reason = (
+                    "continued step numbering on the adjacent page"
+                    if first_step_number == active_last_step + 1
+                    else "resumed non-initial step numbering on the adjacent page"
+                )
+                grouping_decisions[key].append(
+                    ProcedureGroupingDecision(
+                        decision="merged",
+                        reason=continuation_reason,
+                        pages=[page_numbers[key][-1], parsed.page.physical_page],
+                    )
+                )
             else:
-                key = (parsed.document_id, title, section_run)
+                key = (parsed.document_id, title, tuple(heading_path), section_run)
                 section_run += 1
                 grouped[key] = []
-                paths[key] = section_steps[0].heading_path
+                paths[key] = heading_path
                 page_numbers[key] = []
                 step_issues[key] = []
                 end_evidence[key] = []
                 completeness_notes[key] = []
+                grouping_decisions[key] = []
                 section_levels[key] = section_steps[0].section_level
                 order.append(key)
+                previous_key = previous_key_by_title.get((parsed.document_id, title))
+                if previous_key is not None:
+                    prior_page = page_numbers[previous_key][-1]
+                    prior_last_step = grouped[previous_key][-1].number
+                    prior_ended = any(
+                        evidence.after_step == prior_last_step
+                        for evidence in end_evidence[previous_key]
+                    )
+                    prior_interrupted = _heading_between_positions(
+                        heading_lines_by_page,
+                        final_positions[previous_key],
+                        _section_start_position(
+                            parsed_pages,
+                            after=final_positions[previous_key],
+                            heading_path=heading_path,
+                            fallback=current_section_position,
+                        ),
+                    )
+                    if prior_interrupted:
+                        reason = "an intervening heading ended the prior section"
+                    elif paths[previous_key] != heading_path:
+                        reason = "heading path differs from the repeated title"
+                    elif first_step_number == 1:
+                        reason = "repeated title started again at step 1"
+                    elif prior_ended:
+                        reason = "previous procedure ended before the repeated title"
+                    elif position != 0 or parsed.page.physical_page != prior_page + 1:
+                        reason = "repeated title is not the first section on an adjacent page"
+                    else:
+                        reason = "repeated title did not continue the prior step numbering"
+                    grouping_decisions[key].append(
+                        ProcedureGroupingDecision(
+                            decision="kept-separate",
+                            reason=reason,
+                            pages=sorted({prior_page, parsed.page.physical_page}),
+                        )
+                    )
+                previous_key_by_title[(parsed.document_id, title)] = key
 
             grouped[key].extend(parsed_step.step for parsed_step in section_steps)
             if parsed.page.physical_page not in page_numbers[key]:
@@ -2489,23 +2628,39 @@ def _group_procedures(
                 section_steps[-1].line_index,
             )
             active_key = key
-            active_title = title
             previous_page = parsed.page.physical_page
 
     procedures: list[StoredProcedure] = []
     for key in order:
-        document_id, title, _ = key
+        document_id, title, _, _ = key
         steps = grouped[key]
         deduplicated: dict[int, StoredProcedureStep] = {}
         issues: list[str] = []
         for step in steps:
             if step.number in deduplicated:
                 issues.append(f"step {step.number} appears more than once")
+                reason = f"step {step.number} appears more than once in one candidate"
+                if not any(
+                    decision.decision == "rejected" and decision.reason == reason
+                    for decision in grouping_decisions[key]
+                ):
+                    grouping_decisions[key].append(
+                        ProcedureGroupingDecision(
+                            decision="rejected",
+                            reason=reason,
+                            pages=sorted(
+                                {
+                                    deduplicated[step.number].citation.physical_page,
+                                    step.citation.physical_page,
+                                }
+                            ),
+                        )
+                    )
             else:
                 deduplicated[step.number] = step
         issues.extend(step_issues[key])
-        ordered_steps = [deduplicated[number] for number in sorted(deduplicated)]
-        final_step = max(deduplicated)
+        ordered_steps = list(deduplicated.values())
+        final_step = ordered_steps[-1].number
         note_events = _events_before_next_heading(
             parsed_pages,
             events=(event for parsed in parsed_pages for event in parsed.completeness_note_events),
@@ -2563,6 +2718,7 @@ def _group_procedures(
                 end_evidence=end_evidence[key],
                 completeness_notes=notes,
                 validation_issues=issues,
+                grouping_decisions=grouping_decisions[key],
             )
         )
     return procedures
