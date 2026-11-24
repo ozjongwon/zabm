@@ -1,0 +1,163 @@
+{
+  "profile_schema_version": "1",
+  "profile_manifest_version": "cross-layout-profiles-v1",
+  "profiles": [
+    {
+      "id": "standard-en",
+      "version": "1",
+      "selector": {
+        "metadata": {},
+        "fallback": true
+      },
+      "page_classification": {
+        "exceptions": []
+      },
+      "layout": {
+        "columns": [],
+        "reading_order": "left-to-right"
+      },
+      "language": {
+        "primary_language": "en",
+        "regions": []
+      },
+      "headings": {
+        "rules": [],
+        "infer_hierarchy": true
+      },
+      "tables": {
+        "excluded_regions": []
+      },
+      "figures": {
+        "excluded_regions": [],
+        "requires_human_transcription": true
+      },
+      "end_boundaries": {
+        "strategy": "explicit-marker",
+        "markers": [
+          "This concludes"
+        ]
+      },
+      "action_aliases": {}
+    },
+    {
+      "id": "two-column-en",
+      "version": "1",
+      "selector": {
+        "metadata": {
+          "layout_family": "two-column"
+        },
+        "fallback": false
+      },
+      "page_classification": {
+        "exceptions": []
+      },
+      "layout": {
+        "columns": [
+          {
+            "id": "left",
+            "x_min": 0.0,
+            "x_max": 0.5
+          },
+          {
+            "id": "right",
+            "x_min": 0.5,
+            "x_max": 1.0
+          }
+        ],
+        "reading_order": "left-to-right"
+      },
+      "language": {
+        "primary_language": "en",
+        "regions": []
+      },
+      "headings": {
+        "rules": [],
+        "infer_hierarchy": true
+      },
+      "tables": {
+        "excluded_regions": []
+      },
+      "figures": {
+        "excluded_regions": [],
+        "requires_human_transcription": true
+      },
+      "end_boundaries": {
+        "strategy": "explicit-marker",
+        "markers": [
+          "This concludes",
+          "Service finished"
+        ]
+      },
+      "action_aliases": {}
+    },
+    {
+      "id": "multilingual-two-column-en",
+      "version": "1",
+      "selector": {
+        "metadata": {
+          "layout_family": "multilingual-two-column"
+        },
+        "fallback": false
+      },
+      "page_classification": {
+        "exceptions": []
+      },
+      "layout": {
+        "columns": [
+          {
+            "id": "english",
+            "x_min": 0.0,
+            "x_max": 0.5
+          },
+          {
+            "id": "german",
+            "x_min": 0.5,
+            "x_max": 1.0
+          }
+        ],
+        "reading_order": "left-to-right"
+      },
+      "language": {
+        "primary_language": "en",
+        "regions": [
+          {
+            "language": "en",
+            "box": {
+              "x_min": 0.0,
+              "y_min": 0.0,
+              "x_max": 0.5,
+              "y_max": 1.0
+            }
+          },
+          {
+            "language": "de",
+            "box": {
+              "x_min": 0.5,
+              "y_min": 0.0,
+              "x_max": 1.0,
+              "y_max": 1.0
+            }
+          }
+        ]
+      },
+      "headings": {
+        "rules": [],
+        "infer_hierarchy": true
+      },
+      "tables": {
+        "excluded_regions": []
+      },
+      "figures": {
+        "excluded_regions": [],
+        "requires_human_transcription": true
+      },
+      "end_boundaries": {
+        "strategy": "explicit-marker",
+        "markers": [
+          "This concludes"
+        ]
+      },
+      "action_aliases": {}
+    }
+  ]
+}

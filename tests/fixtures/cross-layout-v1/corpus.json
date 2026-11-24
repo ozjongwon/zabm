@@ -1,0 +1,608 @@
+{
+  "corpus_version": "cross-layout-v1",
+  "manifest_version": "cross-layout-corpus-v1",
+  "retrieval_date": "2026-11-24",
+  "coverage": {
+    "single_column_procedures": [
+      "single-column-evidence",
+      "single-column-ask"
+    ],
+    "two_column_procedures": [
+      "two-column-evidence",
+      "two-column-ask"
+    ],
+    "multilingual_multi_column_pages": [
+      "multilingual-evidence"
+    ],
+    "contents_pages": [
+      "contents-rejected"
+    ],
+    "torque_table_pages": [
+      "torque-table-rejected"
+    ],
+    "contact_information_pages": [
+      "contact-rejected"
+    ],
+    "legal_pages": [
+      "legal-rejected"
+    ],
+    "cover_pages": [
+      "cover-rejected"
+    ],
+    "figure_only_pages": [
+      "figure-only-rejected"
+    ],
+    "repeated_headers": [
+      "single-column-evidence"
+    ],
+    "warnings": [
+      "single-column-evidence",
+      "two-column-evidence"
+    ],
+    "page_numbers": [
+      "single-column-evidence"
+    ],
+    "figure_callouts": [
+      "figure-only-rejected"
+    ],
+    "broken_words": [
+      "broken-word-evidence"
+    ],
+    "complete_procedures": [
+      "single-column-ask",
+      "two-column-ask"
+    ],
+    "missing_first_steps": [
+      "missing-first-ask"
+    ],
+    "missing_final_steps": [
+      "missing-final-ask"
+    ],
+    "duplicate_numbering": [
+      "duplicate-numbering-ask"
+    ],
+    "ambiguous_continuations": [
+      "ambiguous-continuation-ask"
+    ],
+    "declarative_profile_required": [
+      "two-column-evidence"
+    ]
+  },
+  "documents": [
+    {
+      "id": "cover-page",
+      "title": "Corpus Cover",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Cover"],
+            [690, 72, "1 Protect the frame during shipping."],
+            [672, 72, "2 Inspect the frame after shipping."],
+            [654, 72, "This concludes the cover procedure."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contents-page",
+      "title": "Corpus Contents",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Contents"],
+            [690, 72, "1 Remove the rear wheel .......... 7"],
+            [672, 72, "2 Install the rear wheel ......... 8"],
+            [654, 72, "This concludes the wheel procedure."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "torque-table-page",
+      "title": "Corpus Torque Table",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Torque table"],
+            [690, 72, "1 Clamp bolt 5 N m"],
+            [672, 72, "2 Lever bolt 4 N m"],
+            [654, 72, "This concludes the torque table."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contact-page",
+      "title": "Corpus Contact Information",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Contact information"],
+            [690, 72, "1 Call support for warranty service."],
+            [672, 72, "2 Email support for technical questions."],
+            [654, 72, "This concludes the contact information."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "legal-page",
+      "title": "Corpus Legal Notice",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Legal notice"],
+            [690, 72, "1 Do not reproduce this manual without permission."],
+            [672, 72, "2 Retain this notice with the product."],
+            [654, 72, "This concludes the legal notice."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "figure-only-page",
+      "title": "Corpus Figure Only",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Figure only"],
+            [690, 72, "1 Figure callout"],
+            [672, 72, "2 Figure callout"],
+            [654, 72, "This concludes the figure callouts."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "single-column",
+      "title": "Corpus Single Column Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "12 Rear hub overhaul"],
+            [690, 72, "WARNING"],
+            [672, 72, "Release the hub clamp before disassembly."],
+            [654, 72, "1 Remove the axle nut."],
+            [636, 72, "2 Lift the hub cap."]
+          ]
+        },
+        {
+          "lines": [
+            [720, 72, "13 Rear hub overhaul"],
+            [702, 72, "Rear hub overhaul continued"],
+            [684, 72, "3 Replace the bearing."],
+            [666, 72, "4 Install the hub cap."],
+            [648, 72, "This concludes the Rear hub overhaul."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "two-column",
+      "title": "Corpus Two Column Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "ingestion_metadata": {
+        "layout_family": "two-column"
+      },
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "14 Bleed the brake"],
+            [690, 72, "NOTICE"],
+            [672, 72, "Close the reservoir before bleeding."],
+            [654, 72, "1 Fit the bleed syringe."],
+            [636, 72, "2 Open the bleed valve."],
+            [618, 72, "3 Close the bleed valve."],
+            [600, 72, "Proceed to the next service interval. Service finished."],
+            [500, 330, "Figure 3"],
+            [482, 330, "A Bleed screw"],
+            [464, 330, "B Reservoir cap"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "multilingual",
+      "title": "Corpus Multilingual Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "ingestion_metadata": {
+        "layout_family": "multilingual-two-column"
+      },
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "15 Center the derailleur"],
+            [690, 72, "1 Loosen the derailleur clamp."],
+            [672, 72, "2 Align the derailleur cage."],
+            [654, 72, "3 Tighten the derailleur clamp."],
+            [636, 72, "This concludes the Center the derailleur."],
+            [690, 330, "1 Losen Sie die Umwerferklemme."],
+            [672, 330, "2 Richten Sie den Umwerfer aus."],
+            [654, 330, "3 Ziehen Sie die Umwerferklemme fest."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ambiguous-continuation",
+      "title": "Corpus Repeated Headings Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "20 Spring replacement"],
+            [690, 72, "50 Hour Service Spring replacement"],
+            [672, 72, "1 Remove the road spring."],
+            [654, 72, "2 Install the road spring."],
+            [636, 72, "This concludes the Spring replacement."],
+            [600, 72, "200 Hour Service Spring replacement"],
+            [582, 72, "1 Remove the trail spring."],
+            [564, 72, "2 Install the trail spring."],
+            [546, 72, "This concludes the Spring replacement."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "duplicate-numbering",
+      "title": "Corpus Duplicate Numbering Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "22 Replace brake pads"],
+            [690, 72, "1 Remove the brake pad."],
+            [672, 72, "1 Remove the pad spring."],
+            [654, 72, "2 Install the brake pad."],
+            [636, 72, "This concludes the Replace brake pads."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "missing-first-step",
+      "title": "Corpus Missing First Step Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "23 Replace chainring"],
+            [690, 72, "2 Place the new chainring."],
+            [672, 72, "3 Fasten the chainring bolts."],
+            [654, 72, "This concludes the Replace chainring."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "missing-final-step",
+      "title": "Corpus Missing Final Step Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "24 Adjust saddle"],
+            [690, 72, "1 Loosen the saddle clamp."],
+            [672, 72, "2 Move the saddle."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "broken-word",
+      "title": "Corpus Broken Word Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "25 Replace hydraulic hose"],
+            [690, 72, "1 Remove the hy-"],
+            [672, 72, "draulic hose."],
+            [654, 72, "2 Install the new hose."],
+            [636, 72, "This concludes the Replace hydraulic hose."]
+          ]
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "cover-rejected",
+      "kind": "evidence",
+      "document_id": "cover-page",
+      "question": "What are the steps in the cover?",
+      "expected": {
+        "match_count": 0
+      },
+      "known_gap": "03"
+    },
+    {
+      "id": "contents-rejected",
+      "kind": "evidence",
+      "document_id": "contents-page",
+      "question": "What are the steps in the contents?",
+      "expected": {
+        "match_count": 0
+      },
+      "known_gap": "03"
+    },
+    {
+      "id": "torque-table-rejected",
+      "kind": "evidence",
+      "document_id": "torque-table-page",
+      "question": "What are the steps in the torque table?",
+      "expected": {
+        "match_count": 0
+      },
+      "known_gap": "03"
+    },
+    {
+      "id": "contact-rejected",
+      "kind": "evidence",
+      "document_id": "contact-page",
+      "question": "What are the steps in the contact information?",
+      "expected": {
+        "match_count": 0
+      },
+      "known_gap": "03"
+    },
+    {
+      "id": "legal-rejected",
+      "kind": "evidence",
+      "document_id": "legal-page",
+      "question": "What are the steps in the legal notice?",
+      "expected": {
+        "match_count": 0
+      },
+      "known_gap": "03"
+    },
+    {
+      "id": "figure-only-rejected",
+      "kind": "evidence",
+      "document_id": "figure-only-page",
+      "question": "What are the steps in the figure only?",
+      "expected": {
+        "match_count": 0
+      },
+      "known_gap": "03"
+    },
+    {
+      "id": "single-column-evidence",
+      "kind": "evidence",
+      "document_id": "single-column",
+      "question": "What are the steps to overhaul the rear hub?",
+      "expected": {
+        "match_count": 1,
+        "complete": true,
+        "title": "Rear hub overhaul",
+        "steps": [
+          {
+            "number": 1,
+            "text": "Remove the axle nut.",
+            "warnings": [
+              {
+                "severity": "warning",
+                "text": "Release the hub clamp before disassembly."
+              }
+            ]
+          },
+          {
+            "number": 2,
+            "text": "Lift the hub cap.",
+            "warnings": []
+          },
+          {
+            "number": 3,
+            "text": "Replace the bearing.",
+            "warnings": []
+          },
+          {
+            "number": 4,
+            "text": "Install the hub cap.",
+            "warnings": []
+          }
+        ],
+        "printed_pages": [
+          12,
+          13
+        ]
+      }
+    },
+    {
+      "id": "single-column-ask",
+      "kind": "ask",
+      "document_id": "single-column",
+      "question": "What are the steps to overhaul the rear hub?",
+      "expected": {
+        "status": "supported",
+        "procedure_title": "Rear hub overhaul",
+        "step_numbers": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "citations": [
+          {
+            "document_id": "single-column",
+            "printed_page": 12,
+            "physical_page": 1,
+            "section": "Rear hub overhaul"
+          },
+          {
+            "document_id": "single-column",
+            "printed_page": 13,
+            "physical_page": 2,
+            "section": "Rear hub overhaul"
+          }
+        ]
+      }
+    },
+    {
+      "id": "two-column-evidence",
+      "kind": "evidence",
+      "document_id": "two-column",
+      "question": "What are the steps to bleed the brake?",
+      "expected": {
+        "match_count": 1,
+        "complete": true,
+        "title": "Bleed the brake",
+        "profile_id": "two-column-en",
+        "steps": [
+          {
+            "number": 1,
+            "text": "Fit the bleed syringe.",
+            "warnings": [
+              {
+                "severity": "notice",
+                "text": "Close the reservoir before bleeding."
+              }
+            ]
+          },
+          {
+            "number": 2,
+            "text": "Open the bleed valve.",
+            "warnings": []
+          },
+          {
+            "number": 3,
+            "text": "Close the bleed valve.",
+            "warnings": []
+          }
+        ],
+        "printed_pages": [
+          14
+        ]
+      }
+    },
+    {
+      "id": "two-column-ask",
+      "kind": "ask",
+      "document_id": "two-column",
+      "question": "What are the steps to bleed the brake?",
+      "expected": {
+        "status": "supported",
+        "procedure_title": "Bleed the brake",
+        "step_numbers": [
+          1,
+          2,
+          3
+        ],
+        "citations": [
+          {
+            "document_id": "two-column",
+            "printed_page": 14,
+            "physical_page": 1,
+            "section": "Bleed the brake"
+          }
+        ]
+      }
+    },
+    {
+      "id": "multilingual-evidence",
+      "kind": "evidence",
+      "document_id": "multilingual",
+      "question": "What are the steps to center the derailleur?",
+      "expected": {
+        "match_count": 1,
+        "complete": true,
+        "title": "Center the derailleur",
+        "profile_id": "multilingual-two-column-en",
+        "steps": [
+          {
+            "number": 1,
+            "text": "Loosen the derailleur clamp.",
+            "warnings": []
+          },
+          {
+            "number": 2,
+            "text": "Align the derailleur cage.",
+            "warnings": []
+          },
+          {
+            "number": 3,
+            "text": "Tighten the derailleur clamp.",
+            "warnings": []
+          }
+        ],
+        "printed_pages": [
+          15
+        ]
+      },
+      "known_gap": "04"
+    },
+    {
+      "id": "broken-word-evidence",
+      "kind": "evidence",
+      "document_id": "broken-word",
+      "question": "What are the steps to replace the hydraulic hose?",
+      "expected": {
+        "match_count": 1,
+        "complete": true,
+        "title": "Replace hydraulic hose",
+        "steps": [
+          {
+            "number": 1,
+            "text": "Remove the hydraulic hose.",
+            "warnings": []
+          },
+          {
+            "number": 2,
+            "text": "Install the new hose.",
+            "warnings": []
+          }
+        ],
+        "printed_pages": [
+          1
+        ]
+      },
+      "known_gap": "04"
+    },
+    {
+      "id": "duplicate-numbering-ask",
+      "kind": "ask",
+      "document_id": "duplicate-numbering",
+      "question": "What are the steps to replace the brake pads?",
+      "expected": {
+        "status": "not_found",
+        "message_contains": "appears more than once"
+      }
+    },
+    {
+      "id": "missing-first-ask",
+      "kind": "ask",
+      "document_id": "missing-first-step",
+      "question": "What are the steps to replace the chainring?",
+      "expected": {
+        "status": "not_found",
+        "message_contains": "required step 1 may be missing"
+      }
+    },
+    {
+      "id": "missing-final-ask",
+      "kind": "ask",
+      "document_id": "missing-final-step",
+      "question": "What are the steps to adjust the saddle?",
+      "expected": {
+        "status": "not_found",
+        "message_contains": "procedure end was not found"
+      }
+    },
+    {
+      "id": "ambiguous-continuation-ask",
+      "kind": "ask",
+      "document_id": "ambiguous-continuation",
+      "question": "What are the steps for spring replacement?",
+      "expected": {
+        "status": "clarification_required"
+      }
+    }
+  ]
+}
