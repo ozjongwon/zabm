@@ -43,6 +43,8 @@ profile, and the installed-target smoke checks.
 The import check must fail. The installer must finish with the CLI health
 check, local chat and embedding provider smoke, source/evidence verification,
 one supported CLI answer, and the same answer through the web endpoint.
+It must also enable and leave active `ollama.service`, with the service running
+as `/home/ollama`'s owner and group.
 
 The following generated paths are outside the repository and must not appear
 in `git status`:
@@ -51,6 +53,7 @@ in `git status`:
 - `/home/ollama/models`
 - `/home/ollama/server`
 - `/home/ollama/state`
+- `/etc/systemd/system/ollama.service`
 - `~/.local/bin/zabm-runtime`
 
 Model weights are deliberately separate from the installer binary and runtime
@@ -77,6 +80,8 @@ Run the automated installed-target checks independently:
 
 ```bash
 ./scripts/runtime-smoke.sh
+sudo systemctl status ollama.service
+sudo journalctl --unit ollama.service --lines 50
 ```
 
 ## Idempotence
@@ -88,10 +93,10 @@ Run the installer a second time:
 ```
 
 The second run must reuse the pinned server and imported models, leave one
-runtime server process, leave permission mode `600` on `runtime.env`, and pass
-the same smoke checks. It must not add development, test, or evaluation Python
-packages. Confirm `~/.local/bin/zabm-runtime` is replaced in place rather than
-duplicated.
+active `ollama.service`, leave permission mode `600` on `runtime.env`, and
+pass the same smoke checks. It must not add development, test, or evaluation
+Python packages. Confirm `~/.local/bin/zabm-runtime` is replaced in place
+rather than duplicated.
 
 ## Evidence record
 

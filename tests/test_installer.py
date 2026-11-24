@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import grp
 import os
+import pwd
 import shlex
 import subprocess
 from pathlib import Path
@@ -155,6 +157,7 @@ def test_runtime_installer_dry_run_reports_the_complete_target_plan(
     assert "f046db1dc724cf4f6f0a0c5917e922823b73eb1d27b8f9a9c2797f7866974804" in result.stdout
     assert "/home/ollama/models" in result.stdout
     assert "installed-target smoke" in result.stdout
+    assert "systemctl (ollama.service, enabled at boot)" in result.stdout
     assert "one supported answer" in result.stdout
     assert "sk-test-do-not-print" not in result.stdout + result.stderr
 
@@ -229,6 +232,7 @@ install_runtime_base() {{ printf 'phase: runtime base\\n'; }}
 install_model_server() {{ :; }}
 write_runtime_config() {{ :; }}
 write_runtime_launcher() {{ :; }}
+write_model_service() {{ :; }}
 start_model_server() {{ :; }}
 fetch_models() {{ :; }}
 prepare_evidence() {{ :; }}
@@ -311,6 +315,8 @@ def test_runtime_installer_grants_access_without_changing_runtime_home_ownership
     command = f"""
 source {shlex.quote(str(RUNTIME_INSTALLER))}
 RUNTIME_HOME={shlex.quote(str(runtime_home))}
+SERVER_DIR="{runtime_home}/server"
+MODEL_DIR="{runtime_home}/models"
 STATE_DIR={shlex.quote(str(runtime_home / "state"))}
 setfacl() {{ :; }}
 sudo() {{
@@ -337,3 +343,95 @@ check_disk_space
     assert "preserving its owner and group" in result.stdout
     assert "chown" not in result.stdout + result.stderr
     assert (runtime_home.stat().st_uid, runtime_home.stat().st_gid) == owner_before
+
+
+def test_runtime_installer_writes_a_systemd_unit_with_runtime_home_ownership(
+    tmp_path: Path,
+) -> None:
+    runtime_home = tmp_path / "ollama"
+    runtime_home.mkdir()
+    unit_dir = tmp_path / "systemd"
+    unit_dir.mkdir()
+    env = os.environ.copy()
+    env.update(
+        {
+            "ZABM_RUNTIME_HOME": str(runtime_home),
+            "ZABM_SYSTEMD_UNIT_DIR": str(unit_dir),
+        }
+    )
+    command = f"source {shlex.quote(str(RUNTIME_INSTALLER))}; write_model_service"
+
+    first = subprocess.run(
+        ["bash", "-c", command],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert first.returncode == 0, first.stderr
+
+    service = unit_dir / "ollama.service"
+    first_stat = service.stat()
+    contents = service.read_text(encoding="utf-8")
+    assert f"User={pwd.getpwuid(os.getuid()).pw_name}\n" in contents
+    assert f"Group={grp.getgrgid(os.getgid()).gr_name}\n" in contents
+    assert f'Environment="OLLAMA_MODELS={runtime_home}/models"\n' in contents
+    assert 'Environment="OLLAMA_HOST=127.0.0.1:11434"\n' in contents
+    assert f"ExecStart={runtime_home}/server/v0.40.18/bin/ollama serve\n" in contents
+    assert "WantedBy=multi-user.target\n" in contents
+
+    second = subprocess.run(
+        ["bash", "-c", command],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert second.returncode == 0, second.stderr
+    assert service.stat().st_ino == first_stat.st_ino
+    assert service.stat().st_mtime_ns == first_stat.st_mtime_ns
+
+
+def test_runtime_installer_starts_ollama_through_systemctl(tmp_path: Path) -> None:
+    runtime_home = tmp_path / "ollama"
+    runtime_home.mkdir()
+    state_dir = runtime_home / "state"
+    service_file = tmp_path / "ollama.service"
+    service_file.write_text("[Unit]\n", encoding="utf-8")
+    command = f"""
+source {shlex.quote(str(RUNTIME_INSTALLER))}
+RUNTIME_HOME={shlex.quote(str(runtime_home))}
+SERVER_DIR={shlex.quote(str(runtime_home / "server"))}
+MODEL_DIR={shlex.quote(str(runtime_home / "models"))}
+STATE_DIR={shlex.quote(str(state_dir))}
+LEGACY_SERVER_PID_FILE={shlex.quote(str(state_dir / "ollama.pid"))}
+OLLAMA_SERVICE_FILE={shlex.quote(str(service_file))}
+server_version_response() {{ :; }}
+wait_for_server() {{ printf 'wait: ready\\n'; }}
+systemctl() {{
+  printf 'systemctl:'
+  printf ' %s' "$@"
+  printf '\\n'
+  case "$1" in
+    is-active|is-enabled) return 1 ;;
+  esac
+}}
+sudo() {{ "$@"; }}
+start_model_server
+"""
+
+    result = subprocess.run(
+        ["bash", "-c", command],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "systemctl: is-enabled --quiet ollama.service" in result.stdout
+    assert "systemctl: enable ollama.service" in result.stdout
+    assert "systemctl: start ollama.service" in result.stdout
+    assert "wait: ready" in result.stdout

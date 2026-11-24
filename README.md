@@ -49,8 +49,9 @@ without reinstalling the runtime:
 ./scripts/fetch-runtime-models.sh
 ```
 
-The installed `zabm-runtime` launcher starts the local server when needed and
-delegates to the same locked CLI:
+The installer creates and enables `ollama.service`; Linux starts the local
+server at boot. The installed `zabm-runtime` launcher ensures that service is
+active and delegates to the same locked CLI:
 
 ```bash
 zabm-runtime ask \
@@ -61,6 +62,14 @@ zabm-runtime web --data-dir .zabm
 Run `./scripts/runtime-smoke.sh` after a reboot or service change. See
 [Target runtime acceptance](docs/target-runtime-acceptance.md) for the clean
 host procedure and evidence to record.
+
+Inspect or control the model service with standard systemd commands:
+
+```bash
+sudo systemctl status ollama.service
+sudo systemctl restart ollama.service
+sudo journalctl --unit ollama.service
+```
 
 ## Checks
 
