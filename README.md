@@ -42,6 +42,30 @@ make verify
 `make verify` runs the CLI health check, Ruff lint and formatting checks,
 Pyright type checking, and the automated test suite.
 
+## Local web chat
+
+Start the minimal local web chat against the generated evidence directory:
+
+```bash
+./.venv/bin/python -m zabm web --data-dir .zabm
+```
+
+Open <http://127.0.0.1:8765>. The server binds to the loopback interface by
+default. Use `--host` and `--port` to change the binding, including `--port 0`
+to select an available port. Provider options match `zabm ask`, so the web chat
+uses the same deterministic default or selected remote provider.
+
+The browser posts to `/api/ask`, which returns the complete canonical response
+envelope. The web page only presents that envelope: it does not retrieve
+evidence, decide compatibility, verify numbers, or choose refusal statuses.
+Supported responses show claims and citations with document, printed page,
+physical page, section, and retrieval date. Refusals suppress answer
+components, while conflicts show every candidate source and any cited
+precedence.
+
+See [Web chat acceptance](docs/web-chat-acceptance.md) for the procedure that
+compares the web and CLI behavior.
+
 ## Specification, compatibility, and procedure tracers
 
 Download the original hash-verified source PDFs into the local `pdf-doc`

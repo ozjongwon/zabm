@@ -60,6 +60,7 @@ from zabm.specifications import (
     verify_source_files,
     write_json,
 )
+from zabm.web import ZabmHTTPServer
 
 PINNED_PYTHON = "3.13.5"
 PINNED_DEPENDENCIES = {"pydantic": "2.14.3", "pypdf": "6.21.4"}
@@ -556,6 +557,48 @@ def _ask_command(
     return 0
 
 
+def _web_command(
+    host: str,
+    port: int,
+    data_dir: Path,
+    *,
+    provider: str | None,
+    provider_url: str | None,
+    model: str | None,
+    embedding_model: str | None,
+    provider_configuration: str | None,
+) -> int:
+    try:
+        model_provider = configured_provider(
+            provider=provider,
+            base_url=provider_url,
+            model=model,
+            embedding_model=embedding_model,
+            configuration=provider_configuration,
+        )
+        server = ZabmHTTPServer((host, port), data_dir, model_provider)
+    except (OSError, ProviderError) as exc:
+        print(f"zabm web: {exc}", file=sys.stderr)
+        return 1
+
+    address = server.server_address
+    raw_host = address[0]
+    server_host = raw_host.decode() if isinstance(raw_host, bytes | bytearray) else raw_host
+    server_port = address[1]
+    display_host = f"[{server_host}]" if ":" in server_host else server_host
+    print(
+        f"zabm web: http://{display_host}:{server_port} (data: {data_dir}; press Ctrl+C to stop)",
+        flush=True,
+    )
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nzabm web: stopped", file=sys.stderr)
+    finally:
+        server.server_close()
+    return 0
+
+
 def _evidence_command(question: str, data_dir: Path, as_json: bool) -> int:
     inspection = inspect_procedure_evidence(question, data_dir)
     if as_json:
@@ -1031,6 +1074,29 @@ def _parser() -> argparse.ArgumentParser:
     _add_provider_arguments(provider_smoke)
     provider_smoke.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
+    web = commands.add_parser(
+        "web",
+        help="Serve the local web chat for bicycle maintenance questions.",
+    )
+    web.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Interface to bind; defaults to the loopback address.",
+    )
+    web.add_argument(
+        "--port",
+        type=int,
+        default=8765,
+        help="TCP port to bind; use 0 to select an available port.",
+    )
+    web.add_argument(
+        "--data-dir",
+        type=Path,
+        default=DEFAULT_DATA_DIR,
+        help="Directory for generated evidence.",
+    )
+    _add_provider_arguments(web)
+
     evidence = commands.add_parser(
         "evidence",
         help="Inspect the retrieval evidence selected for a procedure question.",
@@ -1278,6 +1344,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "provider-smoke":
         return _provider_smoke_command(
             args.json,
+            provider=args.provider,
+            provider_url=args.provider_url,
+            model=args.model,
+            embedding_model=args.embedding_model,
+            provider_configuration=args.provider_configuration,
+        )
+    if args.command == "web":
+        return _web_command(
+            args.host,
+            args.port,
+            args.data_dir,
             provider=args.provider,
             provider_url=args.provider_url,
             model=args.model,
