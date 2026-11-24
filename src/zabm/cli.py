@@ -27,6 +27,12 @@ from zabm.evaluation_set import (
     validate_evaluation_set,
     verify_evaluation_freeze,
 )
+from zabm.ingestion import (
+    DEFAULT_INGESTION_PROFILES,
+    IngestionProfileError,
+    load_ingestion_profiles,
+    resolve_document_profile,
+)
 from zabm.procedures import (
     ProcedureEvidenceInspection,
     ingest_retrieval,
@@ -172,9 +178,19 @@ def _ingest_command(
     pdf_dir: Path,
     data_dir: Path,
     freeze_path: Path | None,
+    ingestion_profiles_path: Path,
     as_json: bool,
 ) -> int:
     try:
+        ingestion_profiles = load_ingestion_profiles(ingestion_profiles_path)
+        source_manifest = load_source_manifest(manifest)
+        for source in source_manifest.sources:
+            resolve_document_profile(
+                ingestion_profiles,
+                source_id=source.id,
+                metadata=source.ingestion_metadata,
+                reference=source.ingestion_profile,
+            )
         source_freeze = freeze_path
         if (
             source_freeze is None
@@ -194,8 +210,20 @@ def _ingest_command(
             pdf_dir,
             data_dir,
         )
-        retrieval_report = ingest_retrieval(manifest, pdf_dir, data_dir)
-    except (OSError, FrozenSourcePackError, IngestionError, ValueError) as exc:
+        retrieval_report = ingest_retrieval(
+            manifest,
+            pdf_dir,
+            data_dir,
+            ingestion_profiles_path,
+            ingestion_profiles=ingestion_profiles,
+        )
+    except (
+        OSError,
+        FrozenSourcePackError,
+        IngestionError,
+        IngestionProfileError,
+        ValueError,
+    ) as exc:
         print(f"zabm ingest: {exc}", file=sys.stderr)
         return 1
 
@@ -213,6 +241,7 @@ def _ingest_command(
                 compatibility_report.eligible_compatibility_rule_count
             ),
             "retrieval_page_count": retrieval_report.page_count,
+            "ingestion_provenance": retrieval_report.ingestion_provenance.model_dump(mode="json"),
             "page_alignment": retrieval_report.page_alignment.model_dump(mode="json"),
             "table_row_count": retrieval_report.table_row_count,
             "warning_count": retrieval_report.warning_count,
@@ -876,6 +905,12 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="Verify this source-pack freeze before writing derived evidence.",
     )
+    ingest.add_argument(
+        "--ingestion-profiles",
+        type=Path,
+        default=DEFAULT_INGESTION_PROFILES,
+        help="Path to the versioned PDF-ingestion profile manifest.",
+    )
     ingest.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
     ask = commands.add_parser(
@@ -1125,6 +1160,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.pdf_dir,
             args.data_dir,
             args.freeze,
+            args.ingestion_profiles,
             args.json,
         )
     if args.command == "ask":

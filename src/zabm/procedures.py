@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from itertools import pairwise
@@ -13,6 +13,17 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
+from zabm.ingestion import (
+    DEFAULT_INGESTION_PROFILES,
+    PARSER_VERSION,
+    IngestionProfileProvenance,
+    IngestionProfilesFile,
+    IngestionProvenance,
+    SelectedProfileProvenance,
+    load_ingestion_profiles,
+    profile_sha256,
+    resolve_document_profile,
+)
 from zabm.matching import identity_matches, tokens, unknown_tokens
 from zabm.response import (
     CanonicalResponse,
@@ -41,10 +52,6 @@ WARNING_HEADINGS: dict[str, Literal["warning", "notice"]] = {
 STEP_NUMBER = re.compile(r"^\d{1,2}$")
 INLINE_STEP = re.compile(r"^(\d{1,2})\s+(.+)$")
 SERVICE_HEADING = re.compile(r"^(?:\d+/)?\d+ Hour Service\s+(.+)$", re.IGNORECASE)
-PROCEDURE_END = re.compile(
-    r"\b(?:this concludes|end of procedure|procedure is complete)\b",
-    re.IGNORECASE,
-)
 NAVIGATION_CUE = re.compile(
     r"^(?:proceed to|this concludes|stop here|end of procedure)\b",
     re.IGNORECASE,
@@ -102,6 +109,7 @@ class RetrievalSource(BaseModel):
     document_id: str
     title: str
     manufacturer: str
+    ingestion_profile: IngestionProfileProvenance
     pages: list[RetrievalPage]
 
 
@@ -123,6 +131,7 @@ class StoredProcedure(BaseModel):
 
 class RetrievalCatalog(BaseModel):
     source_pack_id: str
+    ingestion_provenance: IngestionProvenance
     sources: list[RetrievalSource]
     procedures: list[StoredProcedure]
 
@@ -137,6 +146,7 @@ class PageAlignmentReport(BaseModel):
 
 class RetrievalIngestReport(BaseModel):
     source_pack_id: str
+    ingestion_provenance: IngestionProvenance
     page_count: int
     page_alignment: PageAlignmentReport
     table_row_count: int
@@ -211,13 +221,43 @@ class _PageParse:
     document_id: str
 
 
-def ingest_retrieval(manifest_path: Path, pdf_dir: Path, data_dir: Path) -> RetrievalIngestReport:
+def ingest_retrieval(
+    manifest_path: Path,
+    pdf_dir: Path,
+    data_dir: Path,
+    ingestion_profiles_path: Path | None = None,
+    *,
+    ingestion_profiles: IngestionProfilesFile | None = None,
+) -> RetrievalIngestReport:
     manifest = load_source_manifest(manifest_path)
+    if ingestion_profiles is not None and ingestion_profiles_path is None:
+        raise ValueError("preloaded ingestion profiles require their source manifest path")
+    profile_path = ingestion_profiles_path or DEFAULT_INGESTION_PROFILES
+    profiles = ingestion_profiles or load_ingestion_profiles(profile_path)
     sources: list[RetrievalSource] = []
     procedures: list[StoredProcedure] = []
     validation_issues: list[str] = []
+    selected_profiles: list[SelectedProfileProvenance] = []
 
     for source in manifest.sources:
+        selected_profile = resolve_document_profile(
+            profiles,
+            source_id=source.id,
+            metadata=source.ingestion_metadata,
+            reference=source.ingestion_profile,
+        )
+        selected_sha256 = profile_sha256(selected_profile)
+        profile_provenance = IngestionProfileProvenance(
+            profile_id=selected_profile.id,
+            profile_version=selected_profile.version,
+            profile_sha256=selected_sha256,
+        )
+        selected_profiles.append(
+            SelectedProfileProvenance(
+                document_id=source.id,
+                **profile_provenance.model_dump(),
+            )
+        )
         source_path = pdf_dir / f"{source.id}.pdf"
         if not source_path.is_file():
             raise OSError(f"source {source.id} has not been downloaded")
@@ -234,6 +274,7 @@ def ingest_retrieval(manifest_path: Path, pdf_dir: Path, data_dir: Path) -> Retr
                 manufacturer=source.manufacturer,
                 retrieval_date=source.retrieval_date,
                 manifest_version=manifest.manifest_version,
+                end_markers=selected_profile.end_boundaries.markers,
             )
             for index, page in enumerate(reader.pages, start=1)
         ]
@@ -242,6 +283,7 @@ def ingest_retrieval(manifest_path: Path, pdf_dir: Path, data_dir: Path) -> Retr
                 document_id=source.id,
                 title=source.title,
                 manufacturer=source.manufacturer,
+                ingestion_profile=profile_provenance,
                 pages=[parsed.page for parsed in parsed_pages],
             )
         )
@@ -251,8 +293,16 @@ def ingest_retrieval(manifest_path: Path, pdf_dir: Path, data_dir: Path) -> Retr
                 f"{procedure.procedure_id}: {issue}" for issue in procedure.validation_issues
             )
 
+    ingestion_provenance = IngestionProvenance(
+        parser_version=PARSER_VERSION,
+        profile_schema_version=profiles.profile_schema_version,
+        profile_manifest_version=profiles.profile_manifest_version,
+        profile_manifest_sha256=file_sha256(profile_path),
+        profiles=selected_profiles,
+    )
     catalog = RetrievalCatalog(
         source_pack_id=manifest.manifest_version,
+        ingestion_provenance=ingestion_provenance,
         sources=sources,
         procedures=procedures,
     )
@@ -267,6 +317,7 @@ def ingest_retrieval(manifest_path: Path, pdf_dir: Path, data_dir: Path) -> Retr
     )
     return RetrievalIngestReport(
         source_pack_id=manifest.manifest_version,
+        ingestion_provenance=ingestion_provenance,
         page_count=len(pages),
         page_alignment=PageAlignmentReport(
             document_count=len(sources),
@@ -426,6 +477,7 @@ def _parse_page(
     manufacturer: str,
     retrieval_date: date,
     manifest_version: str,
+    end_markers: Sequence[str],
 ) -> _PageParse:
     raw_text = page.extract_text() or ""
     lines = _positioned_lines(page)
@@ -494,7 +546,7 @@ def _parse_page(
             continue
 
         line_text = _left_column_text(line)
-        if PROCEDURE_END.search(line_text):
+        if _matches_procedure_end(line_text, end_markers):
             section_numbers = [
                 parsed_step.step.number
                 for parsed_step in steps
@@ -536,7 +588,7 @@ def _parse_page(
                 ):
                     break
                 candidate_text = _left_column_text(candidate)
-                if PROCEDURE_END.search(candidate_text):
+                if _matches_procedure_end(candidate_text, end_markers):
                     end_evidence.setdefault(section_sequence, []).append(
                         ProcedureEndEvidence(text=candidate_text, after_step=step.number)
                     )
@@ -655,6 +707,13 @@ def _printed_page_and_title(text: str, physical_page: int) -> tuple[int, str]:
     if match is None:
         return physical_page, text
     return int(match.group(1)), match.group(2).strip()
+
+
+def _matches_procedure_end(text: str, markers: Sequence[str]) -> bool:
+    return any(
+        re.search(rf"(?<!\w){re.escape(marker)}(?!\w)", text, flags=re.IGNORECASE)
+        for marker in markers
+    )
 
 
 def _step_starts(lines: list[_Line]) -> list[_StepStart]:

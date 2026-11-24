@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
 from zabm.conflicts import EvidenceCandidate, adjudicate, conflicting_evidence_response
+from zabm.ingestion import IngestionProfileReference
 from zabm.matching import identity_matches, tokens, unknown_tokens
 from zabm.response import (
     CanonicalResponse,
@@ -39,6 +40,8 @@ class SourceRecord(BaseModel):
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     retrieval_date: date
     revision: str | None = None
+    ingestion_metadata: dict[str, str] = Field(default_factory=dict[str, str])
+    ingestion_profile: IngestionProfileReference | None = None
 
 
 class SourceManifest(BaseModel):

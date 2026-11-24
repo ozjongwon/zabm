@@ -108,6 +108,47 @@ selected procedure evidence with:
   "What are the steps for hose sizing and remote installation?"
 ```
 
+## PDF ingestion profiles
+
+Retrieval ingestion uses the versioned profile manifest at
+`data/ingestion/profiles-v1.json`. The default `standard-en` profile applies to
+ordinary English documents. A source manifest can select another profile
+explicitly:
+
+```json
+{
+  "id": "example-source",
+  "ingestion_profile": {
+    "id": "two-column-en",
+    "version": "1"
+  }
+}
+```
+
+It can instead supply metadata matched by a profile selector:
+
+```json
+{
+  "id": "example-source",
+  "ingestion_metadata": {
+    "layout_family": "two-column"
+  }
+}
+```
+
+Select a different profile manifest during ingestion with
+`--ingestion-profiles /path/to/profiles.json`. Profiles are declarative,
+versioned data for page-classification exceptions, column and language regions,
+heading rules, table and figure exclusions, procedure end boundaries, and
+action aliases. Unknown profile or schema versions, ambiguous metadata
+selection, and invalid overrides fail ingestion before any generated evidence
+is written.
+
+Every generated `retrieval.json` records the parser version, profile schema and
+manifest versions, the profile-manifest SHA-256, and each source's selected
+profile ID, version, and canonical profile SHA-256. These fields also appear in
+the `zabm ingest --json` report.
+
 ## Local grounded model path
 
 By default, `zabm ask` uses the deterministic local evidence renderer and needs
