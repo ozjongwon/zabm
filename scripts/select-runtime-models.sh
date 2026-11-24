@@ -9,4 +9,5 @@ validate_platform
 check_nvidia_prerequisites
 require_installed_runtime
 verify_ollama_service
-fetch_models
+select_models
+write_runtime_config

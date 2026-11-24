@@ -28,11 +28,12 @@ x86_64 machine with:
 ./scripts/install-runtime.sh
 ```
 
-The target installer uses only `requirements/runtime.lock`, fetches
-hash-verified model weights outside the repository, rebuilds the frozen
-evidence stores, and verifies the CLI, web chat, local chat and embedding
-provider, and one supported answer. It does not install or start Ollama. Use
-`--dry-run` to inspect the complete plan without changing the machine.
+The target installer uses only `requirements/runtime.lock`, selects existing
+models reported by `ollama list`, rebuilds the frozen evidence stores, and
+verifies the CLI, web chat, local chat and embedding provider, and one
+supported answer. It does not install or start Ollama and does not download or
+import models. Use `--dry-run` to inspect the complete plan without changing
+the machine.
 
 Every normal run prints the same plan before changing anything. The server,
 models, and logs use `/home/ollama`. Ollama must already be installed there or
@@ -40,11 +41,14 @@ made available through `ZABM_OLLAMA_BIN`, and `ollama.service` must already be
 enabled and active. If those prerequisites are missing, the installer prints
 the required setup commands and exits without installing anything.
 
-Model weights live under `/home/ollama/models` and can be fetched or verified
-without reinstalling the runtime:
+The installer prefers `ZABM_MODEL` and `ZABM_EMBEDDING_MODEL` when those names
+are present in `ollama list`. Otherwise it chooses an installed
+embedding-named model for embeddings and the first installed non-embedding
+model for chat. If only one model is installed, it is used for both. Select
+models again without reinstalling the runtime:
 
 ```bash
-./scripts/fetch-runtime-models.sh
+./scripts/select-runtime-models.sh
 ```
 
 Linux starts the externally managed `ollama.service` at boot. The installed

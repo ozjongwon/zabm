@@ -10,7 +10,7 @@
 - [x] The installer is idempotent, fails fast, and does not require a manually prepared Python environment.
 - [x] The runtime dependency group is installed from the lockfile and excludes development, test, and evaluation-only tooling.
 - [x] The selected local OpenAI-compatible model server and its required runtime libraries are installed and configured.
-- [x] Model weights remain outside the repository and can be fetched through a separate documented command or optional installer flag.
+- [x] Model weights remain outside the repository; the installer selects existing Ollama models without downloading or importing new ones.
 - [x] The installer validates `nvidia-smi` and gives clear prerequisite instructions when the kernel GPU driver is missing; it does not replace the host driver automatically.
 - [x] The CLI and web chat become runnable without source-development setup.
 - [x] A smoke check verifies the application, local provider, evidence stores, and one supported answer on the installed target.
@@ -50,4 +50,10 @@
   `ollama.service`, then prints exact remediation steps and exits when those
   prerequisites are absent. Model weight acquisition and import remain in the
   installer.
+- 2026-11-25: Per operator direction, the installer no longer downloads or
+  imports models. It reads `ollama list`, honors `ZABM_MODEL` and
+  `ZABM_EMBEDDING_MODEL` selections, otherwise prefers an embedding-named
+  model for embeddings and reuses the sole installed model when needed. The
+  separate model command now selects existing models and refreshes the runtime
+  provider configuration.
 

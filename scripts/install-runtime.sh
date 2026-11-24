@@ -10,7 +10,6 @@ readonly OS_RELEASE_FILE="${ZABM_OS_RELEASE_FILE:-/etc/os-release}"
 # shellcheck source=../runtime/runtime-v1.conf
 source "${RUNTIME_CONFIG}"
 
-readonly MIN_RUNTIME_FREE_GIB=12
 readonly DEFAULT_RUNTIME_HOME="/home/ollama"
 RUNTIME_HOME="${ZABM_RUNTIME_HOME:-${DEFAULT_RUNTIME_HOME}}"
 readonly RUNTIME_CONFIG_DIR="${ZABM_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/zabm}"
@@ -20,7 +19,9 @@ readonly CONFIG_FILE="${RUNTIME_CONFIG_DIR}/runtime.env"
 readonly DATA_DIR="${ZABM_DATA_DIR:-${REPO_ROOT}/.zabm}"
 readonly BIN_DIR="${HOME}/.local/bin"
 OLLAMA_BIN="${ZABM_OLLAMA_BIN:-}"
-MODEL_STATE_FILE="${STATE_DIR}/models-v1.sha256"
+RUNTIME_CHAT_MODEL_NAME="${ZABM_MODEL:-}"
+RUNTIME_EMBEDDING_MODEL_NAME="${ZABM_EMBEDDING_MODEL:-}"
+AVAILABLE_MODELS=()
 readonly VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
 readonly PROVIDER_URL="http://127.0.0.1:11434/v1"
 readonly OLLAMA_SERVICE_NAME="${ZABM_OLLAMA_SERVICE:-ollama.service}"
@@ -37,9 +38,9 @@ usage() {
 Usage: ./scripts/install-runtime.sh [--dry-run] [--runtime-home PATH]
 
 Installs the supported target runtime on Debian 13 or Ubuntu 24.04 x86_64:
-the runtime Python environment, CLI, web chat, external models, generated
-evidence stores, and installed-target smoke checks. Ollama must already be
-installed and managed by systemd; this script only verifies it.
+the runtime Python environment, CLI, web chat, generated evidence stores, and
+installed-target smoke checks. Ollama and its models must already be installed
+and managed by systemd; this script selects existing models with 'ollama list'.
 
 Options:
   --dry-run            Validate and print the full plan without changing anything
@@ -47,8 +48,9 @@ Options:
                        (default: /home/ollama)
   -h, --help           Show this help
 
-Model weights are stored outside the repository. They can also be fetched
-separately with ./scripts/fetch-runtime-models.sh.
+Set ZABM_MODEL or ZABM_EMBEDDING_MODEL to choose specific installed models.
+Existing models can also be selected again with
+./scripts/select-runtime-models.sh.
 EOF
 }
 
@@ -122,7 +124,6 @@ parse_args() {
         [[ -n "${RUNTIME_HOME}" ]] || die "--runtime-home cannot be the filesystem root"
         MODEL_DIR="${RUNTIME_HOME}/models"
         STATE_DIR="${RUNTIME_HOME}/state"
-        MODEL_STATE_FILE="${STATE_DIR}/models-v1.sha256"
         shift 2
         ;;
       -h|--help)
@@ -291,6 +292,11 @@ write_if_changed() {
 
 write_runtime_config() {
   local generated
+  local provider_configuration
+
+  [[ -n "${RUNTIME_CHAT_MODEL_NAME}" && -n "${RUNTIME_EMBEDDING_MODEL_NAME}" ]] ||
+    die "runtime models have not been selected"
+  provider_configuration="ollama-v${RUNTIME_SERVER_VERSION},${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0,seed=0"
 
   mkdir -p "${RUNTIME_CONFIG_DIR}"
   generated="$(mktemp)"
@@ -300,7 +306,7 @@ write_runtime_config() {
     printf 'ZABM_PROVIDER_URL=%s\n' "${PROVIDER_URL}"
     printf 'ZABM_MODEL=%s\n' "${RUNTIME_CHAT_MODEL_NAME}"
     printf 'ZABM_EMBEDDING_MODEL=%s\n' "${RUNTIME_EMBEDDING_MODEL_NAME}"
-    printf 'ZABM_PROVIDER_CONFIGURATION=%s\n' "${RUNTIME_PROVIDER_CONFIGURATION}"
+    printf 'ZABM_PROVIDER_CONFIGURATION=%q\n' "${provider_configuration}"
     printf 'ZABM_PROVIDER_API_KEY=\n'
     printf 'ZABM_DEBUG=0\n'
     printf 'OLLAMA_MODELS=%q\n' "${MODEL_DIR}"
@@ -400,102 +406,93 @@ verify_ollama_service() {
   wait_for_server
 }
 
-download_verified_model() {
-  local url="$1"
-  local expected_sha256="$2"
-  local destination="$3"
-
-  if [[ -f "${destination}" ]] &&
-    [[ "$(sha256sum "${destination}" | cut -d' ' -f1)" == "${expected_sha256}" ]]; then
-    ensure_model_file_access "${destination}"
-    return
-  fi
-
-  mkdir -p "$(dirname -- "${destination}")"
-  local partial
-  partial="$(mktemp "${destination}.partial.XXXXXX")"
-  log "downloading $(basename -- "${destination}")"
-  if ! run curl \
-    --fail \
-    --location \
-    --proto '=https' \
-    --retry 3 \
-    --show-error \
-    --silent \
-    --output "${partial}" \
-    "${url}"; then
-    rm -f -- "${partial}"
-    die "model download failed for $(basename -- "${destination}")"
-  fi
-  if ! printf '%s  %s\n' "${expected_sha256}" "${partial}" |
-    sha256sum --check --status; then
-    rm -f -- "${partial}"
-    die "model checksum mismatch for $(basename -- "${destination}")"
-  fi
-  mv "${partial}" "${destination}"
-  ensure_model_file_access "${destination}"
-}
-
-ensure_model_file_access() {
-  local destination="$1"
-
-  run_privileged chown "${RUNTIME_OWNER}:${RUNTIME_GROUP}" "${destination}" ||
-    die "cannot assign ${destination} to ${RUNTIME_OWNER}:${RUNTIME_GROUP}"
-  run_privileged chmod 0644 "${destination}" ||
-    die "cannot make ${destination} readable by the model service"
-}
-
-model_is_imported() {
+list_installed_models() {
   "${OLLAMA_BIN}" list 2>/dev/null |
-    awk 'NR > 1 {print $1}' |
-    grep -Fxq -e "$1" -e "$1:latest"
+    awk 'NR > 1 && NF > 0 {print $1}'
 }
 
-import_model() {
-  local model_name="$1"
-  local model_file="$2"
-  local modelfile
-
-  if model_is_imported "${model_name}"; then
-    return
-  fi
-  modelfile="$(mktemp)"
-  printf 'FROM %s\n' "${model_file}" > "${modelfile}"
-  run env \
-    OLLAMA_HOST="127.0.0.1:11434" \
-    "${OLLAMA_BIN}" create "${model_name}" --file "${modelfile}"
-  rm -f -- "${modelfile}"
+load_installed_models() {
+  mapfile -t AVAILABLE_MODELS < <(list_installed_models)
+  ((${#AVAILABLE_MODELS[@]} > 0)) ||
+    die "Ollama has no installed models; pull a model with '${OLLAMA_BIN} pull <model>' before retrying"
 }
 
-fetch_models() {
-  local marker
+model_is_available() {
+  local model
 
-  mkdir -p "${MODEL_DIR}" "${STATE_DIR}"
-  marker="${RUNTIME_CHAT_MODEL_SHA256}:${RUNTIME_EMBEDDING_MODEL_SHA256}:${RUNTIME_PROVIDER_CONFIGURATION}"
-  if [[ -f "${MODEL_STATE_FILE}" ]] &&
-    [[ "$(sed -n '1p' "${MODEL_STATE_FILE}")" == "${marker}" ]] &&
-    model_is_imported "${RUNTIME_CHAT_MODEL_NAME}" &&
-    model_is_imported "${RUNTIME_EMBEDDING_MODEL_NAME}"; then
-    log "pinned models are already imported"
+  for model in "${AVAILABLE_MODELS[@]}"; do
+    [[ "${model}" == "$1" ]] && return
+  done
+  return 1
+}
+
+lookup_available_model() {
+  if model_is_available "$1"; then
+    printf '%s\n' "$1"
     return
   fi
+  if [[ "$1" != *:* ]] && model_is_available "$1:latest"; then
+    printf '%s\n' "$1:latest"
+    return
+  fi
+  return 1
+}
 
-  download_verified_model \
-    "${RUNTIME_CHAT_MODEL_URL}" \
-    "${RUNTIME_CHAT_MODEL_SHA256}" \
-    "${MODEL_DIR}/${RUNTIME_CHAT_MODEL_FILE}"
-  download_verified_model \
-    "${RUNTIME_EMBEDDING_MODEL_URL}" \
-    "${RUNTIME_EMBEDDING_MODEL_SHA256}" \
-    "${MODEL_DIR}/${RUNTIME_EMBEDDING_MODEL_FILE}"
+model_looks_like_embedding() {
+  local model="${1,,}"
 
-  import_model \
-    "${RUNTIME_CHAT_MODEL_NAME}" \
-    "${MODEL_DIR}/${RUNTIME_CHAT_MODEL_FILE}"
-  import_model \
-    "${RUNTIME_EMBEDDING_MODEL_NAME}" \
-    "${MODEL_DIR}/${RUNTIME_EMBEDDING_MODEL_FILE}"
-  printf '%s\n' "${marker}" > "${MODEL_STATE_FILE}"
+  [[ "${model}" =~ (embed|bge|e5|nomic|mxbai|minilm|gte|snowflake|arctic) ]]
+}
+
+available_models_csv() {
+  local IFS=', '
+
+  printf '%s' "${AVAILABLE_MODELS[*]}"
+}
+
+select_chat_model() {
+  local requested="${RUNTIME_CHAT_MODEL_NAME}"
+  local model
+  local selected=""
+
+  if [[ -n "${requested}" ]]; then
+    lookup_available_model "${requested}" ||
+      die "requested chat model '${requested}' is not installed; available models: $(available_models_csv)"
+    return
+  fi
+  for model in "${AVAILABLE_MODELS[@]}"; do
+    if ! model_looks_like_embedding "${model}"; then
+      selected="${model}"
+      break
+    fi
+  done
+  printf '%s\n' "${selected:-${AVAILABLE_MODELS[0]}}"
+}
+
+select_embedding_model() {
+  local requested="${RUNTIME_EMBEDDING_MODEL_NAME}"
+  local model
+
+  if [[ -n "${requested}" ]]; then
+    lookup_available_model "${requested}" ||
+      die "requested embedding model '${requested}' is not installed; available models: $(available_models_csv)"
+    return
+  fi
+  for model in "${AVAILABLE_MODELS[@]}"; do
+    if model_looks_like_embedding "${model}"; then
+      printf '%s\n' "${model}"
+      return
+    fi
+  done
+  printf '%s\n' "${AVAILABLE_MODELS[0]}"
+}
+
+select_models() {
+  load_installed_models
+  RUNTIME_CHAT_MODEL_NAME="$(select_chat_model)"
+  RUNTIME_EMBEDDING_MODEL_NAME="$(select_embedding_model)"
+  log "using existing chat model: ${RUNTIME_CHAT_MODEL_NAME}"
+  log "using existing embedding model: ${RUNTIME_EMBEDDING_MODEL_NAME}"
 }
 
 prepare_evidence() {
@@ -601,22 +598,20 @@ print_plan() {
   log "runtime dependencies only; development, test, and evaluation dependencies are excluded"
   log "application: CLI and web chat in ${REPO_ROOT}/.venv"
   log "runtime home: ${RUNTIME_HOME}"
-  log "minimum free space: ${MIN_RUNTIME_FREE_GIB} GiB on the runtime-home filesystem"
   log "Ollama prerequisite: preinstalled ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION} and active ${OLLAMA_SERVICE_NAME}"
-  log "chat model: ${RUNTIME_CHAT_MODEL_FILE} (${RUNTIME_CHAT_MODEL_SHA256})"
-  log "embedding model: ${RUNTIME_EMBEDDING_MODEL_FILE} (${RUNTIME_EMBEDDING_MODEL_SHA256})"
-  log "model weights: ${MODEL_DIR}"
+  log "model selection: existing models reported by '${OLLAMA_BIN:-ollama} list'"
+  log "chat model preference: ${RUNTIME_CHAT_MODEL_NAME:-an installed non-embedding model}"
+  log "embedding model preference: ${RUNTIME_EMBEDDING_MODEL_NAME:-an installed embedding model, otherwise the chat model}"
+  log "model downloads and imports: none"
+  log "Ollama model store: ${MODEL_DIR}"
   log "runtime configuration: ${CONFIG_FILE}"
   log "evidence stores: ${DATA_DIR}/generated"
   log "installed-target smoke: health, local provider, evidence stores, web chat, and one supported answer"
 }
 
-check_disk_space() {
+prepare_runtime_directories() {
   local acl_path
-  local available_gib
-  local available_kib
   local current_user
-  local required_kib
 
   current_user="$(id -u)"
   if [[ ! -w "${RUNTIME_HOME}" ]]; then
@@ -642,15 +637,7 @@ check_disk_space() {
   ensure_runtime_directory "${STATE_DIR}"
   [[ -w "${STATE_DIR}" ]] ||
     die "${STATE_DIR} must be writable by the user running the installer"
-  available_kib="$(df -Pk "${RUNTIME_HOME}" | awk 'NR == 2 {print $4}')"
-  required_kib=$((MIN_RUNTIME_FREE_GIB * 1024 * 1024))
-  [[ -n "${available_kib}" ]] ||
-    die "could not determine free space for ${RUNTIME_HOME}"
-  available_gib="$((available_kib / 1024 / 1024))"
-  if ((available_kib < required_kib)); then
-    die "${RUNTIME_HOME} has ${available_gib} GiB free; at least ${MIN_RUNTIME_FREE_GIB} GiB is required; choose another --runtime-home on a larger filesystem"
-  fi
-  log "disk check: ${available_gib} GiB free under ${RUNTIME_HOME}"
+  log "runtime directories are ready under ${RUNTIME_HOME}"
 }
 
 main() {
@@ -666,13 +653,13 @@ main() {
 
   print_plan
   check_ollama_prerequisites
-  check_disk_space
+  prepare_runtime_directories
   log "starting installation; use --dry-run to inspect the plan without changes"
+  verify_ollama_service
+  select_models
   install_runtime_base
   write_runtime_config
   write_runtime_launcher
-  verify_ollama_service
-  fetch_models
   prepare_evidence
   run_installed_smoke
 

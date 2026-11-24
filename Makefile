@@ -17,7 +17,7 @@ runtime-server:
 	./scripts/start-runtime-server.sh
 
 runtime-models:
-	./scripts/fetch-runtime-models.sh
+	./scripts/select-runtime-models.sh
 
 runtime-smoke:
 	./scripts/runtime-smoke.sh

@@ -1,24 +1,23 @@
 # Target runtime acceptance
 
 Run this procedure on disposable Debian 13 and Ubuntu 24.04 x86_64 hosts. Start
-from a fresh clone with no existing `.venv`, managed Python, uv, model weights,
-or generated evidence. Ollama is a separately installed prerequisite.
+from a fresh clone with no existing `.venv`, managed Python, uv, or generated
+evidence. Ollama and at least one model are separately installed prerequisites.
 
 ## Prerequisites
 
 - Root or passwordless `sudo` for distribution packages.
 - Network access to Debian or Ubuntu mirrors, Astral's pinned uv installer,
-  the Python package index, GitHub release assets, Hugging Face model files,
-  and the frozen source-pack URLs.
+  the Python package index, GitHub release assets, and the frozen source-pack
+  URLs.
 - Enough space outside the runtime home for the Python environment, source
-  PDFs, and evidence stores. The installer verifies the large runtime-home
-  requirement separately.
+  PDFs, and evidence stores.
 - A working NVIDIA kernel driver for GPU execution. The installer validates
   `nvidia-smi -L` and does not install or replace the driver.
-- At least 12 GiB free on the runtime-home filesystem. The installer checks
-  this before downloading model weights.
 - Ollama v0.40.18 installed under `/home/ollama` or exposed through
   `ZABM_OLLAMA_BIN`, with `ollama.service` enabled and active.
+- At least one model already installed in Ollama. For separate chat and
+  embedding roles, install both; otherwise the single model is used for both.
 - `/home/ollama` keeps its existing owner and group. Missing write access for
   the invoking user is granted through a POSIX ACL.
 
@@ -29,9 +28,9 @@ Inspect the plan first:
 ```
 
 The plan must identify Ollama v0.40.18 and active `ollama.service` as external
-prerequisites, and name the Qwen chat model and BGE embedding model with
-SHA-256 values, the model directory, runtime-only dependency profile, and
-installed-target smoke checks.
+prerequisites, state that models are selected from `ollama list` with no
+downloads or imports, and name the model store, runtime-only dependency
+profile, and installed-target smoke checks.
 
 ## Install
 
@@ -54,11 +53,10 @@ in `git status`:
 - `/home/ollama/state`
 - `~/.local/bin/zabm-runtime`
 
-Model weights are deliberately separate from the installer binary and runtime
-configuration:
+Existing Ollama models can be selected again without fetching new weights:
 
 ```bash
-./scripts/fetch-runtime-models.sh
+./scripts/select-runtime-models.sh
 ```
 
 ## Verify the installed commands
@@ -104,7 +102,7 @@ Capture at minimum:
 - `nvidia-smi -L` output or the installer's prerequisite warning;
 - dry-run plan and both installer exit statuses;
 - installed Ollama and Python versions;
-- model filenames and SHA-256 values;
+- selected model names from `ollama list` and the generated provider identity;
 - CLI `health --json`, provider smoke, supported answer envelope, and web
   endpoint response;
 - second-run result and the pytest-import exclusion result;
