@@ -8,5 +8,5 @@ source "${SCRIPT_DIR}/install-runtime.sh"
 validate_platform
 check_nvidia_prerequisites
 require_installed_runtime
-start_model_server
+verify_ollama_service
 fetch_models

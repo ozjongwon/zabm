@@ -28,19 +28,17 @@ x86_64 machine with:
 ./scripts/install-runtime.sh
 ```
 
-The target installer uses only `requirements/runtime.lock`, installs a pinned
-Ollama OpenAI-compatible server, fetches hash-verified model weights outside
-the repository, rebuilds the frozen evidence stores, and verifies the CLI, web
-chat, local chat and embedding provider, and one supported answer. Use
+The target installer uses only `requirements/runtime.lock`, fetches
+hash-verified model weights outside the repository, rebuilds the frozen
+evidence stores, and verifies the CLI, web chat, local chat and embedding
+provider, and one supported answer. It does not install or start Ollama. Use
 `--dry-run` to inspect the complete plan without changing the machine.
 
 Every normal run prints the same plan before changing anything. The server,
-models, logs, and large temporary extraction files use `/home/ollama`, with
-the Ollama server and weights stored beneath that required runtime home. The
-installer creates that directory through `sudo` when absent, assigns it to the
-invoking user, and checks for 12 GiB free before downloading. A pre-existing
-`/home/ollama` keeps its existing owner and group; if the invoking user lacks
-write access, the installer grants it through a POSIX ACL.
+models, and logs use `/home/ollama`. Ollama must already be installed there or
+made available through `ZABM_OLLAMA_BIN`, and `ollama.service` must already be
+enabled and active. If those prerequisites are missing, the installer prints
+the required setup commands and exits without installing anything.
 
 Model weights live under `/home/ollama/models` and can be fetched or verified
 without reinstalling the runtime:
@@ -49,9 +47,9 @@ without reinstalling the runtime:
 ./scripts/fetch-runtime-models.sh
 ```
 
-The installer creates and enables `ollama.service`; Linux starts the local
-server at boot. The installed `zabm-runtime` launcher ensures that service is
-active and delegates to the same locked CLI:
+Linux starts the externally managed `ollama.service` at boot. The installed
+`zabm-runtime` launcher delegates to the same locked CLI without starting the
+service:
 
 ```bash
 zabm-runtime ask \

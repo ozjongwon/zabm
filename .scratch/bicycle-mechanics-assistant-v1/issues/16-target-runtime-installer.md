@@ -24,7 +24,7 @@
   GGUFs, generated local-provider configuration, an idempotent server launcher,
   source/evidence rebuild, and installed-target CLI plus web smoke. Added
   installer plan/rejection/config/idempotence tests and a clean-host acceptance
-  procedure. Full Pyright, repo-wide Ruff checks, and 229 tests pass. Clean
+  procedure. Full Pyright, repo-wide Ruff checks, and 228 tests pass. Clean
   Debian 13 and Ubuntu 24.04 execution still requires the documented
   disposable-host acceptance because no container or second target is
   available in this workspace.
@@ -44,4 +44,10 @@
   enabled `ollama.service`. The service runs as `/home/ollama`'s owner and
   group, uses its model directory, binds to loopback, restarts after unit
   changes, and removes the installer's former ad hoc background-process path.
+- 2026-11-25: Per operator direction, the installer no longer installs Ollama,
+  writes its systemd unit, or starts/stops its service. It verifies the
+  preinstalled binary, `/home/ollama`, and the externally managed
+  `ollama.service`, then prints exact remediation steps and exits when those
+  prerequisites are absent. Model weight acquisition and import remain in the
+  installer.
 

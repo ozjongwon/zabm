@@ -1,8 +1,8 @@
 # Target runtime acceptance
 
 Run this procedure on disposable Debian 13 and Ubuntu 24.04 x86_64 hosts. Start
-from a fresh clone with no existing `.venv`, managed Python, uv, Ollama, model
-weights, or generated evidence.
+from a fresh clone with no existing `.venv`, managed Python, uv, model weights,
+or generated evidence. Ollama is a separately installed prerequisite.
 
 ## Prerequisites
 
@@ -16,12 +16,11 @@ weights, or generated evidence.
 - A working NVIDIA kernel driver for GPU execution. The installer validates
   `nvidia-smi -L` and does not install or replace the driver.
 - At least 12 GiB free on the runtime-home filesystem. The installer checks
-  this before downloading and keeps the large Ollama archive and extraction
-  workspace there instead of using `/tmp`.
-- `/home/ollama` for the Ollama server and model weights. The installer creates
-  it through `sudo` when absent and assigns it to the invoking user. A
-  pre-existing directory keeps its owner and group; missing write access is
-  granted to the invoking user through a POSIX ACL.
+  this before downloading model weights.
+- Ollama v0.40.18 installed under `/home/ollama` or exposed through
+  `ZABM_OLLAMA_BIN`, with `ollama.service` enabled and active.
+- `/home/ollama` keeps its existing owner and group. Missing write access for
+  the invoking user is granted through a POSIX ACL.
 
 Inspect the plan first:
 
@@ -29,9 +28,10 @@ Inspect the plan first:
 ./scripts/install-runtime.sh --dry-run
 ```
 
-The plan must name Ollama v0.40.18, the Qwen chat model and BGE embedding model
-with SHA-256 values, an external model directory, the runtime-only dependency
-profile, and the installed-target smoke checks.
+The plan must identify Ollama v0.40.18 and active `ollama.service` as external
+prerequisites, and name the Qwen chat model and BGE embedding model with
+SHA-256 values, the model directory, runtime-only dependency profile, and
+installed-target smoke checks.
 
 ## Install
 
@@ -43,17 +43,15 @@ profile, and the installed-target smoke checks.
 The import check must fail. The installer must finish with the CLI health
 check, local chat and embedding provider smoke, source/evidence verification,
 one supported CLI answer, and the same answer through the web endpoint.
-It must also enable and leave active `ollama.service`, with the service running
-as `/home/ollama`'s owner and group.
+It must not install, start, stop, enable, disable, or rewrite Ollama or its
+systemd unit.
 
 The following generated paths are outside the repository and must not appear
 in `git status`:
 
 - `${XDG_CONFIG_HOME:-$HOME/.config}/zabm/runtime.env`
 - `/home/ollama/models`
-- `/home/ollama/server`
 - `/home/ollama/state`
-- `/etc/systemd/system/ollama.service`
 - `~/.local/bin/zabm-runtime`
 
 Model weights are deliberately separate from the installer binary and runtime
@@ -92,11 +90,11 @@ Run the installer a second time:
 ./scripts/install-runtime.sh
 ```
 
-The second run must reuse the pinned server and imported models, leave one
-active `ollama.service`, leave permission mode `600` on `runtime.env`, and
-pass the same smoke checks. It must not add development, test, or evaluation
-Python packages. Confirm `~/.local/bin/zabm-runtime` is replaced in place
-rather than duplicated.
+The second run must reuse the externally managed Ollama service and imported
+models, leave `ollama.service` active, leave permission mode `600` on
+`runtime.env`, and pass the same smoke checks. It must not add development,
+test, or evaluation Python packages. Confirm `~/.local/bin/zabm-runtime` is
+replaced in place rather than duplicated.
 
 ## Evidence record
 

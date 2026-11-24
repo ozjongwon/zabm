@@ -7,5 +7,5 @@ source "${SCRIPT_DIR}/install-runtime.sh"
 
 validate_platform
 require_installed_runtime
-start_model_server
+verify_ollama_service
 run_installed_smoke

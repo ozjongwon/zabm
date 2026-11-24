@@ -15,27 +15,20 @@ readonly DEFAULT_RUNTIME_HOME="/home/ollama"
 RUNTIME_HOME="${ZABM_RUNTIME_HOME:-${DEFAULT_RUNTIME_HOME}}"
 readonly RUNTIME_CONFIG_DIR="${ZABM_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/zabm}"
 MODEL_DIR="${RUNTIME_HOME}/models"
-SERVER_DIR="${RUNTIME_HOME}/server"
 STATE_DIR="${RUNTIME_HOME}/state"
 readonly CONFIG_FILE="${RUNTIME_CONFIG_DIR}/runtime.env"
 readonly DATA_DIR="${ZABM_DATA_DIR:-${REPO_ROOT}/.zabm}"
 readonly BIN_DIR="${HOME}/.local/bin"
-SERVER_VERSION_DIR="${SERVER_DIR}/v${RUNTIME_SERVER_VERSION}"
-OLLAMA_BIN="${SERVER_VERSION_DIR}/bin/ollama"
-LEGACY_SERVER_PID_FILE="${STATE_DIR}/ollama.pid"
+OLLAMA_BIN="${ZABM_OLLAMA_BIN:-}"
 MODEL_STATE_FILE="${STATE_DIR}/models-v1.sha256"
 readonly VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
 readonly PROVIDER_URL="http://127.0.0.1:11434/v1"
-readonly OLLAMA_SERVICE_NAME="ollama.service"
-readonly SYSTEMD_UNIT_DIR="${ZABM_SYSTEMD_UNIT_DIR:-/etc/systemd/system}"
-OLLAMA_SERVICE_FILE="${SYSTEMD_UNIT_DIR}/${OLLAMA_SERVICE_NAME}"
+readonly OLLAMA_SERVICE_NAME="${ZABM_OLLAMA_SERVICE:-ollama.service}"
 
 DRY_RUN=false
 BASE_INSTALLED=false
-SERVICE_CHANGED=false
 RUNTIME_OWNER=""
 RUNTIME_GROUP=""
-TEMP_DIR=""
 SMOKE_WEB_PID=""
 SMOKE_TEMP_FILES=()
 
@@ -44,13 +37,14 @@ usage() {
 Usage: ./scripts/install-runtime.sh [--dry-run] [--runtime-home PATH]
 
 Installs the supported target runtime on Debian 13 or Ubuntu 24.04 x86_64:
-the runtime Python environment, CLI, web chat, pinned Ollama server, external
-models, generated evidence stores, and installed-target smoke checks.
+the runtime Python environment, CLI, web chat, external models, generated
+evidence stores, and installed-target smoke checks. Ollama must already be
+installed and managed by systemd; this script only verifies it.
 
 Options:
   --dry-run            Validate and print the full plan without changing anything
-  --runtime-home PATH  Store the server, models, logs, and large temporary
-                       extraction files under PATH (default: /home/ollama)
+  --runtime-home PATH  Store models and runtime state under PATH
+                       (default: /home/ollama)
   -h, --help           Show this help
 
 Model weights are stored outside the repository. They can also be fetched
@@ -108,9 +102,6 @@ cleanup() {
     kill -TERM "${SMOKE_WEB_PID}" 2>/dev/null || true
     wait "${SMOKE_WEB_PID}" 2>/dev/null || true
   fi
-  if [[ -n "${TEMP_DIR}" && -d "${TEMP_DIR}" ]]; then
-    rm -rf -- "${TEMP_DIR}"
-  fi
   for path in "${SMOKE_TEMP_FILES[@]}"; do
     rm -f -- "${path}"
   done
@@ -130,11 +121,7 @@ parse_args() {
         RUNTIME_HOME="${2%/}"
         [[ -n "${RUNTIME_HOME}" ]] || die "--runtime-home cannot be the filesystem root"
         MODEL_DIR="${RUNTIME_HOME}/models"
-        SERVER_DIR="${RUNTIME_HOME}/server"
         STATE_DIR="${RUNTIME_HOME}/state"
-        SERVER_VERSION_DIR="${SERVER_DIR}/v${RUNTIME_SERVER_VERSION}"
-        OLLAMA_BIN="${SERVER_VERSION_DIR}/bin/ollama"
-        LEGACY_SERVER_PID_FILE="${STATE_DIR}/ollama.pid"
         MODEL_STATE_FILE="${STATE_DIR}/models-v1.sha256"
         shift 2
         ;;
@@ -209,21 +196,71 @@ check_nvidia_prerequisites() {
 require_installed_runtime() {
   [[ -x "${VENV_PYTHON}" ]] ||
     die "runtime Python is missing; run ./scripts/install-runtime.sh first"
-  [[ -x "${OLLAMA_BIN}" ]] ||
-    die "pinned Ollama is missing; run ./scripts/install-runtime.sh first"
   [[ -f "${CONFIG_FILE}" ]] ||
     die "runtime configuration is missing; run ./scripts/install-runtime.sh first"
+  resolve_ollama_bin ||
+    fail_ollama_prerequisite "Ollama v${RUNTIME_SERVER_VERSION} was not found"
 }
 
-ollama_reports_pinned_version() {
+resolve_ollama_bin() {
+  local candidate
+
+  if [[ -n "${OLLAMA_BIN}" && -x "${OLLAMA_BIN}" ]]; then
+    return
+  fi
+  for candidate in "${RUNTIME_HOME}/bin/ollama" "$(command -v ollama 2>/dev/null || true)"; do
+    if [[ -n "${candidate}" && -x "${candidate}" ]]; then
+      OLLAMA_BIN="${candidate}"
+      return
+    fi
+  done
+  OLLAMA_BIN=""
+  return 1
+}
+
+print_ollama_instructions() {
+  cat >&2 <<EOF
+Ollama is not installed or managed by this script.
+
+Before rerunning, prepare it outside this repository:
+  1. Install Ollama v${RUNTIME_SERVER_VERSION} under ${RUNTIME_HOME}.
+  2. Make its server binary available at ${RUNTIME_HOME}/bin/ollama,
+     on PATH, or through ZABM_OLLAMA_BIN.
+  3. Configure ${OLLAMA_SERVICE_NAME} with OLLAMA_MODELS=${MODEL_DIR}.
+  4. Enable and start the service:
+       sudo systemctl enable --now ${OLLAMA_SERVICE_NAME}
+  5. Verify the service:
+       systemctl is-active --quiet ${OLLAMA_SERVICE_NAME}
+       ${RUNTIME_HOME}/bin/ollama --version
+  6. Rerun ./scripts/install-runtime.sh
+EOF
+}
+
+fail_ollama_prerequisite() {
+  local reason="$1"
+
+  printf 'zabm runtime: error: %s\n' "${reason}" >&2
+  print_ollama_instructions
+  exit 1
+}
+
+check_ollama_prerequisites() {
   local reported
 
-  [[ -x "${OLLAMA_BIN}" ]] || return 1
-  reported="$(
-    OLLAMA_LIBRARY_PATH="${SERVER_VERSION_DIR}/lib/ollama" \
-      "${OLLAMA_BIN}" --version 2>/dev/null || true
-  )"
-  [[ "${reported}" =~ (^|[^0-9])${RUNTIME_SERVER_VERSION}([^0-9]|$) ]]
+  [[ -d "${RUNTIME_HOME}" ]] ||
+    fail_ollama_prerequisite "${RUNTIME_HOME} does not exist"
+  command -v systemctl >/dev/null 2>&1 ||
+    fail_ollama_prerequisite "systemctl is required to check ${OLLAMA_SERVICE_NAME}"
+  resolve_ollama_bin ||
+    fail_ollama_prerequisite "Ollama v${RUNTIME_SERVER_VERSION} was not found"
+  reported="$("${OLLAMA_BIN}" --version 2>&1 || true)"
+  [[ "${reported}" =~ (^|[^0-9])${RUNTIME_SERVER_VERSION}([^0-9]|$) ]] ||
+    fail_ollama_prerequisite "expected Ollama v${RUNTIME_SERVER_VERSION}, found: ${reported:-no version output}"
+  systemctl is-enabled --quiet "${OLLAMA_SERVICE_NAME}" ||
+    fail_ollama_prerequisite "${OLLAMA_SERVICE_NAME} is not enabled at boot"
+  systemctl is-active --quiet "${OLLAMA_SERVICE_NAME}" ||
+    fail_ollama_prerequisite "${OLLAMA_SERVICE_NAME} is not active"
+  log "using preinstalled ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION} from ${OLLAMA_BIN}"
 }
 
 install_runtime_base() {
@@ -235,63 +272,6 @@ install_runtime_base() {
     ZABM_OS_RELEASE_FILE="${OS_RELEASE_FILE}" \
     "${REPO_ROOT}/scripts/install-dev.sh" --profile runtime
   BASE_INSTALLED=true
-}
-
-install_model_server() {
-  local archive
-  local extract_dir
-  local staging_dir
-
-  if ollama_reports_pinned_version; then
-    log "using ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION}"
-    ln -sfn "${SERVER_VERSION_DIR}" "${SERVER_DIR}/current"
-    return
-  fi
-
-  command -v curl >/dev/null 2>&1 || die "curl is required to install the model server"
-  command -v sha256sum >/dev/null 2>&1 || die "sha256sum is required to verify the model server"
-  command -v tar >/dev/null 2>&1 || die "tar is required to install the model server"
-  command -v zstd >/dev/null 2>&1 || die "zstd is required to extract the model server archive"
-
-  mkdir -p "${SERVER_DIR}" "${STATE_DIR}" ||
-    die "cannot create the server directory under ${RUNTIME_HOME}"
-  TEMP_DIR="$(mktemp -d "${STATE_DIR}/install.XXXXXX")" ||
-    die "cannot create the temporary install workspace under ${STATE_DIR}"
-  archive="${TEMP_DIR}/${RUNTIME_SERVER_ARCHIVE}"
-  extract_dir="${TEMP_DIR}/extract"
-  staging_dir="${SERVER_DIR}/.v${RUNTIME_SERVER_VERSION}.new.$$"
-
-  log "downloading ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION}"
-  run curl \
-    --fail \
-    --location \
-    --proto '=https' \
-    --retry 3 \
-    --show-error \
-    --silent \
-    --output "${archive}" \
-    "${RUNTIME_SERVER_URL}"
-  printf '%s  %s\n' "${RUNTIME_SERVER_SHA256}" "${archive}" | sha256sum --check --status ||
-    die "model server archive checksum mismatch"
-
-  mkdir -p "${extract_dir}"
-  log "extracting ${RUNTIME_SERVER_ARCHIVE} under ${TEMP_DIR}"
-  run tar --zstd --extract --file "${archive}" --directory "${extract_dir}"
-  [[ -x "${extract_dir}/bin/ollama" ]] ||
-    die "model server archive did not contain bin/ollama"
-  [[ -d "${extract_dir}/lib/ollama" ]] ||
-    die "model server archive did not contain lib/ollama"
-  run_privileged chown --recursive "${RUNTIME_OWNER}:${RUNTIME_GROUP}" "${extract_dir}" ||
-    die "cannot assign the model server files to ${RUNTIME_OWNER}:${RUNTIME_GROUP}"
-
-  mv "${extract_dir}" "${staging_dir}"
-  if [[ -e "${SERVER_VERSION_DIR}" ]]; then
-    mv "${SERVER_VERSION_DIR}" "${SERVER_VERSION_DIR}.stale.$(date -u +%Y%m%dT%H%M%SZ)"
-  fi
-  mv "${staging_dir}" "${SERVER_VERSION_DIR}"
-  ln -sfn "${SERVER_VERSION_DIR}" "${SERVER_DIR}/current"
-  ollama_reports_pinned_version ||
-    die "installed model server did not report version ${RUNTIME_SERVER_VERSION}"
 }
 
 write_if_changed() {
@@ -326,54 +306,6 @@ write_runtime_config() {
     printf 'OLLAMA_MODELS=%q\n' "${MODEL_DIR}"
   } > "${generated}"
   write_if_changed "${CONFIG_FILE}" 600 "${generated}"
-}
-
-write_model_service() {
-  local generated
-
-  resolve_runtime_ownership
-  [[ -n "${RUNTIME_OWNER}" && -n "${RUNTIME_GROUP}" ]] ||
-    die "cannot determine the owner and group of ${RUNTIME_HOME}"
-
-  generated="$(mktemp)"
-  {
-    printf '# Generated by ./scripts/install-runtime.sh; re-running replaces this file.\n'
-    printf '[Unit]\n'
-    printf 'Description=ZABM Ollama OpenAI-compatible model server\n'
-    printf 'After=network-online.target\n'
-    printf 'Wants=network-online.target\n\n'
-    printf '[Service]\n'
-    printf 'Type=simple\n'
-    printf 'User=%s\n' "${RUNTIME_OWNER}"
-    printf 'Group=%s\n' "${RUNTIME_GROUP}"
-    printf 'WorkingDirectory=%s\n' "${RUNTIME_HOME}"
-    printf 'Environment="HOME=%s"\n' "${RUNTIME_HOME}"
-    printf 'Environment="OLLAMA_HOST=127.0.0.1:11434"\n'
-    printf 'Environment="OLLAMA_MODELS=%s"\n' "${MODEL_DIR}"
-    printf 'Environment="OLLAMA_KEEP_ALIVE=10m"\n'
-    printf 'Environment="OLLAMA_LIBRARY_PATH=%s/lib/ollama"\n' "${SERVER_VERSION_DIR}"
-    printf 'ExecStart=%s serve\n' "${OLLAMA_BIN}"
-    printf 'Restart=on-failure\n'
-    printf 'RestartSec=3\n\n'
-    printf '[Install]\n'
-    printf 'WantedBy=multi-user.target\n'
-  } > "${generated}"
-
-  if [[ -f "${OLLAMA_SERVICE_FILE}" ]] && cmp --silent "${generated}" "${OLLAMA_SERVICE_FILE}"; then
-    rm -f -- "${generated}"
-    return
-  fi
-  if [[ -w "${SYSTEMD_UNIT_DIR}" ]]; then
-    mkdir -p "${SYSTEMD_UNIT_DIR}"
-    install -m 0644 "${generated}" "${OLLAMA_SERVICE_FILE}"
-  else
-    run_privileged install -d -m 0755 "${SYSTEMD_UNIT_DIR}" ||
-      die "cannot create ${SYSTEMD_UNIT_DIR}"
-    run_privileged install -m 0644 "${generated}" "${OLLAMA_SERVICE_FILE}" ||
-      die "cannot install ${OLLAMA_SERVICE_FILE}"
-  fi
-  rm -f -- "${generated}"
-  SERVICE_CHANGED=true
 }
 
 resolve_runtime_ownership() {
@@ -421,9 +353,6 @@ write_runtime_launcher() {
     printf 'set -a\n'
     printf 'source %q\n' "${CONFIG_FILE}"
     printf 'set +a\n'
-    printf 'if [[ "${ZABM_RUNTIME_AUTOSTART:-1}" != "0" ]]; then\n'
-    printf '  %q >/dev/null\n' "${REPO_ROOT}/scripts/start-runtime-server.sh"
-    printf 'fi\n'
     printf 'exec %q -m zabm "$@"\n' "${VENV_PYTHON}"
   } > "${generated}"
   write_if_changed "${BIN_DIR}/zabm-runtime" 755 "${generated}"
@@ -457,73 +386,16 @@ wait_for_server() {
     sleep 0.5
   done
 
-  if command -v systemctl >/dev/null 2>&1; then
-    run_privileged journalctl --unit "${OLLAMA_SERVICE_NAME}" --lines 20 --no-pager
-  fi
-  die "model server did not become ready within 60 seconds"
+  die "${OLLAMA_SERVICE_NAME} is active but did not answer within 60 seconds; inspect it with 'sudo systemctl status ${OLLAMA_SERVICE_NAME}' and 'sudo journalctl --unit ${OLLAMA_SERVICE_NAME}'"
 }
 
-systemctl_privileged() {
-  run_privileged systemctl "$@"
-}
-
-stop_legacy_background_server() {
-  local existing_pid
-
-  [[ -f "${LEGACY_SERVER_PID_FILE}" ]] || return 0
-  existing_pid="$(sed -n '1p' "${LEGACY_SERVER_PID_FILE}")"
-  if [[ -n "${existing_pid}" ]] && kill -0 "${existing_pid}" 2>/dev/null; then
-    if ! grep -q "${OLLAMA_SERVICE_NAME}" "/proc/${existing_pid}/cgroup" 2>/dev/null; then
-      log "stopping the legacy installer-managed model server"
-      kill -TERM "${existing_pid}" 2>/dev/null || true
-      for _ in $(seq 1 20); do
-        kill -0 "${existing_pid}" 2>/dev/null || break
-        sleep 0.25
-      done
-    fi
-  fi
-  rm -f -- "${LEGACY_SERVER_PID_FILE}"
-}
-
-start_model_server() {
+verify_ollama_service() {
   local response
 
-  mkdir -p "${STATE_DIR}" "${MODEL_DIR}"
-  [[ -f "${OLLAMA_SERVICE_FILE}" ]] || write_model_service
-  command -v systemctl >/dev/null 2>&1 ||
-    die "systemctl is required to manage ${OLLAMA_SERVICE_NAME}"
-  stop_legacy_background_server
+  check_ollama_prerequisites
   response="$(server_version_response)"
-
-  if [[ "${SERVICE_CHANGED}" == false ]] &&
-    response_reports_pinned_version "${response}" &&
-    systemctl is-active --quiet "${OLLAMA_SERVICE_NAME}"; then
-    if ! systemctl is-enabled --quiet "${OLLAMA_SERVICE_NAME}"; then
-      systemctl_privileged enable "${OLLAMA_SERVICE_NAME}"
-    fi
-    log "${OLLAMA_SERVICE_NAME} is already active"
-    return
-  fi
-  if [[ "${SERVICE_CHANGED}" == false ]] &&
-    [[ -n "${response}" ]] &&
-    ! response_reports_pinned_version "${response}"; then
-    die "port 11434 is occupied by a different model server version"
-  fi
-
-  if [[ "${SERVICE_CHANGED}" == true ]]; then
-    systemctl_privileged daemon-reload
-  fi
-  if ! systemctl is-enabled --quiet "${OLLAMA_SERVICE_NAME}"; then
-    systemctl_privileged enable "${OLLAMA_SERVICE_NAME}"
-  fi
-  if [[ "${SERVICE_CHANGED}" == true ]]; then
-    log "restarting ${OLLAMA_SERVICE_NAME} after a unit change"
-    systemctl_privileged restart "${OLLAMA_SERVICE_NAME}"
-  elif ! systemctl is-active --quiet "${OLLAMA_SERVICE_NAME}"; then
-    log "starting ${OLLAMA_SERVICE_NAME}"
-    systemctl_privileged start "${OLLAMA_SERVICE_NAME}"
-  else
-    log "waiting for ${OLLAMA_SERVICE_NAME} to become ready"
+  if [[ -n "${response}" ]] && ! response_reports_pinned_version "${response}"; then
+    fail_ollama_prerequisite "port 11434 is answering with a different Ollama version"
   fi
   wait_for_server
 }
@@ -574,8 +446,7 @@ ensure_model_file_access() {
 }
 
 model_is_imported() {
-  OLLAMA_LIBRARY_PATH="${SERVER_VERSION_DIR}/lib/ollama" \
-    "${OLLAMA_BIN}" list 2>/dev/null |
+  "${OLLAMA_BIN}" list 2>/dev/null |
     awk 'NR > 1 {print $1}' |
     grep -Fxq -e "$1" -e "$1:latest"
 }
@@ -591,7 +462,6 @@ import_model() {
   modelfile="$(mktemp)"
   printf 'FROM %s\n' "${model_file}" > "${modelfile}"
   run env \
-    OLLAMA_LIBRARY_PATH="${SERVER_VERSION_DIR}/lib/ollama" \
     OLLAMA_HOST="127.0.0.1:11434" \
     "${OLLAMA_BIN}" create "${model_name}" --file "${modelfile}"
   rm -f -- "${modelfile}"
@@ -647,7 +517,6 @@ source_runtime_config() {
   # shellcheck source=/dev/null
   source "${CONFIG_FILE}"
   set +a
-  export ZABM_RUNTIME_AUTOSTART=0
 }
 
 validate_supported_response() {
@@ -732,11 +601,8 @@ print_plan() {
   log "runtime dependencies only; development, test, and evaluation dependencies are excluded"
   log "application: CLI and web chat in ${REPO_ROOT}/.venv"
   log "runtime home: ${RUNTIME_HOME}"
-  log "temporary install workspace: a subdirectory of ${STATE_DIR}"
   log "minimum free space: ${MIN_RUNTIME_FREE_GIB} GiB on the runtime-home filesystem"
-  log "service manager: systemctl (${OLLAMA_SERVICE_NAME}, enabled at boot)"
-  log "model server: ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION}"
-  log "model server sha256: ${RUNTIME_SERVER_SHA256}"
+  log "Ollama prerequisite: preinstalled ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION} and active ${OLLAMA_SERVICE_NAME}"
   log "chat model: ${RUNTIME_CHAT_MODEL_FILE} (${RUNTIME_CHAT_MODEL_SHA256})"
   log "embedding model: ${RUNTIME_EMBEDDING_MODEL_FILE} (${RUNTIME_EMBEDDING_MODEL_SHA256})"
   log "model weights: ${MODEL_DIR}"
@@ -749,25 +615,10 @@ check_disk_space() {
   local acl_path
   local available_gib
   local available_kib
-  local current_group
   local current_user
   local required_kib
 
   current_user="$(id -u)"
-  current_group="$(id -g)"
-  if [[ ! -d "${RUNTIME_HOME}" ]]; then
-    if ! mkdir -p "${RUNTIME_HOME}" 2>/dev/null; then
-      if ((EUID == 0)); then
-        die "cannot create runtime home ${RUNTIME_HOME}"
-      elif command -v sudo >/dev/null 2>&1; then
-        log "creating ${RUNTIME_HOME} and assigning it to $(id -un)"
-        run_privileged install -d -m 0755 -o "${current_user}" -g "${current_group}" "${RUNTIME_HOME}" ||
-          die "sudo could not create runtime home ${RUNTIME_HOME}"
-      else
-        die "cannot create ${RUNTIME_HOME}; run as root or install sudo and retry"
-      fi
-    fi
-  fi
   if [[ ! -w "${RUNTIME_HOME}" ]]; then
     command -v setfacl >/dev/null 2>&1 || install_runtime_base
     command -v setfacl >/dev/null 2>&1 ||
@@ -777,7 +628,7 @@ check_disk_space() {
       die "sudo could not update the access ACL for ${RUNTIME_HOME}"
     run_privileged setfacl -d -m "u:${current_user}:rwx" "${RUNTIME_HOME}" ||
       die "sudo could not set the default access ACL for ${RUNTIME_HOME}"
-    for acl_path in "${SERVER_DIR}" "${MODEL_DIR}" "${STATE_DIR}"; do
+    for acl_path in "${MODEL_DIR}" "${STATE_DIR}"; do
       if [[ -e "${acl_path}" ]]; then
         run_privileged setfacl -R -m "u:${current_user}:rwx" "${acl_path}" ||
           die "sudo could not update the access ACL for ${acl_path}"
@@ -787,7 +638,6 @@ check_disk_space() {
   [[ -w "${RUNTIME_HOME}" ]] ||
     die "${RUNTIME_HOME} is still not writable after applying access control"
   resolve_runtime_ownership
-  ensure_runtime_directory "${SERVER_DIR}"
   ensure_runtime_directory "${MODEL_DIR}"
   ensure_runtime_directory "${STATE_DIR}"
   [[ -w "${STATE_DIR}" ]] ||
@@ -815,14 +665,13 @@ main() {
   fi
 
   print_plan
+  check_ollama_prerequisites
   check_disk_space
   log "starting installation; use --dry-run to inspect the plan without changes"
   install_runtime_base
-  install_model_server
   write_runtime_config
   write_runtime_launcher
-  write_model_service
-  start_model_server
+  verify_ollama_service
   fetch_models
   prepare_evidence
   run_installed_smoke

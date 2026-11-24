@@ -6,5 +6,6 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/install-runtime.sh"
 
 validate_platform
-require_installed_runtime
-start_model_server
+check_ollama_prerequisites
+wait_for_server
+log "${OLLAMA_SERVICE_NAME} is managed outside this script; use systemctl to start, stop, enable, or inspect it"
