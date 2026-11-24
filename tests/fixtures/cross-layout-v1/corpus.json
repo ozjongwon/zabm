@@ -170,7 +170,8 @@
             [690, 72, "WARNING"],
             [672, 72, "Release the hub clamp before disassembly."],
             [654, 72, "1 Remove the axle nut."],
-            [636, 72, "2 Lift the hub cap."]
+            [636, 72, "2 Lift the hub cap."],
+            [20, 500, "12"]
           ]
         },
         {
@@ -179,7 +180,8 @@
             [702, 72, "Rear hub overhaul continued"],
             [684, 72, "3 Replace the bearing."],
             [666, 72, "4 Install the hub cap."],
-            [648, 72, "This concludes the Rear hub overhaul."]
+            [648, 72, "This concludes the Rear hub overhaul."],
+            [20, 500, "13"]
           ]
         }
       ]
