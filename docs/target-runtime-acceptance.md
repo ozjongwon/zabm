@@ -18,6 +18,7 @@ weights, or generated evidence.
 - At least 12 GiB free on the runtime-home filesystem. The installer checks
   this before downloading and keeps the large Ollama archive and extraction
   workspace there instead of using `/tmp`.
+- A writable `/home/ollama` directory for the Ollama server and model weights.
 
 Inspect the plan first:
 
@@ -28,14 +29,6 @@ Inspect the plan first:
 The plan must name Ollama v0.40.18, the Qwen chat model and BGE embedding model
 with SHA-256 values, an external model directory, the runtime-only dependency
 profile, and the installed-target smoke checks.
-
-If the default runtime home is too small, select a writable directory on a
-larger filesystem:
-
-```bash
-./scripts/install-runtime.sh \
-  --runtime-home /home/ollama/zabm-runtime
-```
 
 ## Install
 
@@ -52,8 +45,9 @@ The following generated paths are outside the repository and must not appear
 in `git status`:
 
 - `${XDG_CONFIG_HOME:-$HOME/.config}/zabm/runtime.env`
-- `${XDG_DATA_HOME:-$HOME/.local/share}/zabm-runtime/models`
-- `${XDG_DATA_HOME:-$HOME/.local/share}/zabm-runtime/server`
+- `/home/ollama/models`
+- `/home/ollama/server`
+- `/home/ollama/state`
 - `~/.local/bin/zabm-runtime`
 
 Model weights are deliberately separate from the installer binary and runtime

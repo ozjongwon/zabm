@@ -153,7 +153,7 @@ def test_runtime_installer_dry_run_reports_the_complete_target_plan(
     assert "bge-small-en-v1.5-q8_0.gguf" in result.stdout
     assert "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e" in result.stdout
     assert "f046db1dc724cf4f6f0a0c5917e922823b73eb1d27b8f9a9c2797f7866974804" in result.stdout
-    assert str(tmp_path / "data" / "zabm-runtime" / "models") in result.stdout
+    assert "/home/ollama/models" in result.stdout
     assert "installed-target smoke" in result.stdout
     assert "one supported answer" in result.stdout
     assert "sk-test-do-not-print" not in result.stdout + result.stderr

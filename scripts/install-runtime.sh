@@ -11,7 +11,8 @@ readonly OS_RELEASE_FILE="${ZABM_OS_RELEASE_FILE:-/etc/os-release}"
 source "${RUNTIME_CONFIG}"
 
 readonly MIN_RUNTIME_FREE_GIB=12
-RUNTIME_HOME="${ZABM_RUNTIME_HOME:-${XDG_DATA_HOME:-${HOME:?HOME must be set}/.local/share}/zabm-runtime}"
+readonly DEFAULT_RUNTIME_HOME="/home/ollama"
+RUNTIME_HOME="${ZABM_RUNTIME_HOME:-${DEFAULT_RUNTIME_HOME}}"
 readonly RUNTIME_CONFIG_DIR="${ZABM_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/zabm}"
 MODEL_DIR="${RUNTIME_HOME}/models"
 SERVER_DIR="${RUNTIME_HOME}/server"
@@ -43,7 +44,7 @@ models, generated evidence stores, and installed-target smoke checks.
 Options:
   --dry-run            Validate and print the full plan without changing anything
   --runtime-home PATH  Store the server, models, logs, and large temporary
-                       extraction files under PATH
+                       extraction files under PATH (default: /home/ollama)
   -h, --help           Show this help
 
 Model weights are stored outside the repository. They can also be fetched
@@ -608,6 +609,8 @@ check_disk_space() {
 
   mkdir -p "${RUNTIME_HOME}" "${STATE_DIR}" ||
     die "cannot create runtime home ${RUNTIME_HOME}; choose a writable path with --runtime-home"
+  [[ -w "${RUNTIME_HOME}" && -w "${STATE_DIR}" ]] ||
+    die "${RUNTIME_HOME} must be writable by the user running the installer; run as the Ollama owner or provision that directory with appropriate ownership"
   available_kib="$(df -Pk "${RUNTIME_HOME}" | awk 'NR == 2 {print $4}')"
   required_kib=$((MIN_RUNTIME_FREE_GIB * 1024 * 1024))
   [[ -n "${available_kib}" ]] ||
