@@ -21,9 +21,14 @@ readonly BIN_DIR="${HOME}/.local/bin"
 OLLAMA_BIN="${ZABM_OLLAMA_BIN:-}"
 RUNTIME_CHAT_MODEL_NAME="${ZABM_MODEL:-}"
 RUNTIME_EMBEDDING_MODEL_NAME="${ZABM_EMBEDDING_MODEL:-}"
+PROVIDER_KIND="${ZABM_RUNTIME_PROVIDER:-}"
+PROVIDER_URL_ARG=""
+RUNTIME_PROVIDER_NAME=""
+RUNTIME_PROVIDER_URL=""
+RUNTIME_API_KEY=""
 AVAILABLE_MODELS=()
 readonly VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
-readonly PROVIDER_URL="http://127.0.0.1:11434/v1"
+readonly LOCAL_PROVIDER_URL="http://127.0.0.1:11434/v1"
 readonly OLLAMA_SERVICE_NAME="${ZABM_OLLAMA_SERVICE:-ollama.service}"
 
 DRY_RUN=false
@@ -35,22 +40,28 @@ SMOKE_TEMP_FILES=()
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install-runtime.sh [--dry-run] [--runtime-home PATH]
+Usage: ./scripts/install-runtime.sh [options]
 
 Installs the supported target runtime on Debian 13 or Ubuntu 24.04 x86_64:
 the runtime Python environment, CLI, web chat, generated evidence stores, and
-installed-target smoke checks. Ollama and its models must already be installed
-and managed by systemd; this script selects existing models with 'ollama list'.
+installed-target smoke checks. The selected model provider can be local Ollama
+or a remote OpenAI-compatible service.
 
 Options:
   --dry-run            Validate and print the full plan without changing anything
   --runtime-home PATH  Store models and runtime state under PATH
                        (default: /home/ollama)
+  --provider NAME      local, deepseek, openai, or openai-compatible
+  --model NAME         Chat model to use
+  --embedding-model NAME
+                       Embedding model to use; omit for chat-only operation
+  --provider-url URL   Base URL for a remote OpenAI-compatible provider
   -h, --help           Show this help
 
-Set ZABM_MODEL or ZABM_EMBEDDING_MODEL to choose specific installed models.
-Existing models can also be selected again with
-./scripts/select-runtime-models.sh.
+Without --provider, an interactive terminal is prompted to choose. Remote API
+keys are read from DEEPSEEK_API_KEY, OPENAI_API_KEY, or
+ZABM_PROVIDER_API_KEY, or prompted for without echoing. The selected provider
+and models are saved in the runtime configuration with mode 600.
 EOF
 }
 
@@ -70,7 +81,7 @@ die() {
 redact_stream() {
   sed -E \
     -e 's#(https?://)[^/@[:space:]]+:[^/@[:space:]]+@#\1<redacted>@#g' \
-    -e 's#((OPENAI_API_KEY|ANTHROPIC_API_KEY|LANGSMITH_API_KEY|HF_TOKEN|HUGGING_FACE_HUB_TOKEN|PASSWORD|TOKEN|SECRET)[A-Z0-9_]*[=:][[:space:]]*)[^[:space:]]+#\1<redacted>#Ig' \
+    -e 's#((OPENAI_API_KEY|DEEPSEEK_API_KEY|ZABM_PROVIDER_API_KEY|ANTHROPIC_API_KEY|LANGSMITH_API_KEY|HF_TOKEN|HUGGING_FACE_HUB_TOKEN|PASSWORD|TOKEN|SECRET)[A-Z0-9_]*[=:][[:space:]]*)[^[:space:]]+#\1<redacted>#Ig' \
     -e 's#(Bearer[[:space:]]+)[A-Za-z0-9._~+/=-]+#\1<redacted>#Ig'
 }
 
@@ -126,6 +137,29 @@ parse_args() {
         STATE_DIR="${RUNTIME_HOME}/state"
         shift 2
         ;;
+      --provider)
+        (($# >= 2)) || die "--provider requires a value"
+        case "$2" in
+          local|deepseek|openai|openai-compatible) PROVIDER_KIND="$2" ;;
+          *) die "--provider must be local, deepseek, openai, or openai-compatible" ;;
+        esac
+        shift 2
+        ;;
+      --model)
+        (($# >= 2)) || die "--model requires a value"
+        RUNTIME_CHAT_MODEL_NAME="$2"
+        shift 2
+        ;;
+      --embedding-model)
+        (($# >= 2)) || die "--embedding-model requires a value"
+        RUNTIME_EMBEDDING_MODEL_NAME="$2"
+        shift 2
+        ;;
+      --provider-url)
+        (($# >= 2)) || die "--provider-url requires a value"
+        PROVIDER_URL_ARG="$2"
+        shift 2
+        ;;
       -h|--help)
         usage
         exit 0
@@ -135,6 +169,193 @@ parse_args() {
         ;;
     esac
   done
+}
+
+prompt_value() {
+  local label="$1"
+  local default="$2"
+  local variable="$3"
+  local answer=""
+
+  if [[ ! -t 0 ]]; then
+    printf -v "${variable}" '%s' "${default}"
+    return
+  fi
+  if [[ -n "${default}" ]]; then
+    read -r -p "${label} [${default}]: " answer ||
+      die "input ended while reading ${label}"
+  else
+    read -r -p "${label}: " answer ||
+      die "input ended while reading ${label}"
+  fi
+  printf -v "${variable}" '%s' "${answer:-${default}}"
+}
+
+prompt_required_value() {
+  local label="$1"
+  local variable="$2"
+  local answer=""
+
+  [[ -t 0 ]] ||
+    die "${label} is required; pass the corresponding option or environment variable"
+  read -r -p "${label}: " answer ||
+    die "input ended while reading ${label}"
+  [[ -n "${answer}" ]] || die "${label} is required"
+  printf -v "${variable}" '%s' "${answer}"
+}
+
+prompt_secret() {
+  local variable="$1"
+  local environment_name="$2"
+  local fallback_environment="${3:-}"
+
+  if [[ -n "${!environment_name:-}" ]]; then
+    printf -v "${variable}" '%s' "${!environment_name}"
+    log "using ${environment_name} from the environment"
+    return
+  fi
+  if [[ -n "${fallback_environment}" && -n "${!fallback_environment:-}" ]]; then
+    printf -v "${variable}" '%s' "${!fallback_environment}"
+    log "using ${fallback_environment} from the environment"
+    return
+  fi
+  [[ -t 0 ]] ||
+    die "${environment_name} is required; export it and rerun the installer"
+  read -r -s -p "${environment_name}: " RUNTIME_API_KEY ||
+    die "input ended while reading ${environment_name}"
+  printf '\n'
+  [[ -n "${RUNTIME_API_KEY}" ]] ||
+    die "${environment_name} is required"
+}
+
+choose_provider_kind() {
+  local choice=""
+
+  if [[ -n "${PROVIDER_KIND}" ]]; then
+    return
+  fi
+  if [[ ! -t 0 ]]; then
+    PROVIDER_KIND=local
+    log "no provider option supplied in a non-interactive session; using local Ollama"
+    return
+  fi
+  printf '%s\n' \
+    'Select the model provider:' \
+    '  1) Local Ollama models' \
+    '  2) DeepSeek' \
+    '  3) OpenAI' \
+    '  4) Another OpenAI-compatible service'
+  read -r -p 'Provider [1]: ' choice ||
+    die "input ended while choosing a provider"
+  case "${choice:-1}" in
+    1) PROVIDER_KIND=local ;;
+    2) PROVIDER_KIND=deepseek ;;
+    3) PROVIDER_KIND=openai ;;
+    4) PROVIDER_KIND=openai-compatible ;;
+    *) die "provider must be 1, 2, 3, or 4" ;;
+  esac
+}
+
+configure_remote_provider() {
+  local default_embedding=""
+  local default_model=""
+  local default_url=""
+  local key_environment=""
+
+  case "${PROVIDER_KIND}" in
+    deepseek)
+      RUNTIME_PROVIDER_NAME=deepseek
+      default_url="${DEEPSEEK_BASE_URL:-https://api.deepseek.com}"
+      default_model="${RUNTIME_CHAT_MODEL_NAME:-${DEEPSEEK_MODEL:-deepseek-flash}}"
+      default_embedding="${RUNTIME_EMBEDDING_MODEL_NAME:-${DEEPSEEK_EMBEDDING_MODEL:-not-configured}}"
+      key_environment=DEEPSEEK_API_KEY
+      ;;
+    openai)
+      RUNTIME_PROVIDER_NAME=openai
+      default_url="${OPENAI_BASE_URL:-https://api.openai.com/v1}"
+      default_model="${RUNTIME_CHAT_MODEL_NAME:-${OPENAI_MODEL:-}}"
+      default_embedding="${RUNTIME_EMBEDDING_MODEL_NAME:-${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}}"
+      key_environment=OPENAI_API_KEY
+      ;;
+    openai-compatible)
+      RUNTIME_PROVIDER_NAME=openai-compatible
+      default_url="${PROVIDER_URL_ARG:-${ZABM_PROVIDER_URL:-}}"
+      default_model="${RUNTIME_CHAT_MODEL_NAME}"
+      default_embedding="${RUNTIME_EMBEDDING_MODEL_NAME:-not-configured}"
+      key_environment=ZABM_PROVIDER_API_KEY
+      ;;
+  esac
+
+  if [[ "${PROVIDER_KIND}" != "openai-compatible" && -n "${PROVIDER_URL_ARG}" ]]; then
+    default_url="${PROVIDER_URL_ARG}"
+  fi
+  prompt_value "${RUNTIME_PROVIDER_NAME} base URL" "${default_url}" RUNTIME_PROVIDER_URL
+  [[ -n "${RUNTIME_PROVIDER_URL}" ]] ||
+    die "a provider URL is required for ${RUNTIME_PROVIDER_NAME}"
+  if [[ -n "${default_model}" ]]; then
+    prompt_value "${RUNTIME_PROVIDER_NAME} chat model" "${default_model}" RUNTIME_CHAT_MODEL_NAME
+  else
+    prompt_required_value "${RUNTIME_PROVIDER_NAME} chat model" RUNTIME_CHAT_MODEL_NAME
+  fi
+  prompt_value \
+    "${RUNTIME_PROVIDER_NAME} embedding model (blank to skip)" \
+    "${default_embedding}" \
+    RUNTIME_EMBEDDING_MODEL_NAME
+  case "${RUNTIME_EMBEDDING_MODEL_NAME}" in
+    0|none) RUNTIME_EMBEDDING_MODEL_NAME=not-configured ;;
+  esac
+  RUNTIME_EMBEDDING_MODEL_NAME="${RUNTIME_EMBEDDING_MODEL_NAME:-not-configured}"
+  if [[ "${key_environment}" == "ZABM_PROVIDER_API_KEY" ]]; then
+    prompt_secret RUNTIME_API_KEY "${key_environment}"
+  else
+    prompt_secret RUNTIME_API_KEY "${key_environment}" ZABM_PROVIDER_API_KEY
+  fi
+}
+
+configure_local_provider() {
+  RUNTIME_PROVIDER_NAME=openai-compatible
+  RUNTIME_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
+  check_ollama_prerequisites
+  verify_ollama_service
+  select_models
+}
+
+configure_provider() {
+  choose_provider_kind
+  case "${PROVIDER_KIND}" in
+    local) configure_local_provider ;;
+    deepseek|openai|openai-compatible) configure_remote_provider ;;
+    *) die "unsupported runtime provider: ${PROVIDER_KIND}" ;;
+  esac
+}
+
+prepare_dry_run_plan() {
+  PROVIDER_KIND="${PROVIDER_KIND:-local}"
+  case "${PROVIDER_KIND}" in
+    local)
+      RUNTIME_PROVIDER_NAME=openai-compatible
+      RUNTIME_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
+      ;;
+    deepseek)
+      RUNTIME_PROVIDER_NAME=deepseek
+      RUNTIME_PROVIDER_URL="${PROVIDER_URL_ARG:-${DEEPSEEK_BASE_URL:-https://api.deepseek.com}}"
+      RUNTIME_CHAT_MODEL_NAME="${RUNTIME_CHAT_MODEL_NAME:-${DEEPSEEK_MODEL:-deepseek-flash}}"
+      RUNTIME_EMBEDDING_MODEL_NAME="${RUNTIME_EMBEDDING_MODEL_NAME:-${DEEPSEEK_EMBEDDING_MODEL:-not-configured}}"
+      ;;
+    openai)
+      RUNTIME_PROVIDER_NAME=openai
+      RUNTIME_PROVIDER_URL="${PROVIDER_URL_ARG:-${OPENAI_BASE_URL:-https://api.openai.com/v1}}"
+      RUNTIME_CHAT_MODEL_NAME="${RUNTIME_CHAT_MODEL_NAME:-${OPENAI_MODEL:-}}"
+      RUNTIME_EMBEDDING_MODEL_NAME="${RUNTIME_EMBEDDING_MODEL_NAME:-${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}}"
+      ;;
+    openai-compatible)
+      RUNTIME_PROVIDER_NAME=openai-compatible
+      RUNTIME_PROVIDER_URL="${PROVIDER_URL_ARG:-${ZABM_PROVIDER_URL:-}}"
+      ;;
+    *)
+      die "unsupported runtime provider: ${PROVIDER_KIND}"
+      ;;
+  esac
 }
 
 read_os_release() {
@@ -199,8 +420,14 @@ require_installed_runtime() {
     die "runtime Python is missing; run ./scripts/install-runtime.sh first"
   [[ -f "${CONFIG_FILE}" ]] ||
     die "runtime configuration is missing; run ./scripts/install-runtime.sh first"
-  resolve_ollama_bin ||
-    fail_ollama_prerequisite "Ollama v${RUNTIME_SERVER_VERSION} was not found"
+  source_runtime_config
+  PROVIDER_KIND="${ZABM_RUNTIME_PROVIDER_KIND:-local}"
+  RUNTIME_PROVIDER_NAME="${ZABM_PROVIDER:-${RUNTIME_PROVIDER_NAME}}"
+  RUNTIME_PROVIDER_URL="${ZABM_PROVIDER_URL:-${RUNTIME_PROVIDER_URL}}"
+  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+    resolve_ollama_bin ||
+      fail_ollama_prerequisite "Ollama v${RUNTIME_SERVER_VERSION} was not found"
+  fi
 }
 
 resolve_ollama_bin() {
@@ -296,20 +523,44 @@ write_runtime_config() {
 
   [[ -n "${RUNTIME_CHAT_MODEL_NAME}" && -n "${RUNTIME_EMBEDDING_MODEL_NAME}" ]] ||
     die "runtime models have not been selected"
-  provider_configuration="ollama-v${RUNTIME_SERVER_VERSION},${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0,seed=0"
+  case "${PROVIDER_KIND}" in
+    local)
+      provider_configuration="ollama-v${RUNTIME_SERVER_VERSION},${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0,seed=0"
+      ;;
+    deepseek)
+      provider_configuration="deepseek-v1,${RUNTIME_CHAT_MODEL_NAME},temperature=0"
+      ;;
+    *)
+      provider_configuration="${RUNTIME_PROVIDER_NAME}-v1,${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0,seed=0"
+      ;;
+  esac
 
   mkdir -p "${RUNTIME_CONFIG_DIR}"
   generated="$(mktemp)"
   {
     printf '# Generated by ./scripts/install-runtime.sh; re-running replaces this file.\n'
-    printf 'ZABM_PROVIDER=openai-compatible\n'
-    printf 'ZABM_PROVIDER_URL=%s\n' "${PROVIDER_URL}"
-    printf 'ZABM_MODEL=%s\n' "${RUNTIME_CHAT_MODEL_NAME}"
-    printf 'ZABM_EMBEDDING_MODEL=%s\n' "${RUNTIME_EMBEDDING_MODEL_NAME}"
+    printf 'ZABM_RUNTIME_PROVIDER_KIND=%q\n' "${PROVIDER_KIND}"
+    printf 'ZABM_PROVIDER=%q\n' "${RUNTIME_PROVIDER_NAME}"
+    printf 'ZABM_PROVIDER_URL=%q\n' "${RUNTIME_PROVIDER_URL}"
+    printf 'ZABM_MODEL=%q\n' "${RUNTIME_CHAT_MODEL_NAME}"
+    printf 'ZABM_EMBEDDING_MODEL=%q\n' "${RUNTIME_EMBEDDING_MODEL_NAME}"
     printf 'ZABM_PROVIDER_CONFIGURATION=%q\n' "${provider_configuration}"
-    printf 'ZABM_PROVIDER_API_KEY=\n'
     printf 'ZABM_DEBUG=0\n'
-    printf 'OLLAMA_MODELS=%q\n' "${MODEL_DIR}"
+    case "${PROVIDER_KIND}" in
+      local)
+        printf 'ZABM_PROVIDER_API_KEY=\n'
+        printf 'OLLAMA_MODELS=%q\n' "${MODEL_DIR}"
+        ;;
+      deepseek)
+        printf 'DEEPSEEK_API_KEY=%q\n' "${RUNTIME_API_KEY}"
+        ;;
+      openai)
+        printf 'OPENAI_API_KEY=%q\n' "${RUNTIME_API_KEY}"
+        ;;
+      openai-compatible)
+        printf 'ZABM_PROVIDER_API_KEY=%q\n' "${RUNTIME_API_KEY}"
+        ;;
+    esac
   } > "${generated}"
   write_if_changed "${CONFIG_FILE}" 600 "${generated}"
 }
@@ -450,36 +701,35 @@ available_models_csv() {
   printf '%s' "${AVAILABLE_MODELS[*]}"
 }
 
-select_chat_model() {
-  local requested="${RUNTIME_CHAT_MODEL_NAME}"
-  local model
-  local selected=""
+print_available_models() {
+  local index
 
-  if [[ -n "${requested}" ]]; then
-    lookup_available_model "${requested}" ||
-      die "requested chat model '${requested}' is not installed; available models: $(available_models_csv)"
-    return
-  fi
-  for model in "${AVAILABLE_MODELS[@]}"; do
-    if ! model_looks_like_embedding "${model}"; then
-      selected="${model}"
-      break
-    fi
+  printf '%s\n' 'Installed Ollama models:'
+  for index in "${!AVAILABLE_MODELS[@]}"; do
+    printf '  %d) %s\n' "$((index + 1))" "${AVAILABLE_MODELS[index]}"
   done
-  printf '%s\n' "${selected:-${AVAILABLE_MODELS[0]}}"
 }
 
-select_embedding_model() {
-  local requested="${RUNTIME_EMBEDDING_MODEL_NAME}"
-  local model
+model_from_choice() {
+  local choice="$1"
+  local index
 
-  if [[ -n "${requested}" ]]; then
-    lookup_available_model "${requested}" ||
-      die "requested embedding model '${requested}' is not installed; available models: $(available_models_csv)"
+  if [[ "${choice}" =~ ^[1-9][0-9]*$ ]]; then
+    index=$((choice - 1))
+    ((index < ${#AVAILABLE_MODELS[@]})) ||
+      die "model selection ${choice} is out of range"
+    printf '%s\n' "${AVAILABLE_MODELS[index]}"
     return
   fi
+  lookup_available_model "${choice}" ||
+    die "model '${choice}' is not installed; choose one of: $(available_models_csv)"
+}
+
+default_chat_model() {
+  local model
+
   for model in "${AVAILABLE_MODELS[@]}"; do
-    if model_looks_like_embedding "${model}"; then
+    if ! model_looks_like_embedding "${model}"; then
       printf '%s\n' "${model}"
       return
     fi
@@ -487,12 +737,70 @@ select_embedding_model() {
   printf '%s\n' "${AVAILABLE_MODELS[0]}"
 }
 
+default_embedding_model() {
+  local model
+
+  for model in "${AVAILABLE_MODELS[@]}"; do
+    if model_looks_like_embedding "${model}"; then
+      printf '%s\n' "${model}"
+      return
+    fi
+  done
+  printf '%s\n' "not-configured"
+}
+
+select_chat_model() {
+  local requested="${RUNTIME_CHAT_MODEL_NAME}"
+  local default_model
+  local choice=""
+
+  if [[ -n "${requested}" ]]; then
+    lookup_available_model "${requested}" ||
+      die "requested chat model '${requested}' is not installed; available models: $(available_models_csv)"
+    return
+  fi
+  default_model="$(default_chat_model)"
+  if [[ -t 0 ]]; then
+    read -r -p "Chat model number or name [${default_model}]: " choice ||
+      die "input ended while choosing the chat model"
+  fi
+  model_from_choice "${choice:-${default_model}}"
+}
+
+select_embedding_model() {
+  local requested="${RUNTIME_EMBEDDING_MODEL_NAME}"
+  local default_model
+  local choice=""
+
+  if [[ -n "${requested}" ]]; then
+    if [[ "${requested}" == "not-configured" ]]; then
+      printf '%s\n' "${requested}"
+      return
+    fi
+    lookup_available_model "${requested}" ||
+      die "requested embedding model '${requested}' is not installed; available models: $(available_models_csv)"
+    return
+  fi
+  default_model="$(default_embedding_model)"
+  if [[ -t 0 ]]; then
+    read -r -p "Embedding model number/name, or 0 to skip [${default_model}]: " choice ||
+      die "input ended while choosing the embedding model"
+  fi
+  choice="${choice:-${default_model}}"
+  if [[ "${choice}" == "0" || "${choice}" == "none" || "${choice}" == "not-configured" ]]; then
+    printf '%s\n' "not-configured"
+    return
+  fi
+  model_from_choice "${choice}"
+}
+
 select_models() {
   load_installed_models
+  print_available_models
   RUNTIME_CHAT_MODEL_NAME="$(select_chat_model)"
   RUNTIME_EMBEDDING_MODEL_NAME="$(select_embedding_model)"
-  log "using existing chat model: ${RUNTIME_CHAT_MODEL_NAME}"
-  log "using existing embedding model: ${RUNTIME_EMBEDDING_MODEL_NAME}"
+  log "selected chat model: ${RUNTIME_CHAT_MODEL_NAME}"
+  log "selected embedding model: ${RUNTIME_EMBEDDING_MODEL_NAME}"
 }
 
 prepare_evidence() {
@@ -509,7 +817,7 @@ prepare_evidence() {
 source_runtime_config() {
   [[ -f "${CONFIG_FILE}" ]] ||
     die "runtime configuration is missing: ${CONFIG_FILE}"
-  # The file is generated by this installer and contains only non-secret values.
+  # Generated with mode 600; remote-provider credentials may be present.
   set -a
   # shellcheck source=/dev/null
   source "${CONFIG_FILE}"
@@ -549,8 +857,13 @@ run_installed_smoke() {
   log "smoke: application health"
   "${VENV_PYTHON}" -m zabm health >/dev/null
 
-  log "smoke: local chat and embedding provider"
-  run "${VENV_PYTHON}" -m zabm provider-smoke
+  log "smoke: ${ZABM_PROVIDER} provider"
+  if [[ -n "${ZABM_EMBEDDING_MODEL:-}" && "${ZABM_EMBEDDING_MODEL}" != "not-configured" ]]; then
+    run "${VENV_PYTHON}" -m zabm provider-smoke
+  else
+    log "smoke: embeddings are not configured; checking chat only"
+    run "${VENV_PYTHON}" -m zabm provider-smoke --skip-embeddings
+  fi
 
   log "smoke: evidence stores and one supported answer"
   "${VENV_PYTHON}" -m zabm ask \
@@ -597,16 +910,20 @@ print_plan() {
   log "platform: ${OS_PRETTY_NAME} (${OS_ID} ${OS_VERSION_ID}, x86_64)"
   log "runtime dependencies only; development, test, and evaluation dependencies are excluded"
   log "application: CLI and web chat in ${REPO_ROOT}/.venv"
-  log "runtime home: ${RUNTIME_HOME}"
-  log "Ollama prerequisite: preinstalled ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION} and active ${OLLAMA_SERVICE_NAME}"
-  log "model selection: existing models reported by '${OLLAMA_BIN:-ollama} list'"
-  log "chat model preference: ${RUNTIME_CHAT_MODEL_NAME:-an installed non-embedding model}"
-  log "embedding model preference: ${RUNTIME_EMBEDDING_MODEL_NAME:-an installed embedding model, otherwise the chat model}"
+  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+    log "runtime home: ${RUNTIME_HOME}"
+    log "Ollama prerequisite: preinstalled ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION} and active ${OLLAMA_SERVICE_NAME}"
+    log "model selection: existing models reported by '${OLLAMA_BIN:-ollama} list'"
+  else
+    log "provider: ${RUNTIME_PROVIDER_NAME} at ${RUNTIME_PROVIDER_URL}"
+    log "remote credentials: saved with runtime configuration, not printed"
+  fi
+  log "chat model: ${RUNTIME_CHAT_MODEL_NAME:-selected during installation}"
+  log "embedding model: ${RUNTIME_EMBEDDING_MODEL_NAME:-selected during installation}"
   log "model downloads and imports: none"
-  log "Ollama model store: ${MODEL_DIR}"
   log "runtime configuration: ${CONFIG_FILE}"
   log "evidence stores: ${DATA_DIR}/generated"
-  log "installed-target smoke: health, local provider, evidence stores, web chat, and one supported answer"
+  log "installed-target smoke: health, selected provider, evidence stores, web chat, and one supported answer"
 }
 
 prepare_runtime_directories() {
@@ -643,20 +960,24 @@ prepare_runtime_directories() {
 main() {
   parse_args "$@"
   validate_platform
-  check_nvidia_prerequisites
 
   if [[ "${DRY_RUN}" == true ]]; then
+    prepare_dry_run_plan
     print_plan
     log "dry run complete; no changes made"
     return
   fi
 
+  configure_provider
+  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+    check_nvidia_prerequisites
+  fi
+
   print_plan
-  check_ollama_prerequisites
-  prepare_runtime_directories
+  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+    prepare_runtime_directories
+  fi
   log "starting installation; use --dry-run to inspect the plan without changes"
-  verify_ollama_service
-  select_models
   install_runtime_base
   write_runtime_config
   write_runtime_launcher
@@ -666,7 +987,11 @@ main() {
   log "target runtime is ready"
   log "CLI: ${BIN_DIR}/zabm-runtime ask \"...\""
   log "web: ${BIN_DIR}/zabm-runtime web --data-dir ${DATA_DIR}"
-  log "server: sudo systemctl status ${OLLAMA_SERVICE_NAME}"
+  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+    log "server: sudo systemctl status ${OLLAMA_SERVICE_NAME}"
+  else
+    log "provider: ${RUNTIME_PROVIDER_NAME}"
+  fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

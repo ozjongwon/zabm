@@ -2,7 +2,7 @@
 
 Run this procedure on disposable Debian 13 and Ubuntu 24.04 x86_64 hosts. Start
 from a fresh clone with no existing `.venv`, managed Python, uv, or generated
-evidence. Ollama and at least one model are separately installed prerequisites.
+evidence. Choose either local Ollama or a remote OpenAI-compatible provider.
 
 ## Prerequisites
 
@@ -12,14 +12,12 @@ evidence. Ollama and at least one model are separately installed prerequisites.
   URLs.
 - Enough space outside the runtime home for the Python environment, source
   PDFs, and evidence stores.
-- A working NVIDIA kernel driver for GPU execution. The installer validates
-  `nvidia-smi -L` and does not install or replace the driver.
-- Ollama v0.40.18 installed under `/home/ollama` or exposed through
-  `ZABM_OLLAMA_BIN`, with `ollama.service` enabled and active.
-- At least one model already installed in Ollama. For separate chat and
-  embedding roles, install both; otherwise the single model is used for both.
-- `/home/ollama` keeps its existing owner and group. Missing write access for
-  the invoking user is granted through a POSIX ACL.
+- For local Ollama: a working NVIDIA kernel driver for GPU execution, Ollama
+  v0.40.18 installed under `/home/ollama` or exposed through
+  `ZABM_OLLAMA_BIN`, active `ollama.service`, and at least one installed model.
+  The installer validates `nvidia-smi -L` and does not replace the driver.
+- For remote access: credentials for DeepSeek, OpenAI, or another
+  OpenAI-compatible endpoint. The installer prompts without echoing the key.
 
 Inspect the plan first:
 
@@ -27,10 +25,9 @@ Inspect the plan first:
 ./scripts/install-runtime.sh --dry-run
 ```
 
-The plan must identify Ollama v0.40.18 and active `ollama.service` as external
-prerequisites, state that models are selected from `ollama list` with no
-downloads or imports, and name the model store, runtime-only dependency
-profile, and installed-target smoke checks.
+The plan must identify the selected provider and models. For local Ollama it
+must also identify v0.40.18 and active `ollama.service` as external
+prerequisites. The plan must state that no downloads or imports occur.
 
 ## Install
 
@@ -40,10 +37,9 @@ profile, and installed-target smoke checks.
 ```
 
 The import check must fail. The installer must finish with the CLI health
-check, local chat and embedding provider smoke, source/evidence verification,
-one supported CLI answer, and the same answer through the web endpoint.
-It must not install, start, stop, enable, disable, or rewrite Ollama or its
-systemd unit.
+check, selected-provider smoke, source/evidence verification, one supported CLI
+answer, and the same answer through the web endpoint. It must not install,
+start, stop, enable, disable, or rewrite Ollama or its systemd unit.
 
 The following generated paths are outside the repository and must not appear
 in `git status`:
@@ -69,15 +65,17 @@ zabm-runtime web --data-dir .zabm
 ```
 
 Open the reported loopback URL and ask the same question. Both responses must
-be `supported`, with claims and citations, and must identify the local
-`openai-compatible` provider and pinned model names.
+be `supported`, with claims and citations, and must identify the selected
+provider and models.
 
 Run the automated installed-target checks independently:
 
 ```bash
 ./scripts/runtime-smoke.sh
-sudo systemctl status ollama.service
-sudo journalctl --unit ollama.service --lines 50
+if [[ "${ZABM_RUNTIME_PROVIDER_KIND:-}" == "local" ]]; then
+  sudo systemctl status ollama.service
+  sudo journalctl --unit ollama.service --lines 50
+fi
 ```
 
 ## Idempotence
@@ -88,11 +86,11 @@ Run the installer a second time:
 ./scripts/install-runtime.sh
 ```
 
-The second run must reuse the externally managed Ollama service and imported
-models, leave `ollama.service` active, leave permission mode `600` on
-`runtime.env`, and pass the same smoke checks. It must not add development,
-test, or evaluation Python packages. Confirm `~/.local/bin/zabm-runtime` is
-replaced in place rather than duplicated.
+The second run must preserve the selected provider and models, leave permission
+mode `600` on `runtime.env`, and pass the same smoke checks. For local Ollama,
+`ollama.service` must remain active. The run must not add development, test, or
+evaluation Python packages. Confirm `~/.local/bin/zabm-runtime` is replaced in
+place rather than duplicated.
 
 ## Evidence record
 
@@ -101,8 +99,8 @@ Capture at minimum:
 - host image, architecture, date, and kernel;
 - `nvidia-smi -L` output or the installer's prerequisite warning;
 - dry-run plan and both installer exit statuses;
-- installed Ollama and Python versions;
-- selected model names from `ollama list` and the generated provider identity;
+- installed Ollama and Python versions, when using local models;
+- selected provider, model names, and generated provider identity;
 - CLI `health --json`, provider smoke, supported answer envelope, and web
   endpoint response;
 - second-run result and the pytest-import exclusion result;

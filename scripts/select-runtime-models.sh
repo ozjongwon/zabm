@@ -8,6 +8,6 @@ source "${SCRIPT_DIR}/install-runtime.sh"
 validate_platform
 check_nvidia_prerequisites
 require_installed_runtime
-verify_ollama_service
-select_models
+PROVIDER_KIND=local
+configure_local_provider
 write_runtime_config

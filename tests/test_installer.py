@@ -151,12 +151,39 @@ def test_runtime_installer_dry_run_reports_the_complete_target_plan(
     assert "ollama v0.40.18" in result.stdout
     assert "model selection: existing models reported by 'ollama list'" in result.stdout
     assert "model downloads and imports: none" in result.stdout
-    assert "/home/ollama/models" in result.stdout
+    assert "chat model: selected during installation" in result.stdout
+    assert "embedding model: selected during installation" in result.stdout
     assert "installed-target smoke" in result.stdout
     assert "Ollama prerequisite: preinstalled ollama v0.40.18" in result.stdout
     assert "active ollama.service" in result.stdout
     assert "one supported answer" in result.stdout
     assert "sk-test-do-not-print" not in result.stdout + result.stderr
+
+
+def test_runtime_installer_dry_run_can_plan_a_remote_provider_without_leaking_its_key(
+    tmp_path: Path,
+) -> None:
+    os_release = tmp_path / "debian-release"
+    os_release.write_text(
+        'ID=debian\nVERSION_ID="13"\nPRETTY_NAME="Debian GNU/Linux 13"\n',
+        encoding="utf-8",
+    )
+
+    result = run_runtime_installer(
+        "--dry-run",
+        "--provider",
+        "deepseek",
+        os_release=str(os_release),
+        extra_env={
+            "DEEPSEEK_API_KEY": "deepseek-secret-do-not-print",
+        },
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "provider: deepseek at https://api.deepseek.com" in result.stdout
+    assert "chat model: deepseek-flash" in result.stdout
+    assert "embedding model: not-configured" in result.stdout
+    assert "deepseek-secret-do-not-print" not in result.stdout + result.stderr
 
 
 def test_runtime_configuration_and_launcher_are_secret_free_and_idempotent(
@@ -175,6 +202,9 @@ def test_runtime_configuration_and_launcher_are_secret_free_and_idempotent(
     )
     generate = (
         f"source {RUNTIME_INSTALLER}; "
+        "PROVIDER_KIND=local; "
+        "RUNTIME_PROVIDER_NAME=openai-compatible; "
+        "RUNTIME_PROVIDER_URL=http://127.0.0.1:11434/v1; "
         "RUNTIME_CHAT_MODEL_NAME=test-chat; "
         "RUNTIME_EMBEDDING_MODEL_NAME=test-embedding; "
         "write_runtime_config; write_runtime_launcher"
@@ -199,6 +229,8 @@ def test_runtime_configuration_and_launcher_are_secret_free_and_idempotent(
 
     assert config.stat().st_mode & 0o777 == 0o600
     assert launcher.stat().st_mode & 0o777 == 0o755
+    assert "ZABM_RUNTIME_PROVIDER_KIND=local\n" in config_contents
+    assert "ZABM_PROVIDER=openai-compatible\n" in config_contents
     assert "ZABM_PROVIDER_API_KEY=\n" in config_contents
     assert "ZABM_MODEL=test-chat\n" in config_contents
     assert "ZABM_EMBEDDING_MODEL=test-embedding\n" in config_contents
@@ -368,14 +400,14 @@ printf 'embedding=%s\\n' "$RUNTIME_EMBEDDING_MODEL_NAME"
     )
 
     assert result.returncode == 0, result.stderr
-    assert "using existing chat model: qwen2.5:7b" in result.stdout
-    assert "using existing embedding model: nomic-embed-text:latest" in result.stdout
+    assert "selected chat model: qwen2.5:7b" in result.stdout
+    assert "selected embedding model: nomic-embed-text:latest" in result.stdout
     assert "chat=qwen2.5:7b" in result.stdout
     assert "embedding=nomic-embed-text:latest" in result.stdout
     assert call_log.read_text(encoding="utf-8").splitlines() == ["list"]
 
 
-def test_runtime_installer_reuses_a_sole_installed_model_for_both_roles(
+def test_runtime_installer_skips_embeddings_when_only_a_chat_model_exists(
     tmp_path: Path,
 ) -> None:
     ollama = tmp_path / "ollama"
@@ -407,7 +439,7 @@ printf 'embedding=%s\\n' "$RUNTIME_EMBEDDING_MODEL_NAME"
 
     assert result.returncode == 0, result.stderr
     assert "chat=llama3.2:latest" in result.stdout
-    assert "embedding=llama3.2:latest" in result.stdout
+    assert "embedding=not-configured" in result.stdout
 
 
 def test_runtime_installer_uses_requested_installed_models(tmp_path: Path) -> None:
@@ -445,6 +477,76 @@ printf 'embedding=%s\\n' "$RUNTIME_EMBEDDING_MODEL_NAME"
     assert result.returncode == 0, result.stderr
     assert "chat=qwen2.5:latest" in result.stdout
     assert "embedding=nomic-embed-text:latest" in result.stdout
+
+
+def test_runtime_installer_configures_deepseek_without_an_embedding_model(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    config_home = tmp_path / "config"
+    command = f"""
+source {shlex.quote(str(RUNTIME_INSTALLER))}
+PROVIDER_KIND=deepseek
+configure_remote_provider
+write_runtime_config
+"""
+    env = os.environ.copy()
+    env.update(
+        {
+            "HOME": str(home),
+            "XDG_CONFIG_HOME": str(config_home),
+            "DEEPSEEK_API_KEY": "deepseek-secret-do-not-print",
+        }
+    )
+
+    result = subprocess.run(
+        ["bash", "-c", command],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    config = config_home / "zabm" / "runtime.env"
+    contents = config.read_text(encoding="utf-8")
+    assert result.returncode == 0, result.stderr
+    assert config.stat().st_mode & 0o777 == 0o600
+    assert "ZABM_RUNTIME_PROVIDER_KIND=deepseek\n" in contents
+    assert "ZABM_PROVIDER=deepseek\n" in contents
+    assert "ZABM_PROVIDER_URL=https://api.deepseek.com\n" in contents
+    assert "ZABM_MODEL=deepseek-flash\n" in contents
+    assert "ZABM_EMBEDDING_MODEL=not-configured\n" in contents
+    assert "DEEPSEEK_API_KEY=deepseek-secret-do-not-print\n" in contents
+    assert "deepseek-secret-do-not-print" not in result.stdout + result.stderr
+
+
+def test_installed_remote_runtime_does_not_require_ollama(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config" / "zabm"
+    config_dir.mkdir(parents=True)
+    (config_dir / "runtime.env").write_text(
+        "ZABM_RUNTIME_PROVIDER_KIND=deepseek\nZABM_PROVIDER=deepseek\nZABM_MODEL=deepseek-flash\n",
+        encoding="utf-8",
+    )
+    command = f"""
+source {shlex.quote(str(RUNTIME_INSTALLER))}
+require_installed_runtime
+printf 'kind=%s provider=%s\\n' "$PROVIDER_KIND" "$RUNTIME_PROVIDER_NAME"
+"""
+    env = os.environ.copy()
+    env.update({"XDG_CONFIG_HOME": str(tmp_path / "config")})
+
+    result = subprocess.run(
+        ["bash", "-c", command],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "kind=deepseek provider=deepseek" in result.stdout
 
 
 def test_runtime_installer_prints_ollama_setup_instructions_when_service_is_inactive(

@@ -13,7 +13,7 @@
 - [x] Model weights remain outside the repository; the installer selects existing Ollama models without downloading or importing new ones.
 - [x] The installer validates `nvidia-smi` and gives clear prerequisite instructions when the kernel GPU driver is missing; it does not replace the host driver automatically.
 - [x] The CLI and web chat become runnable without source-development setup.
-- [x] A smoke check verifies the application, local provider, evidence stores, and one supported answer on the installed target.
+- [x] A smoke check verifies the application, selected provider, evidence stores, and one supported answer on the installed target.
 - [x] Secrets remain in environment variables or an equivalent secret store and are absent from installer output and committed configuration.
 - [x] Re-running the installer leaves a working system without duplicating runtime configuration.
 
@@ -56,4 +56,12 @@
   model for embeddings and reuses the sole installed model when needed. The
   separate model command now selects existing models and refreshes the runtime
   provider configuration.
+- 2026-11-25: The installer now asks whether to use local Ollama or a remote
+  OpenAI-compatible provider. Local selection displays `ollama list` and asks
+  for chat and optional embedding models. DeepSeek, OpenAI, and custom remote
+  settings are prompted or read from environment variables, including hidden
+  API-key entry. The selected provider, endpoint, models, and credential are
+  persisted in mode-600 `runtime.env` and used by the installed launcher and
+  smoke checks. Chat-only provider smoke skips embeddings when that capability
+  is not configured.
 

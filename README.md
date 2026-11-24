@@ -28,27 +28,40 @@ x86_64 machine with:
 ./scripts/install-runtime.sh
 ```
 
-The target installer uses only `requirements/runtime.lock`, selects existing
-models reported by `ollama list`, rebuilds the frozen evidence stores, and
-verifies the CLI, web chat, local chat and embedding provider, and one
-supported answer. It does not install or start Ollama and does not download or
-import models. Use `--dry-run` to inspect the complete plan without changing
-the machine.
+The target installer prompts for a local Ollama or remote OpenAI-compatible
+provider, rebuilds the frozen evidence stores, and verifies the CLI, web chat,
+selected provider, and one supported answer. It does not install or start
+Ollama, download models, or import new models. Use `--dry-run` to inspect the
+complete plan without changing the machine.
 
-Every normal run prints the same plan before changing anything. The server,
-models, and logs use `/home/ollama`. Ollama must already be installed there or
-made available through `ZABM_OLLAMA_BIN`, and `ollama.service` must already be
-enabled and active. If those prerequisites are missing, the installer prints
-the required setup commands and exits without installing anything.
+For local Ollama, the installer lists models reported by `ollama list` and
+prompts for the chat model and optional embedding model. Ollama must already
+be installed under `/home/ollama` or exposed through `ZABM_OLLAMA_BIN`, with
+`ollama.service` enabled and active.
 
-The installer prefers `ZABM_MODEL` and `ZABM_EMBEDDING_MODEL` when those names
-are present in `ollama list`. Otherwise it chooses an installed
-embedding-named model for embeddings and the first installed non-embedding
-model for chat. If only one model is installed, it is used for both. Select
-models again without reinstalling the runtime:
+For DeepSeek or OpenAI, the installer prompts for the endpoint, model, optional
+embedding model, and API key. Keys can also come from `DEEPSEEK_API_KEY`,
+`OPENAI_API_KEY`, or `ZABM_PROVIDER_API_KEY`. DeepSeek defaults to
+`deepseek-flash` and skips embeddings when no embedding model is configured.
+For a custom remote service, choose `openai-compatible`.
+
+The selected provider, models, endpoint, and API key are written to the
+mode-`600` runtime configuration and used by the smoke check and installed
+launcher. To select local models again without reinstalling the runtime:
 
 ```bash
 ./scripts/select-runtime-models.sh
+```
+
+Non-interactive installations can provide the choices directly:
+
+```bash
+ZABM_MODEL='<chat-model>' \
+ZABM_EMBEDDING_MODEL='<embedding-model>' \
+./scripts/install-runtime.sh --provider local
+
+DEEPSEEK_API_KEY='...' \
+./scripts/install-runtime.sh --provider deepseek
 ```
 
 Linux starts the externally managed `ollama.service` at boot. The installed
@@ -65,7 +78,7 @@ Run `./scripts/runtime-smoke.sh` after a reboot or service change. See
 [Target runtime acceptance](docs/target-runtime-acceptance.md) for the clean
 host procedure and evidence to record.
 
-Inspect or control the model service with standard systemd commands:
+Inspect or control a local model service with standard systemd commands:
 
 ```bash
 sudo systemctl status ollama.service
@@ -407,8 +420,9 @@ configuration, source-pack version, and latency spread together:
 
 The DeepSeek preset follows the same `ask` and evaluation procedure with
 `--provider deepseek` and `DEEPSEEK_API_KEY`. It records
-`embedding_model: "not-configured"` by default. Run the embedding smoke only
-when `DEEPSEEK_EMBEDDING_MODEL` names a model supported by that endpoint.
+`embedding_model: "not-configured"` by default. Add `--skip-embeddings` to
+`provider-smoke` for chat-only profiles, or configure
+`DEEPSEEK_EMBEDDING_MODEL` when the endpoint supports embeddings.
 
 The provider may phrase validated claims only. It must return one sentence for
 each supplied claim identifier; missing, extra, or malformed sentences and

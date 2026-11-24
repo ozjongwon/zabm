@@ -482,6 +482,7 @@ def _provider_smoke_command(
     as_json: bool,
     output_path: Path | None,
     cpu_quantized: bool,
+    skip_embeddings: bool,
     *,
     provider: str | None,
     provider_url: str | None,
@@ -508,11 +509,14 @@ def _provider_smoke_command(
             seed=0,
         )
         chat_latency_ms = (time.perf_counter() - started) * 1000
-        started = time.perf_counter()
-        vectors = model_provider.embed(["bicycle clamp bolt torque"])
-        embedding_latency_ms = (time.perf_counter() - started) * 1000
-        if not vectors or not vectors[0]:
-            raise ProviderError("provider returned no embedding vector")
+        vectors: list[list[float]] = []
+        embedding_latency_ms = 0.0
+        if not skip_embeddings:
+            started = time.perf_counter()
+            vectors = model_provider.embed(["bicycle clamp bolt torque"])
+            embedding_latency_ms = (time.perf_counter() - started) * 1000
+            if not vectors or not vectors[0]:
+                raise ProviderError("provider returned no embedding vector")
     except ProviderError as exc:
         print(f"zabm provider-smoke: {exc}", file=sys.stderr)
         return 1
@@ -521,12 +525,16 @@ def _provider_smoke_command(
         "response_characters": len(response),
         "latency_ms": round(chat_latency_ms, 3),
     }
-    embedding_result = {
-        "input_count": 1,
-        "vector_count": len(vectors),
-        "dimensions": len(vectors[0]),
-        "latency_ms": round(embedding_latency_ms, 3),
-    }
+    embedding_result: dict[str, object]
+    if skip_embeddings:
+        embedding_result = {"status": "skipped"}
+    else:
+        embedding_result = {
+            "input_count": 1,
+            "vector_count": len(vectors),
+            "dimensions": len(vectors[0]),
+            "latency_ms": round(embedding_latency_ms, 3),
+        }
     report: dict[str, object] = {
         "provider": model_provider.identity.model_dump(mode="json"),
         "chat": chat_result,
@@ -554,10 +562,15 @@ def _provider_smoke_command(
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
         identity = model_provider.identity
-        print(
-            f"Provider smoke passed: {identity.provider}/{identity.model}, "
-            f"embedding {identity.embedding_model} ({len(vectors[0])} dimensions)."
-        )
+        if skip_embeddings:
+            print(
+                f"Provider smoke passed: {identity.provider}/{identity.model}; embeddings skipped."
+            )
+        else:
+            print(
+                f"Provider smoke passed: {identity.provider}/{identity.model}, "
+                f"embedding {identity.embedding_model} ({len(vectors[0])} dimensions)."
+            )
     return 0
 
 
@@ -1154,6 +1167,11 @@ def _parser() -> argparse.ArgumentParser:
         help="Write CPU-quantized acceptance evidence for the smoke result.",
     )
     provider_smoke.add_argument(
+        "--skip-embeddings",
+        action="store_true",
+        help="Check chat without calling an embedding endpoint.",
+    )
+    provider_smoke.add_argument(
         "--output",
         type=Path,
         help="Optional path for the provider-smoke JSON report.",
@@ -1482,6 +1500,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.json,
             args.output,
             args.cpu_quantized,
+            args.skip_embeddings,
             provider=args.provider,
             provider_url=args.provider_url,
             model=args.model,

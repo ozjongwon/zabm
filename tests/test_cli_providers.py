@@ -279,6 +279,29 @@ def test_provider_smoke_exercises_chat_and_embedding_contracts() -> None:
     assert api_key not in result.stderr
 
 
+def test_provider_smoke_can_skip_embeddings_for_chat_only_profiles() -> None:
+    with provider_server(generated_specification()) as (provider_url, requests):
+        result = run_cli_with_env(
+            {"DEEPSEEK_API_KEY": "deepseek-test-key"},
+            "provider-smoke",
+            "--provider",
+            "deepseek",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "deepseek-test-model",
+            "--embedding-model",
+            "not-configured",
+            "--skip-embeddings",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["embeddings"] == {"status": "skipped"}
+    assert [request["path"] for request in requests] == ["/v1/chat/completions"]
+
+
 def test_cpu_quantized_provider_smoke_writes_acceptance_evidence(tmp_path: Path) -> None:
     output_path = tmp_path / "cpu-smoke.json"
 
