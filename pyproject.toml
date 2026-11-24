@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Bicycle maintenance assistant with evidence-gated answers."
 requires-python = "==3.13.5"
 dependencies = [
+  "fonttools==4.68.0",
   "pydantic==2.14.3",
   "pypdf==6.21.4",
 ]

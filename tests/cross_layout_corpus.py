@@ -36,7 +36,7 @@ def materialize_corpus(root: Path) -> CorpusWorkspace:
     sources: list[dict[str, Any]] = []
     for document in corpus["documents"]:
         source_path = pdf_dir / f"{document['id']}.pdf"
-        _write_positioned_pdf(source_path, document["pages"])
+        write_positioned_pdf(source_path, document["pages"])
         source = {
             "id": document["id"],
             "title": document["title"],
@@ -75,7 +75,11 @@ def materialize_corpus(root: Path) -> CorpusWorkspace:
     )
 
 
-def ingest_corpus(workspace: CorpusWorkspace) -> tuple[dict[str, Any], dict[str, Any]]:
+def ingest_corpus(
+    workspace: CorpusWorkspace,
+    *,
+    language: str | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     download = run_cli(
         "download",
         "--manifest",
@@ -86,7 +90,7 @@ def ingest_corpus(workspace: CorpusWorkspace) -> tuple[dict[str, Any], dict[str,
     )
     assert download.returncode == 0, download.stderr
 
-    ingest = run_cli(
+    ingest_args = [
         "ingest",
         "--manifest",
         str(workspace.manifest_path),
@@ -101,7 +105,10 @@ def ingest_corpus(workspace: CorpusWorkspace) -> tuple[dict[str, Any], dict[str,
         "--data-dir",
         str(workspace.data_dir),
         "--json",
-    )
+    ]
+    if language is not None:
+        ingest_args.extend(["--language", language])
+    ingest = run_cli(*ingest_args)
     assert ingest.returncode == 0, ingest.stderr
     report: dict[str, Any] = json.loads(ingest.stdout)
     catalog = read_catalog(workspace)
@@ -114,8 +121,8 @@ def read_catalog(workspace: CorpusWorkspace) -> dict[str, Any]:
     )
 
 
-def _write_positioned_pdf(path: Path, pages: list[dict[str, Any]]) -> None:
-    page_object_numbers = [4 + index * 2 for index in range(len(pages))]
+def write_positioned_pdf(path: Path, pages: list[dict[str, Any]]) -> None:
+    page_object_numbers = [6 + index * 2 for index in range(len(pages))]
     content_object_numbers = [number + 1 for number in page_object_numbers]
     objects: list[bytes] = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
@@ -124,6 +131,8 @@ def _write_positioned_pdf(path: Path, pages: list[dict[str, Any]]) -> None:
             f"[{' '.join(f'{number} 0 R' for number in page_object_numbers)}] >>"
         ).encode(),
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Times-Italic >>",
     ]
     for page, content_number in zip(
         pages,
@@ -134,7 +143,7 @@ def _write_positioned_pdf(path: Path, pages: list[dict[str, Any]]) -> None:
             [
                 (
                     f"<< /Type /Page /Parent 2 0 R "
-                    f"/Resources << /Font << /F1 3 0 R >> >> "
+                    f"/Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> "
                     f"/MediaBox [0 0 612 792] /Contents {content_number} 0 R >>"
                 ).encode(),
                 _content_stream(page["lines"]),
@@ -164,8 +173,13 @@ def _write_positioned_pdf(path: Path, pages: list[dict[str, Any]]) -> None:
 
 
 def _content_stream(lines: list[list[Any]]) -> bytes:
-    commands = ["BT", "/F1 10 Tf"]
-    for y, x, text in lines:
+    commands = ["BT"]
+    for entry in lines:
+        y, x, text, *rest = entry
+        style: dict[str, Any] = rest[0] if rest else {}
+        font = str(style.get("font", "F1"))
+        size = float(style.get("size", 10))
+        commands.append(f"/{font} {size:g} Tf")
         commands.append(f"1 0 0 1 {x} {y} Tm ({_pdf_escape(text)}) Tj")
     commands.append("ET")
     stream = "\n".join(commands).encode("latin-1")

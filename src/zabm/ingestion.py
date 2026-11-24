@@ -3,14 +3,18 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import unicodedata
 from collections.abc import Mapping
+from importlib.metadata import version as package_version
 from itertools import pairwise
 from pathlib import Path
 from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-PARSER_VERSION = "pdf-ingestion-v2"
+PARSER_VERSION = "pdf-ingestion-v3"
+FONTTOOLS_VERSION = package_version("fonttools")
+PYPDF_VERSION = package_version("pypdf")
 PROFILE_SCHEMA_VERSION = "1"
 SUPPORTED_PROFILE_VERSIONS = frozenset({"1"})
 DEFAULT_INGESTION_PROFILES = (
@@ -39,6 +43,28 @@ EndBoundaryStrategy = Literal["explicit-marker", "section-boundary"]
 
 class IngestionProfileError(ValueError):
     pass
+
+
+def normalize_pdf_text(text: str) -> str:
+    normalized_lines = [
+        " ".join(unicodedata.normalize("NFKC", line).replace("\u00ad", "").split())
+        for line in text.splitlines()
+    ]
+    joined = ""
+    for line in normalized_lines:
+        if not line:
+            continue
+        if (
+            joined
+            and joined.endswith("-")
+            and len(joined) >= 2
+            and joined[-2].isalpha()
+            and line[0].islower()
+        ):
+            joined = f"{joined[:-1]}{line}"
+        else:
+            joined = f"{joined} {line}".strip()
+    return " ".join(joined.split())
 
 
 class _ContractModel(BaseModel):
@@ -77,6 +103,21 @@ class NormalizedBox(_ContractModel):
             raise ValueError("x_max must be greater than x_min")
         if self.y_max <= self.y_min:
             raise ValueError("y_max must be greater than y_min")
+        return self
+
+
+class PageBox(_ContractModel):
+    x_min: float = Field(ge=0)
+    y_min: float = Field(ge=0)
+    x_max: float = Field(gt=0)
+    y_max: float = Field(gt=0)
+
+    @model_validator(mode="after")
+    def validate_extent(self) -> PageBox:
+        if self.x_max <= self.x_min:
+            raise ValueError("page x_max must be greater than x_min")
+        if self.y_max <= self.y_min:
+            raise ValueError("page y_max must be greater than y_min")
         return self
 
 
@@ -264,6 +305,8 @@ class SelectedProfileProvenance(IngestionProfileProvenance):
 
 class IngestionProvenance(_ContractModel):
     parser_version: str
+    fonttools_version: str
+    pypdf_version: str
     profile_schema_version: str
     profile_manifest_version: str
     profile_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -280,12 +323,17 @@ class PdfPageObservation(_ContractModel):
 
 class LayoutSpan(_ContractModel):
     span_id: str
+    line_id: str
     document_id: str
     physical_page: int = Field(ge=1)
+    column_id: str
+    raw_text: str
     text: str
     box: NormalizedBox
+    page_box: PageBox
     font_name: str | None = None
     font_size: float | None = None
+    font_weight: int | None = None
     bold: bool = False
     italic: bool = False
     language: str | None = None
@@ -294,6 +342,8 @@ class LayoutSpan(_ContractModel):
 class LayoutStageResult(_ContractModel):
     document_id: str
     physical_page: int = Field(ge=1)
+    page_width: float = Field(gt=0)
+    page_height: float = Field(gt=0)
     columns: list[ColumnBand]
     spans: list[LayoutSpan]
     reading_order: list[str]

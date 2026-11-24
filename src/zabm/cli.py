@@ -179,6 +179,7 @@ def _ingest_command(
     data_dir: Path,
     freeze_path: Path | None,
     ingestion_profiles_path: Path,
+    language: str | None,
     as_json: bool,
 ) -> int:
     try:
@@ -216,6 +217,7 @@ def _ingest_command(
             data_dir,
             ingestion_profiles_path,
             ingestion_profiles=ingestion_profiles,
+            requested_language=language,
         )
     except (
         OSError,
@@ -911,6 +913,10 @@ def _parser() -> argparse.ArgumentParser:
         default=DEFAULT_INGESTION_PROFILES,
         help="Path to the versioned PDF-ingestion profile manifest.",
     )
+    ingest.add_argument(
+        "--language",
+        help="Preferred extracted language code; defaults to each profile's primary language.",
+    )
     ingest.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
     ask = commands.add_parser(
@@ -1161,6 +1167,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.data_dir,
             args.freeze,
             args.ingestion_profiles,
+            args.language,
             args.json,
         )
     if args.command == "ask":

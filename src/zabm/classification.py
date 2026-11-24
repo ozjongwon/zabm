@@ -125,7 +125,7 @@ class DeterministicPageBlockClassifier:
         if INDEX_HEADING.search(title_text) or (page_references >= 3 and alphabetical_entries >= 3):
             return self._result(observation, layout, "index", confidence=0.98, profile=profile)
 
-        table_rows = sum(_looks_like_table_row(text) for text in texts)
+        table_rows = sum(_looks_like_table_row(span.raw_text) for span in layout.spans)
         if TABLE_HEADING.search(title_text) or (table_rows >= 2 and table_rows >= len(texts) / 2):
             return self._result(
                 observation,
@@ -249,7 +249,7 @@ def _block_kind(
         return "heading"
     if page_kind in {"contents", "index", "contact", "legal", "advertisement", "navigation"}:
         return "paragraph"
-    if page_kind == "table" or _looks_like_table_row(span.text):
+    if page_kind == "table" or _looks_like_table_row(span.raw_text):
         return "table"
     if (
         page_kind == "figure"

@@ -825,8 +825,7 @@
         "printed_pages": [
           15
         ]
-      },
-      "known_gap": "04"
+      }
     },
     {
       "id": "broken-word-evidence",
@@ -850,10 +849,9 @@
           }
         ],
         "printed_pages": [
-          1
+          25
         ]
-      },
-      "known_gap": "04"
+      }
     },
     {
       "id": "duplicate-numbering-ask",

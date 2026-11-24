@@ -144,10 +144,19 @@ action aliases. Unknown profile or schema versions, ambiguous metadata
 selection, and invalid overrides fail ingestion before any generated evidence
 is written.
 
+Extraction preserves per-span font name, size, weight/style hints, normalized
+and raw text, line and span IDs, and both normalized and page-point bounding
+boxes. Declared column bands are read in profile order; otherwise deterministic
+column-gap detection supplies automatic bands. Configured language regions and
+limited script/word-hint detection keep multilingual columns separate. Use
+`--language de` with `zabm ingest` to prefer another language over each
+profile's primary language.
+
 Every generated `retrieval.json` records the parser version, profile schema and
 manifest versions, the profile-manifest SHA-256, and each source's selected
-profile ID, version, and canonical profile SHA-256. These fields also appear in
-the `zabm ingest --json` report.
+profile ID, version, and canonical profile SHA-256. It also records the pinned
+`pypdf` and `fonttools` versions used for extraction. These fields also appear
+in the `zabm ingest --json` report.
 
 ## Local grounded model path
 
