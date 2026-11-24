@@ -24,8 +24,14 @@
   GGUFs, generated local-provider configuration, an idempotent server launcher,
   source/evidence rebuild, and installed-target CLI plus web smoke. Added
   installer plan/rejection/config/idempotence tests and a clean-host acceptance
-  procedure. Full Pyright, repo-wide Ruff checks, and 224 tests pass. Clean
+  procedure. Full Pyright, repo-wide Ruff checks, and 226 tests pass. Clean
   Debian 13 and Ubuntu 24.04 execution still requires the documented
   disposable-host acceptance because no container or second target is
   available in this workspace.
+- 2026-11-25: Fixed two target-install failures found during acceptance.
+  Normal runs now print the complete plan before changing the machine, and a
+  preflight requires 12 GiB free on the selected runtime-home filesystem.
+  `--runtime-home` selects an explicit writable location, and the large Ollama
+  archive plus extraction workspace now live under that runtime home instead
+  of the often-small `/tmp` filesystem.
 

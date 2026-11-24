@@ -34,6 +34,16 @@ the repository, rebuilds the frozen evidence stores, and verifies the CLI, web
 chat, local chat and embedding provider, and one supported answer. Use
 `--dry-run` to inspect the complete plan without changing the machine.
 
+Every normal run prints the same plan before changing anything. The server,
+models, logs, and large temporary extraction files use one runtime-home
+filesystem. By default this is
+`${XDG_DATA_HOME:-$HOME/.local/share}/zabm-runtime`; select another writable
+filesystem when the default location has less than 12 GiB free:
+
+```bash
+./scripts/install-runtime.sh --runtime-home /path/on/a/large/filesystem/zabm-runtime
+```
+
 Model weights live under `${XDG_DATA_HOME:-$HOME/.local/share}/zabm-runtime/models`
 and can be fetched or re-verified without reinstalling the runtime:
 

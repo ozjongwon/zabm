@@ -10,10 +10,14 @@ weights, or generated evidence.
 - Network access to Debian or Ubuntu mirrors, Astral's pinned uv installer,
   the Python package index, GitHub release assets, Hugging Face model files,
   and the frozen source-pack URLs.
-- About 6 GB free for the Python environment, pinned Ollama package, model
-  files, source PDFs, and evidence stores.
+- Enough space outside the runtime home for the Python environment, source
+  PDFs, and evidence stores. The installer verifies the large runtime-home
+  requirement separately.
 - A working NVIDIA kernel driver for GPU execution. The installer validates
   `nvidia-smi -L` and does not install or replace the driver.
+- At least 12 GiB free on the runtime-home filesystem. The installer checks
+  this before downloading and keeps the large Ollama archive and extraction
+  workspace there instead of using `/tmp`.
 
 Inspect the plan first:
 
@@ -24,6 +28,14 @@ Inspect the plan first:
 The plan must name Ollama v0.40.18, the Qwen chat model and BGE embedding model
 with SHA-256 values, an external model directory, the runtime-only dependency
 profile, and the installed-target smoke checks.
+
+If the default runtime home is too small, select a writable directory on a
+larger filesystem:
+
+```bash
+./scripts/install-runtime.sh \
+  --runtime-home /home/ollama/zabm-runtime
+```
 
 ## Install
 

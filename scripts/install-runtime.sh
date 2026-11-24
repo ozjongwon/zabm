@@ -10,19 +10,20 @@ readonly OS_RELEASE_FILE="${ZABM_OS_RELEASE_FILE:-/etc/os-release}"
 # shellcheck source=../runtime/runtime-v1.conf
 source "${RUNTIME_CONFIG}"
 
-readonly RUNTIME_HOME="${ZABM_RUNTIME_HOME:-${XDG_DATA_HOME:-${HOME:?HOME must be set}/.local/share}/zabm-runtime}"
+readonly MIN_RUNTIME_FREE_GIB=12
+RUNTIME_HOME="${ZABM_RUNTIME_HOME:-${XDG_DATA_HOME:-${HOME:?HOME must be set}/.local/share}/zabm-runtime}"
 readonly RUNTIME_CONFIG_DIR="${ZABM_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/zabm}"
-readonly MODEL_DIR="${RUNTIME_HOME}/models"
-readonly SERVER_DIR="${RUNTIME_HOME}/server"
-readonly STATE_DIR="${RUNTIME_HOME}/state"
+MODEL_DIR="${RUNTIME_HOME}/models"
+SERVER_DIR="${RUNTIME_HOME}/server"
+STATE_DIR="${RUNTIME_HOME}/state"
 readonly CONFIG_FILE="${RUNTIME_CONFIG_DIR}/runtime.env"
 readonly DATA_DIR="${ZABM_DATA_DIR:-${REPO_ROOT}/.zabm}"
 readonly BIN_DIR="${HOME}/.local/bin"
-readonly SERVER_VERSION_DIR="${SERVER_DIR}/v${RUNTIME_SERVER_VERSION}"
-readonly OLLAMA_BIN="${SERVER_VERSION_DIR}/bin/ollama"
-readonly SERVER_PID_FILE="${STATE_DIR}/ollama.pid"
-readonly SERVER_LOG_FILE="${STATE_DIR}/ollama.log"
-readonly MODEL_STATE_FILE="${STATE_DIR}/models-v1.sha256"
+SERVER_VERSION_DIR="${SERVER_DIR}/v${RUNTIME_SERVER_VERSION}"
+OLLAMA_BIN="${SERVER_VERSION_DIR}/bin/ollama"
+SERVER_PID_FILE="${STATE_DIR}/ollama.pid"
+SERVER_LOG_FILE="${STATE_DIR}/ollama.log"
+MODEL_STATE_FILE="${STATE_DIR}/models-v1.sha256"
 readonly VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
 readonly PROVIDER_URL="http://127.0.0.1:11434/v1"
 
@@ -33,15 +34,17 @@ SMOKE_TEMP_FILES=()
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/install-runtime.sh [--dry-run]
+Usage: ./scripts/install-runtime.sh [--dry-run] [--runtime-home PATH]
 
 Installs the supported target runtime on Debian 13 or Ubuntu 24.04 x86_64:
 the runtime Python environment, CLI, web chat, pinned Ollama server, external
 models, generated evidence stores, and installed-target smoke checks.
 
 Options:
-  --dry-run    Validate and print the complete install plan without changes
-  -h, --help   Show this help
+  --dry-run            Validate and print the full plan without changing anything
+  --runtime-home PATH  Store the server, models, logs, and large temporary
+                       extraction files under PATH
+  -h, --help           Show this help
 
 Model weights are stored outside the repository. They can also be fetched
 separately with ./scripts/fetch-runtime-models.sh.
@@ -105,6 +108,21 @@ parse_args() {
       --dry-run)
         DRY_RUN=true
         shift
+        ;;
+      --runtime-home)
+        (($# >= 2)) || die "--runtime-home requires an absolute path"
+        [[ "$2" == /* ]] || die "--runtime-home requires an absolute path"
+        RUNTIME_HOME="${2%/}"
+        [[ -n "${RUNTIME_HOME}" ]] || die "--runtime-home cannot be the filesystem root"
+        MODEL_DIR="${RUNTIME_HOME}/models"
+        SERVER_DIR="${RUNTIME_HOME}/server"
+        STATE_DIR="${RUNTIME_HOME}/state"
+        SERVER_VERSION_DIR="${SERVER_DIR}/v${RUNTIME_SERVER_VERSION}"
+        OLLAMA_BIN="${SERVER_VERSION_DIR}/bin/ollama"
+        SERVER_PID_FILE="${STATE_DIR}/ollama.pid"
+        SERVER_LOG_FILE="${STATE_DIR}/ollama.log"
+        MODEL_STATE_FILE="${STATE_DIR}/models-v1.sha256"
+        shift 2
         ;;
       -h|--help)
         usage
@@ -217,8 +235,10 @@ install_model_server() {
   command -v tar >/dev/null 2>&1 || die "tar is required to install the model server"
   command -v zstd >/dev/null 2>&1 || die "zstd is required to extract the model server archive"
 
-  mkdir -p "${SERVER_DIR}" "${STATE_DIR}"
-  TEMP_DIR="$(mktemp -d)"
+  mkdir -p "${SERVER_DIR}" "${STATE_DIR}" ||
+    die "cannot create the server directory under ${RUNTIME_HOME}"
+  TEMP_DIR="$(mktemp -d "${STATE_DIR}/install.XXXXXX")" ||
+    die "cannot create the temporary install workspace under ${STATE_DIR}"
   archive="${TEMP_DIR}/${RUNTIME_SERVER_ARCHIVE}"
   extract_dir="${TEMP_DIR}/extract"
   staging_dir="${SERVER_DIR}/.v${RUNTIME_SERVER_VERSION}.new.$$"
@@ -237,6 +257,7 @@ install_model_server() {
     die "model server archive checksum mismatch"
 
   mkdir -p "${extract_dir}"
+  log "extracting ${RUNTIME_SERVER_ARCHIVE} under ${TEMP_DIR}"
   run tar --zstd --extract --file "${archive}" --directory "${extract_dir}"
   [[ -x "${extract_dir}/bin/ollama" ]] ||
     die "model server archive did not contain bin/ollama"
@@ -563,9 +584,13 @@ run_installed_smoke() {
 }
 
 print_plan() {
+  log "install plan:"
   log "platform: ${OS_PRETTY_NAME} (${OS_ID} ${OS_VERSION_ID}, x86_64)"
   log "runtime dependencies only; development, test, and evaluation dependencies are excluded"
   log "application: CLI and web chat in ${REPO_ROOT}/.venv"
+  log "runtime home: ${RUNTIME_HOME}"
+  log "temporary install workspace: a subdirectory of ${STATE_DIR}"
+  log "minimum free space: ${MIN_RUNTIME_FREE_GIB} GiB on the runtime-home filesystem"
   log "model server: ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION}"
   log "model server sha256: ${RUNTIME_SERVER_SHA256}"
   log "chat model: ${RUNTIME_CHAT_MODEL_FILE} (${RUNTIME_CHAT_MODEL_SHA256})"
@@ -574,6 +599,24 @@ print_plan() {
   log "runtime configuration: ${CONFIG_FILE}"
   log "evidence stores: ${DATA_DIR}/generated"
   log "installed-target smoke: health, local provider, evidence stores, web chat, and one supported answer"
+}
+
+check_disk_space() {
+  local available_gib
+  local available_kib
+  local required_kib
+
+  mkdir -p "${RUNTIME_HOME}" "${STATE_DIR}" ||
+    die "cannot create runtime home ${RUNTIME_HOME}; choose a writable path with --runtime-home"
+  available_kib="$(df -Pk "${RUNTIME_HOME}" | awk 'NR == 2 {print $4}')"
+  required_kib=$((MIN_RUNTIME_FREE_GIB * 1024 * 1024))
+  [[ -n "${available_kib}" ]] ||
+    die "could not determine free space for ${RUNTIME_HOME}"
+  available_gib="$((available_kib / 1024 / 1024))"
+  if ((available_kib < required_kib)); then
+    die "${RUNTIME_HOME} has ${available_gib} GiB free; at least ${MIN_RUNTIME_FREE_GIB} GiB is required; choose another --runtime-home on a larger filesystem"
+  fi
+  log "disk check: ${available_gib} GiB free under ${RUNTIME_HOME}"
 }
 
 main() {
@@ -587,6 +630,9 @@ main() {
     return
   fi
 
+  print_plan
+  check_disk_space
+  log "starting installation; use --dry-run to inspect the plan without changes"
   install_runtime_base
   install_model_server
   write_runtime_config
