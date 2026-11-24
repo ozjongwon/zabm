@@ -67,6 +67,7 @@ from zabm.response import (
     StoredCitation,
 )
 from zabm.specifications import (
+    SourceManifest,
     file_sha256,
     load_source_manifest,
     write_json,
@@ -258,7 +259,7 @@ class RetrievalSource(BaseModel):
     title: str
     manufacturer: str
     revision: str | None = None
-    source_sha256: str
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     ingestion_profile: IngestionProfileProvenance
     procedure_language: str = "en"
     action_aliases: dict[str, list[str]] = Field(default_factory=dict[str, list[str]])
@@ -1021,23 +1022,51 @@ def assess_ingestion_rebuild(
 ) -> RebuildDecision:
     manifest = load_source_manifest(manifest_path)
     profiles = ingestion_profiles or load_ingestion_profiles(ingestion_profiles_path)
+    resolved_profiles = _resolve_document_profiles(manifest, profiles)
+    expected = _ingestion_provenance(
+        manifest,
+        profiles,
+        ingestion_profiles_path,
+        manifest_path,
+        transcriptions_path,
+        resolved_profiles,
+    )
+    return _assess_ingestion_rebuild_for_provenance(data_dir, expected, review)
+
+
+def _resolve_document_profiles(
+    manifest: SourceManifest,
+    profiles: IngestionProfilesFile,
+) -> dict[str, DocumentProfile]:
+    return {
+        source.id: resolve_document_profile(
+            profiles,
+            source_id=source.id,
+            metadata=source.ingestion_metadata,
+            reference=source.ingestion_profile,
+        )
+        for source in manifest.sources
+    }
+
+
+def _ingestion_provenance(
+    manifest: SourceManifest,
+    profiles: IngestionProfilesFile,
+    ingestion_profiles_path: Path,
+    manifest_path: Path,
+    transcriptions_path: Path | None,
+    resolved_profiles: dict[str, DocumentProfile],
+) -> IngestionProvenance:
     selected_profiles = [
         SelectedProfileProvenance(
             document_id=source.id,
-            profile_id=(
-                profile := resolve_document_profile(
-                    profiles,
-                    source_id=source.id,
-                    metadata=source.ingestion_metadata,
-                    reference=source.ingestion_profile,
-                )
-            ).id,
-            profile_version=profile.version,
-            profile_sha256=profile_sha256(profile),
+            profile_id=resolved_profiles[source.id].id,
+            profile_version=resolved_profiles[source.id].version,
+            profile_sha256=profile_sha256(resolved_profiles[source.id]),
         )
         for source in manifest.sources
     ]
-    expected = IngestionProvenance(
+    return IngestionProvenance(
         parser_version=PARSER_VERSION,
         fonttools_version=FONTTOOLS_VERSION,
         pypdf_version=PYPDF_VERSION,
@@ -1050,6 +1079,13 @@ def assess_ingestion_rebuild(
         ),
         profiles=selected_profiles,
     )
+
+
+def _assess_ingestion_rebuild_for_provenance(
+    data_dir: Path,
+    expected: IngestionProvenance,
+    review: str | None,
+) -> RebuildDecision:
     catalog_path = data_dir / "generated" / "retrieval.json"
     if not catalog_path.is_file():
         return RebuildDecision(status="initial-build")
@@ -1137,13 +1173,19 @@ def ingest_retrieval(
         raise ValueError("preloaded ingestion profiles require their source manifest path")
     profile_path = ingestion_profiles_path or DEFAULT_INGESTION_PROFILES
     profiles = ingestion_profiles or load_ingestion_profiles(profile_path)
-    rebuild_decision = assess_ingestion_rebuild(
-        manifest_path,
+    resolved_profiles = _resolve_document_profiles(manifest, profiles)
+    ingestion_provenance = _ingestion_provenance(
+        manifest,
+        profiles,
         profile_path,
+        manifest_path,
+        transcriptions_path,
+        resolved_profiles,
+    )
+    rebuild_decision = _assess_ingestion_rebuild_for_provenance(
         data_dir,
-        ingestion_profiles=profiles,
-        transcriptions_path=transcriptions_path,
-        review=rebuild_review,
+        ingestion_provenance,
+        rebuild_review,
     )
     transcription_file = (
         load_procedure_transcriptions(transcriptions_path)
@@ -1164,26 +1206,14 @@ def ingest_retrieval(
     procedures: list[StoredProcedure] = []
     verified_transcription_count = 0
     validation_issues: list[str] = []
-    selected_profiles: list[SelectedProfileProvenance] = []
 
     for source in manifest.sources:
-        selected_profile = resolve_document_profile(
-            profiles,
-            source_id=source.id,
-            metadata=source.ingestion_metadata,
-            reference=source.ingestion_profile,
-        )
+        selected_profile = resolved_profiles[source.id]
         selected_sha256 = profile_sha256(selected_profile)
         profile_provenance = IngestionProfileProvenance(
             profile_id=selected_profile.id,
             profile_version=selected_profile.version,
             profile_sha256=selected_sha256,
-        )
-        selected_profiles.append(
-            SelectedProfileProvenance(
-                document_id=source.id,
-                **profile_provenance.model_dump(),
-            )
         )
         source_path = pdf_dir / f"{source.id}.pdf"
         if not source_path.is_file():
@@ -1241,19 +1271,6 @@ def ingest_retrieval(
                 for issue in resolved_procedure.validation_issues
             )
 
-    ingestion_provenance = IngestionProvenance(
-        parser_version=PARSER_VERSION,
-        fonttools_version=FONTTOOLS_VERSION,
-        pypdf_version=PYPDF_VERSION,
-        profile_schema_version=profiles.profile_schema_version,
-        profile_manifest_version=profiles.profile_manifest_version,
-        profile_manifest_sha256=file_sha256(profile_path),
-        source_manifest_sha256=file_sha256(manifest_path),
-        transcription_evidence_sha256=(
-            file_sha256(transcriptions_path) if transcriptions_path is not None else None
-        ),
-        profiles=selected_profiles,
-    )
     catalog = RetrievalCatalog(
         source_pack_id=manifest.manifest_version,
         ingestion_provenance=ingestion_provenance,
