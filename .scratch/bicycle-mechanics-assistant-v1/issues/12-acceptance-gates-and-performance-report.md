@@ -2,7 +2,7 @@
 
 **What to build:** A scored acceptance report proving whether the full agent meets the v1 accuracy, improvement, abstention, citation, fabrication, and local performance gates. The report preserves per-baseline, per-run, hardware, and runtime evidence and uses the approved paired-bootstrap methodology.
 
-**Blocked by:** 11.
+**Blocked by:** 11, general-pdf-ingestion/12.
 
 **Status:** ready-for-agent
 
@@ -16,3 +16,9 @@
 - [ ] CPU-quantized operation has a successful smoke run and documented performance without being required to meet the GPU threshold.
 - [ ] The report includes every baseline, provider, run, hardware, configuration version, latency, retrieval metric, and gate result.
 - [ ] A failed gate is reported as a failure with diagnostic evidence; no threshold or result is silently changed.
+
+## Comments
+
+- 2026-11-24: Added `general-pdf-ingestion/12` as a blocker. Accuracy and
+  procedure acceptance must run after the generalized ingestion and parser
+  provenance work is complete.

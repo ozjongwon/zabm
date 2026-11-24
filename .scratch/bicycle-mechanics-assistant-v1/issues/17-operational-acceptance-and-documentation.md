@@ -2,7 +2,7 @@
 
 **What to build:** A complete, reviewable v1 handoff proving the assistant can be installed, rebuilt, tested, evaluated, and exercised from clean workspaces on both development and target systems. Documentation records the architecture, empirical choices, evaluation evidence, safety boundaries, and known limitations.
 
-**Blocked by:** 01, 12, 13, 14, 15, 16.
+**Blocked by:** 01, 12, 13, 14, 15, 16, general-pdf-ingestion/12.
 
 **Status:** ready-for-agent
 
@@ -17,4 +17,9 @@
 - [ ] CLI and web chat are exercised for supported specifications, compatibility, procedures, citations, clarification, conflicts, not-found, and out-of-scope outcomes.
 - [ ] The repository contains a quickstart, architecture overview, source-selection audit, evaluation protocol and report, empirical choice record, safety boundaries, and known limitations.
 - [ ] Documentation explains that a passing evaluation does not establish production safety, domain-wide coverage, or current manufacturer guidance.
+
+## Comments
+
+- 2026-11-24: Added `general-pdf-ingestion/12` as a blocker because the final
+  operational handoff depends on stable, documented ingestion provenance.
 
