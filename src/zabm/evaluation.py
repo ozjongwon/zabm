@@ -8,6 +8,7 @@ import os
 import platform
 import re
 import statistics
+import subprocess
 import time
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -184,6 +185,7 @@ class ItemEvaluation(BaseModel):
     procedure_checklist: list[ProcedureChecklistEntry]
     prompt_evidence_characters: int
     prompt_budget_characters: int
+    latency_ms: float = Field(ge=0)
     retrieval: RetrievalMetrics | None
     response: CanonicalResponse
 
@@ -253,11 +255,18 @@ class RoutingIdentity(BaseModel):
     strategy: Literal["model", "prototype"]
 
 
+class GpuIdentity(BaseModel):
+    name: str
+    memory_mib: int = Field(gt=0)
+
+
 class HardwareIdentity(BaseModel):
     platform: str
     machine: str
     processor: str
     python_version: str
+    memory_bytes: int | None = Field(default=None, gt=0)
+    gpu: GpuIdentity | None = None
 
 
 class RuntimeIdentity(BaseModel):
@@ -265,6 +274,14 @@ class RuntimeIdentity(BaseModel):
     application_version: str
     python_version: str
     python_implementation: str
+
+
+class LatencyMeasurement(BaseModel):
+    unit: Literal["ms"] = "ms"
+    scope: Literal["per-scored-item"] = "per-scored-item"
+    warmup_excluded: bool = True
+    warmup_requests: int = Field(ge=0)
+    warmup_latency_ms: float | None = Field(default=None, ge=0)
 
 
 class EvaluationArtifact(BaseModel):
@@ -283,6 +300,7 @@ class EvaluationArtifact(BaseModel):
     routing: RoutingIdentity
     hardware: HardwareIdentity
     runtime: RuntimeIdentity
+    latency_measurement: LatencyMeasurement
     conditions: EvaluationConditions
     langsmith_required: Literal[False] = False
     configurations: list[ConfigurationResult]
@@ -330,6 +348,7 @@ def run_evaluation(
     source_pages = _load_source_pages(manifest, pdf_dir)
     vector_index = _build_vector_index(catalog)
     provider_identity = provider.identity if provider is not None else default_provider_identity()
+    warmup_requests, warmup_latency_ms = _warm_up_provider(provider, configuration.seeds[0])
     configurations: list[ConfigurationResult] = []
     for baseline in configuration.configurations:
         runs = [
@@ -378,17 +397,16 @@ def run_evaluation(
             version=ROUTING_VERSION,
             strategy="model" if provider is not None else "prototype",
         ),
-        hardware=HardwareIdentity(
-            platform=platform.platform(),
-            machine=platform.machine(),
-            processor=platform.processor() or "not-reported",
-            python_version=platform.python_version(),
-        ),
+        hardware=detect_hardware(),
         runtime=RuntimeIdentity(
             application="zabm",
             application_version=__version__,
             python_version=platform.python_version(),
             python_implementation=platform.python_implementation(),
+        ),
+        latency_measurement=LatencyMeasurement(
+            warmup_requests=warmup_requests,
+            warmup_latency_ms=warmup_latency_ms,
         ),
         conditions=EvaluationConditions(
             temperature=configuration.temperature,
@@ -403,6 +421,72 @@ def run_evaluation(
 def write_evaluation_artifact(report: EvaluationArtifact, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     write_json(output_path, report.model_dump(mode="json"))
+
+
+def _warm_up_provider(provider: ModelProvider | None, seed: int) -> tuple[int, float | None]:
+    if provider is None:
+        return 0, None
+
+    started = time.perf_counter()
+    provider.complete(
+        [{"role": "user", "content": "Reply with OK. This is an unreported warm-up."}],
+        seed=seed,
+    )
+    requests = 1
+    if provider.identity.embedding_model != "not-configured":
+        provider.embed(["bicycle clamp bolt torque"])
+        requests += 1
+    return requests, (time.perf_counter() - started) * 1000
+
+
+def detect_hardware() -> HardwareIdentity:
+    return HardwareIdentity(
+        platform=platform.platform(),
+        machine=platform.machine(),
+        processor=platform.processor() or "not-reported",
+        python_version=platform.python_version(),
+        memory_bytes=_system_memory_bytes(),
+        gpu=_detect_gpu(),
+    )
+
+
+def _system_memory_bytes() -> int | None:
+    meminfo = Path("/proc/meminfo")
+    if not meminfo.is_file():
+        return None
+    for line in meminfo.read_text(encoding="utf-8").splitlines():
+        if line.startswith("MemTotal:"):
+            value = line.split()[1]
+            return int(value) * 1024
+    return None
+
+
+def _detect_gpu() -> GpuIdentity | None:
+    try:
+        result = subprocess.run(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,memory.total",
+                "--format=csv,noheader,nounits",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    first_gpu = result.stdout.splitlines()[0] if result.stdout.splitlines() else ""
+    try:
+        name, memory = (part.strip() for part in first_gpu.rsplit(",", maxsplit=1))
+        memory_mib = int(memory)
+    except ValueError:
+        return None
+    if not name or memory_mib <= 0:
+        return None
+    return GpuIdentity(name=name, memory_mib=memory_mib)
 
 
 def _validate_inputs(
@@ -474,9 +558,9 @@ def _run_configuration(
     run_index: int,
     seed: int,
 ) -> EvaluationRun:
-    started = time.perf_counter()
     results: list[ItemEvaluation] = []
     for item in items:
+        started = time.perf_counter()
         retrieved = _retrieve_for_configuration(
             item.question,
             baseline,
@@ -511,6 +595,7 @@ def _run_configuration(
         citation_valid = not citation_issues
         answer_passed = not grading_issues and citation_valid and not unsupported_numbers
         retrieval_failed = bool(item.evidence) and retrieval is not None and retrieval.mrr == 0.0
+        latency_ms = (time.perf_counter() - started) * 1000
         results.append(
             ItemEvaluation(
                 id=item.id,
@@ -527,19 +612,19 @@ def _run_configuration(
                 procedure_checklist=checklist,
                 prompt_evidence_characters=len(retrieved_evidence_text),
                 prompt_budget_characters=prompt_budget.value,
+                latency_ms=latency_ms,
                 retrieval=retrieval,
                 response=response,
             )
         )
 
-    elapsed_ms = (time.perf_counter() - started) * 1000
     return EvaluationRun(
         run=run_index + 1,
         seed=seed,
         seed_supported=provider.seed_supported if provider is not None else False,
         temperature=configuration.temperature,
         items=results,
-        metrics=_run_metrics(results, elapsed_ms),
+        metrics=_run_metrics(results),
     )
 
 
@@ -1318,7 +1403,7 @@ def _unsupported_numbers(
     return sorted(unsupported)
 
 
-def _run_metrics(items: list[ItemEvaluation], elapsed_ms: float) -> RunMetrics:
+def _run_metrics(items: list[ItemEvaluation]) -> RunMetrics:
     supported = [item for item in items if item.actual_status == "supported"]
     citation_validity = (
         sum(item.citation_valid for item in supported) / len(supported) if supported else 1.0
@@ -1352,7 +1437,7 @@ def _run_metrics(items: list[ItemEvaluation], elapsed_ms: float) -> RunMetrics:
         if retrieval_items
         else None
     )
-    latencies = [elapsed_ms]
+    latencies = [item.latency_ms for item in items]
     return RunMetrics(
         accuracy=sum(item.answer_passed for item in items) / len(items),
         supported_item_count=len(supported),

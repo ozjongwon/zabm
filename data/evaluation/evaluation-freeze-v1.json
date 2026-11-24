@@ -11,11 +11,11 @@
   "evaluation_set_path": "data/evaluation/evaluation-set-v1.json",
   "evaluation_set_sha256": "83700100a599852123e9b000cb5fb82f933db081bb5df9e0055e8099aab31ad1",
   "freeze_version": "frozen-bicycle-maintenance-evaluation-v1",
-  "frozen_at": "2026-11-23",
+  "frozen_at": "2026-11-24",
   "item_count": 120,
-  "maintainer_review": "ticket-10-evaluation-freeze-v1",
+  "maintainer_review": "ticket-12-acceptance-rebuild-2026-11-24",
   "source_pack_freeze_path": "data/manifests/source-pack-freeze-v1.json",
-  "source_pack_freeze_sha256": "a780eb1fba84a69ca51dceb981fa125c5e3a7538252d6634482ef1693e4863c0",
+  "source_pack_freeze_sha256": "83a3abe51de975e49fe6559754ed73a123527f9a60c08e9fa89ca1f3548a5770",
   "source_pack_id": "2026-11-23.3-frozen-1",
   "source_pack_manifest_sha256": "8ca22cc463ffba28ab8ab0b55c1fa1a0133cdc28f06b2300b3ace0792ebcf1fe"
 }

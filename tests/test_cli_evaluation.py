@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import statistics
 import subprocess
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -370,11 +371,29 @@ def evaluation_provider_server(
             length = int(self.headers.get("Content-Length", "0"))
             body = cast(dict[str, Any], json.loads(self.rfile.read(length)))
             requests.append({"path": self.path, "body": body})
+            if self.path.endswith("/embeddings"):
+                inputs = cast(list[str], body["input"])
+                payload = json.dumps(
+                    {
+                        "data": [
+                            {"embedding": [float(index + 1), 1.0, 0.0]}
+                            for index, _ in enumerate(inputs)
+                        ]
+                    }
+                ).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+                return
             messages = cast(list[dict[str, str]], body["messages"])
             system = messages[0]["content"]
-            user = json.loads(messages[1]["content"])
+            user: dict[str, Any] = json.loads(messages[1]["content"]) if len(messages) > 1 else {}
             generated: dict[str, Any]
-            if "Phrase every supplied validated claim" in system:
+            if len(messages) == 1:
+                generated = {"status": "ok"}
+            elif "Phrase every supplied validated claim" in system:
                 generated = {
                     "sentences": [
                         {"claim_id": claim["claim_id"], "text": claim["text"]}
@@ -645,20 +664,21 @@ def test_evaluation_uses_one_provider_budget_and_run_seed_for_every_baseline(
         "median",
         "maximum",
     }
+    chat_requests = [request for request in requests if "messages" in request["body"]]
     baseline_requests = [
         request
-        for request in requests
+        for request in chat_requests
         if "The baseline has no application evidence gates."
         in request["body"]["messages"][0]["content"]
     ]
     full_agent_requests = [
         request
-        for request in requests
+        for request in chat_requests
         if "Phrase every supplied validated claim" in request["body"]["messages"][0]["content"]
     ]
     assert len(baseline_requests) == 27
     assert len(full_agent_requests) == 6
-    assert all(request["body"]["temperature"] == 0 for request in requests)
+    assert all(request["body"]["temperature"] == 0 for request in chat_requests)
 
     llm_only_requests = baseline_requests[:9]
     plain_requests = baseline_requests[9:18]
@@ -695,6 +715,41 @@ def test_evaluation_uses_one_provider_budget_and_run_seed_for_every_baseline(
         2,
     ]
     assert all(run["seed_supported"] is True for run in report["configurations"][0]["runs"])
+
+
+def test_evaluation_records_per_item_latency_after_an_explicit_warmup(
+    tmp_path: Path,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+
+    with evaluation_provider_server() as (provider_url, requests):
+        result, report, _ = run_evaluation(
+            tmp_path=tmp_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            evaluation_set_path=evaluation_set_path,
+            provider_url=provider_url,
+        )
+
+    assert result.returncode == 0, result.stderr
+    assert report["latency_measurement"]["scope"] == "per-scored-item"
+    assert report["latency_measurement"]["warmup_excluded"] is True
+    assert report["latency_measurement"]["warmup_requests"] == 2
+    assert any(
+        "unreported warm-up" in request["body"]["messages"][0]["content"]
+        for request in requests
+        if "messages" in request["body"]
+    )
+    assert any(request["path"].endswith("/embeddings") for request in requests)
+
+    full_agent = report["configurations"][-1]
+    for run in full_agent["runs"]:
+        latencies = [item["latency_ms"] for item in run["items"]]
+        assert len(latencies) == 3
+        assert all(latency >= 0 for latency in latencies)
+        assert run["metrics"]["latency_median_ms"] == statistics.median(latencies)
 
 
 def test_evaluation_records_numbers_unsupported_by_the_retrieved_evidence(

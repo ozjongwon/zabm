@@ -16,10 +16,21 @@ from pydantic import BaseModel
 from pypdf._configuration import overwrite_configuration
 
 from zabm import __version__
+from zabm.acceptance import (
+    build_acceptance_report,
+    load_cpu_smoke_evidence,
+    load_evaluation_artifact,
+    write_acceptance_report,
+)
 from zabm.agent import answer_question
 from zabm.compatibility import ingest_compatibility
 from zabm.coverage import run_coverage
-from zabm.evaluation import run_evaluation, write_evaluation_artifact
+from zabm.evaluation import (
+    RuntimeIdentity,
+    detect_hardware,
+    run_evaluation,
+    write_evaluation_artifact,
+)
 from zabm.evaluation_set import (
     build_evaluation_report,
     create_evaluation_freeze,
@@ -78,6 +89,7 @@ DEFAULT_EVALUATION_SET = REPO_ROOT / "data" / "evaluation" / "evaluation-set-v1.
 DEFAULT_EVALUATION_FREEZE = REPO_ROOT / "data" / "evaluation" / "evaluation-freeze-v1.json"
 DEFAULT_BASELINE_CONFIG = REPO_ROOT / "data" / "evaluation" / "baseline-config-v1.json"
 DEFAULT_EVALUATION_RESULTS = REPO_ROOT / "data" / "evaluation" / "baseline-results-v1.json"
+DEFAULT_ACCEPTANCE_REPORT = REPO_ROOT / "data" / "evaluation" / "acceptance-report-v1.json"
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
 DEBUG_LOG_FORMAT = "%(levelname)s %(name)s %(message)s"
@@ -468,6 +480,8 @@ def _render_conflict_record(response: CanonicalResponse) -> str:
 
 def _provider_smoke_command(
     as_json: bool,
+    output_path: Path | None,
+    cpu_quantized: bool,
     *,
     provider: str | None,
     provider_url: str | None,
@@ -503,19 +517,39 @@ def _provider_smoke_command(
         print(f"zabm provider-smoke: {exc}", file=sys.stderr)
         return 1
 
-    report = {
-        "provider": model_provider.identity.model_dump(mode="json"),
-        "chat": {
-            "response_characters": len(response),
-            "latency_ms": round(chat_latency_ms, 3),
-        },
-        "embeddings": {
-            "input_count": 1,
-            "vector_count": len(vectors),
-            "dimensions": len(vectors[0]),
-            "latency_ms": round(embedding_latency_ms, 3),
-        },
+    chat_result = {
+        "response_characters": len(response),
+        "latency_ms": round(chat_latency_ms, 3),
     }
+    embedding_result = {
+        "input_count": 1,
+        "vector_count": len(vectors),
+        "dimensions": len(vectors[0]),
+        "latency_ms": round(embedding_latency_ms, 3),
+    }
+    report: dict[str, object] = {
+        "provider": model_provider.identity.model_dump(mode="json"),
+        "chat": chat_result,
+        "embeddings": embedding_result,
+    }
+    if cpu_quantized:
+        report = {
+            "artifact_version": "cpu-smoke-v1",
+            "status": "passed",
+            "provider": model_provider.identity.model_dump(mode="json"),
+            "hardware": detect_hardware().model_dump(mode="json"),
+            "runtime": RuntimeIdentity(
+                application="zabm",
+                application_version=__version__,
+                python_version=platform.python_version(),
+                python_implementation=platform.python_implementation(),
+            ).model_dump(mode="json"),
+            "latency_ms": round(chat_latency_ms + embedding_latency_ms, 3),
+            "chat": chat_result,
+            "embeddings": embedding_result,
+        }
+    if output_path is not None:
+        write_json(output_path, report)
     if as_json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
@@ -616,11 +650,14 @@ def _retrieval_smoke_command(
     data_dir: Path,
     report_path: Path,
     freeze_path: Path | None,
+    replace_freeze: bool,
     maintainer_review: str | None,
     candidate_audit: Path | None,
     as_json: bool,
 ) -> int:
     try:
+        if replace_freeze and freeze_path is None:
+            raise ValueError("--replace-freeze requires --freeze")
         source_freeze = freeze_path
         if (
             source_freeze is None
@@ -629,7 +666,7 @@ def _retrieval_smoke_command(
             and DEFAULT_SOURCE_FREEZE.is_file()
         ):
             source_freeze = DEFAULT_SOURCE_FREEZE
-        if source_freeze is not None and source_freeze.is_file():
+        if not replace_freeze and source_freeze is not None and source_freeze.is_file():
             verify_source_freeze(
                 source_freeze,
                 manifest,
@@ -913,6 +950,45 @@ def _evaluation_command(
     return 0
 
 
+def _acceptance_command(
+    results_path: Path,
+    output_path: Path,
+    execution_environment: Literal["local-gpu", "local-cpu-quantized"],
+    cpu_smoke_report_path: Path | None,
+    bootstrap_seed: int,
+    bootstrap_resamples: int,
+    as_json: bool,
+) -> int:
+    try:
+        evaluation = load_evaluation_artifact(results_path)
+        cpu_performance = (
+            load_cpu_smoke_evidence(cpu_smoke_report_path)
+            if cpu_smoke_report_path is not None
+            else None
+        )
+        report = build_acceptance_report(
+            evaluation_path=results_path,
+            evaluation=evaluation,
+            execution_environment=execution_environment,
+            cpu_performance=cpu_performance,
+            bootstrap_seed=bootstrap_seed,
+            bootstrap_resamples=bootstrap_resamples,
+        )
+        write_acceptance_report(report, output_path)
+    except (OSError, ValueError) as exc:
+        print(f"zabm acceptance: {exc}", file=sys.stderr)
+        return 1
+
+    if as_json:
+        print(json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True))
+    else:
+        print(f"Acceptance {report.status} for {report.evaluation.evaluation_set_id}.")
+        for gate in report.gates:
+            print(f"- {gate.id}: {gate.status} ({gate.diagnosis})")
+        print(f"Report: {output_path}")
+    return 0 if report.status == "passed" else 1
+
+
 def _add_provider_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--provider",
@@ -1072,6 +1148,16 @@ def _parser() -> argparse.ArgumentParser:
         help="Exercise the configured chat and embedding provider endpoints.",
     )
     _add_provider_arguments(provider_smoke)
+    provider_smoke.add_argument(
+        "--cpu-quantized",
+        action="store_true",
+        help="Write CPU-quantized acceptance evidence for the smoke result.",
+    )
+    provider_smoke.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path for the provider-smoke JSON report.",
+    )
     provider_smoke.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
     web = commands.add_parser(
@@ -1245,6 +1331,51 @@ def _parser() -> argparse.ArgumentParser:
         help="Emit the canonical evaluation artifact.",
     )
 
+    acceptance = commands.add_parser(
+        "acceptance",
+        help="Score v1 acceptance gates from a canonical evaluation artifact.",
+    )
+    acceptance.add_argument(
+        "--results",
+        type=Path,
+        default=DEFAULT_EVALUATION_RESULTS,
+        help="Canonical evaluation artifact containing every baseline and run.",
+    )
+    acceptance.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_ACCEPTANCE_REPORT,
+        help="Path for the scored acceptance report.",
+    )
+    acceptance.add_argument(
+        "--execution-environment",
+        choices=("local-gpu", "local-cpu-quantized"),
+        required=True,
+        help="Recorded execution target used for performance gates.",
+    )
+    acceptance.add_argument(
+        "--cpu-smoke-report",
+        type=Path,
+        help="Successful CPU-quantized smoke report for the documented performance gate.",
+    )
+    acceptance.add_argument(
+        "--bootstrap-seed",
+        type=int,
+        default=20_261_124,
+        help="Fixed seed for item-paired bootstrap resampling.",
+    )
+    acceptance.add_argument(
+        "--bootstrap-resamples",
+        type=int,
+        default=10_000,
+        help="Number of item-paired bootstrap resamples.",
+    )
+    acceptance.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the scored acceptance report.",
+    )
+
     retrieval_smoke = commands.add_parser(
         "retrieval-smoke",
         help="Run the retrieval-only source-pack smoke set and optionally freeze the pack.",
@@ -1288,6 +1419,11 @@ def _parser() -> argparse.ArgumentParser:
         "--freeze",
         type=Path,
         help="Write a source-pack freeze record after the threshold passes.",
+    )
+    retrieval_smoke.add_argument(
+        "--replace-freeze",
+        action="store_true",
+        help="Replace an existing freeze after an explicitly reviewed smoke rerun.",
     )
     retrieval_smoke.add_argument(
         "--maintainer-review",
@@ -1344,6 +1480,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "provider-smoke":
         return _provider_smoke_command(
             args.json,
+            args.output,
+            args.cpu_quantized,
             provider=args.provider,
             provider_url=args.provider_url,
             model=args.model,
@@ -1399,6 +1537,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             embedding_model=args.embedding_model,
             provider_configuration=args.provider_configuration,
         )
+    if args.command == "acceptance":
+        return _acceptance_command(
+            args.results,
+            args.output,
+            args.execution_environment,
+            args.cpu_smoke_report,
+            args.bootstrap_seed,
+            args.bootstrap_resamples,
+            args.json,
+        )
     if args.command == "retrieval-smoke":
         return _retrieval_smoke_command(
             args.manifest,
@@ -1408,6 +1556,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.data_dir,
             args.report,
             args.freeze,
+            args.replace_freeze,
             args.maintainer_review,
             args.candidate_audit,
             args.json,

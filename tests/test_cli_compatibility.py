@@ -472,8 +472,7 @@ def test_cli_routes_a_compatibility_paraphrase_by_meaning(tmp_path: Path) -> Non
     route = {
         "intent": "compatibility",
         "normalized_question": (
-            "Is the hose barb with barb sleeve compatible with the "
-            "Trail Post A2 seatpost?"
+            "Is the hose barb with barb sleeve compatible with the Trail Post A2 seatpost?"
         ),
         "entities": [
             {"kind": "component_a", "text": "hose barb with barb sleeve"},

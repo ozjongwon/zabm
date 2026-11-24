@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import socket
 import subprocess
 import sys
 from pathlib import Path
 from typing import cast
 
+import pytest
 from test_cli_evaluation import (
     prepare_evaluation_fixture,
     write_evaluation_fixture,
@@ -275,6 +277,45 @@ def test_provider_smoke_exercises_chat_and_embedding_contracts() -> None:
     assert all(request["authorization"] == f"Bearer {api_key}" for request in requests)
     assert api_key not in result.stdout
     assert api_key not in result.stderr
+
+
+def test_cpu_quantized_provider_smoke_writes_acceptance_evidence(tmp_path: Path) -> None:
+    output_path = tmp_path / "cpu-smoke.json"
+
+    with provider_server(generated_specification()) as (provider_url, _):
+        result = run_cli_with_env(
+            {},
+            "provider-smoke",
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-cpu-model",
+            "--embedding-model",
+            "local-cpu-embedding",
+            "--provider-configuration",
+            "cpu-quantized-test-v1",
+            "--cpu-quantized",
+            "--output",
+            str(output_path),
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert output_path.is_file()
+    assert json.loads(output_path.read_text(encoding="utf-8")) == report
+    assert report["artifact_version"] == "cpu-smoke-v1"
+    assert report["status"] == "passed"
+    assert report["provider"]["model"] == "local-cpu-model"
+    assert report["hardware"]["machine"] == platform.machine()
+    assert report["hardware"]["gpu"] is None
+    assert report["runtime"]["application"] == "zabm"
+    assert report["latency_ms"] == pytest.approx(
+        report["chat"]["latency_ms"] + report["embeddings"]["latency_ms"],
+        abs=0.002,
+    )
 
 
 def test_provider_smoke_rejects_an_embedding_count_mismatch() -> None:

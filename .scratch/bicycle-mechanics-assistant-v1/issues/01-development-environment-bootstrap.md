@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
 - [ ] The development installer succeeds on clean Debian 13 and Ubuntu 24.04 x86_64 systems.
 - [ ] The installer is idempotent, fails clearly on unsupported systems, redacts secrets, and does not require a manually prepared Python environment.
@@ -18,4 +18,11 @@
 
 - 2026-11-21: Added the Debian 13 / Ubuntu 24.04 x86_64 bootstrap, pinned uv and Python versions, hash-locked runtime/development/test dependency sets, runtime-only profile, CLI health command, and installer/CLI tests. `make verify` passes, and the development lock set was installed successfully in a clean virtual environment. Clean-machine execution remains to be exercised on throwaway Debian 13 and Ubuntu 24.04 hosts because this workspace has restricted network access and no root/sudo.
 - 2026-11-21: A commit could not be created because the workspace's `.git` directory is mounted read-only.
+- 2026-11-24: Re-audited the bootstrap on the current x86_64 Debian 13 host.
+  Debian and Ubuntu dry-run platform checks pass, the runtime profile remains
+  separate from development/test/evaluation dependencies, secrets are redacted,
+  and `make verify` passes with 217 tests. Added
+  `docs/development-bootstrap-acceptance.md` as the clean-host evidence
+  procedure. Clean Debian 13 and Ubuntu 24.04 installs, including the second-run
+  idempotence check, still require human/ops execution on disposable hosts.
 

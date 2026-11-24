@@ -526,6 +526,49 @@ export DEEPSEEK_API_KEY="..."
 LangSmith is not imported or required. The canonical local JSON artifact is
 written before any optional remote mirroring.
 
+## Acceptance report
+
+Score the canonical evaluation artifact against every v1 answer, improvement,
+confidence-interval, citation, abstention, fabrication, and local performance
+gate:
+
+```bash
+make acceptance
+```
+
+The default report is `data/evaluation/acceptance-report-v1.json`. It records
+the evaluation artifact checksum, provider, hardware, runtime, configuration
+versions, every baseline run and spread, retrieval metrics, per-item latency,
+and each gate result. The paired comparisons use the fixed seed
+`20261124`, 10,000 bootstrap resamples, and item-level differences averaged
+across the three runs. A failed gate makes the command exit nonzero and is
+retained in the report with its observed value and threshold; it is never
+silently replaced or removed.
+
+Latency is measured per scored question in the median-accuracy run after an
+explicit provider warm-up.
+For CPU-quantized operation, generate the required smoke evidence with a CPU
+provider, then pass it to acceptance:
+
+```bash
+./.venv/bin/python -m zabm provider-smoke \
+  --provider openai-compatible \
+  --provider-url http://127.0.0.1:8000/v1 \
+  --model <cpu-model> \
+  --embedding-model <embedding-model> \
+  --provider-configuration <cpu-configuration> \
+  --cpu-quantized \
+  --output data/evaluation/cpu-smoke-v1.json
+
+make acceptance \
+  EXECUTION_ENVIRONMENT=local-cpu-quantized \
+  CPU_SMOKE_REPORT=data/evaluation/cpu-smoke-v1.json
+```
+
+Use `EXECUTION_ENVIRONMENT=local-gpu` only for a run whose provider and model
+execute on the recorded local GPU. The GPU gate requires recorded hardware plus
+a median of 20 seconds or less and a p95 of 30 seconds or less.
+
 ## Retrieval-only freeze
 
 Retrieval usability is checked before answer-accuracy work with a fixed
@@ -559,6 +602,20 @@ Changing a frozen source therefore requires an explicit manifest version,
 maintainer review, and a complete evaluation rerun before a replacement freeze
 can be accepted. Do not remove an included source merely because a later
 answer baseline performs poorly.
+
+After an approved ingestion rebuild changes the smoke report, replace the
+freeze explicitly:
+
+```bash
+./.venv/bin/python -m zabm retrieval-smoke \
+  --freeze data/manifests/source-pack-freeze-v1.json \
+  --replace-freeze \
+  --candidate-audit data/audits/source-pack-candidates-v1.json \
+  --maintainer-review <review-reference>
+```
+
+`--replace-freeze` skips verification of the superseded freeze, but still
+requires `--maintainer-review` and a passing retrieval threshold.
 
 Register every unregistered PDF already present in `pdf-doc/`:
 

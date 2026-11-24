@@ -80,9 +80,7 @@ def answer_question(
     router: IntentRouter | None = None,
 ) -> CanonicalResponse:
     if router is None:
-        router = (
-            PrototypeIntentRouter() if provider is None else ModelIntentRouter(provider)
-        )
+        router = PrototypeIntentRouter() if provider is None else ModelIntentRouter(provider)
     route = router.route(question)
     response_type = route.intent
     question = route.normalized_question
@@ -121,9 +119,7 @@ def answer_question(
                 "question family",
                 *(
                     field
-                    for field in (
-                        route.missing_fields + route.ambiguous_fields
-                    )
+                    for field in (route.missing_fields + route.ambiguous_fields)
                     if field != "question_family"
                 ),
             ],
@@ -137,8 +133,7 @@ def answer_question(
         return response
     if route.missing_fields or route.ambiguous_fields:
         missing = [
-            field.replace("_", " ")
-            for field in route.missing_fields + route.ambiguous_fields
+            field.replace("_", " ") for field in route.missing_fields + route.ambiguous_fields
         ]
         response = _routing_clarification(
             response_type=response_type,

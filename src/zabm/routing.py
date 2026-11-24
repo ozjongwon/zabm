@@ -164,9 +164,7 @@ class ModelIntentRouter:
         try:
             route = RequestRoute.model_validate_json(raw)
         except ValidationError as exc:
-            raise ProviderError(
-                "provider returned an invalid request-routing result"
-            ) from exc
+            raise ProviderError("provider returned an invalid request-routing result") from exc
         if not route.normalized_question.strip():
             raise ProviderError("provider returned an empty normalized routing query")
         return route
@@ -191,9 +189,7 @@ class PrototypeIntentRouter:
         second_score = ranked[1][1]
         if best_score < 0.12 or best_score - second_score < 0.012:
             candidates: list[EvidenceIntent] = [
-                intent
-                for intent, score in ranked
-                if score >= max(0.12, best_score - 0.035)
+                intent for intent, score in ranked if score >= max(0.12, best_score - 0.035)
             ]
             return RequestRoute(
                 intent="ambiguous",
@@ -228,9 +224,7 @@ def _similarity(question: str, exemplar: str) -> float:
 
 def _word_counts(text: str) -> Counter[str]:
     return Counter(
-        word
-        for word in WORD_PATTERN.findall(text.casefold())
-        if word not in ROUTING_STOPWORDS
+        word for word in WORD_PATTERN.findall(text.casefold()) if word not in ROUTING_STOPWORDS
     )
 
 

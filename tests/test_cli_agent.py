@@ -127,8 +127,7 @@ def test_out_of_scope_declines_before_evidence_or_answer_generation(
     assert response["claims"] == []
     assert len(requests) == 1
     assert any(
-        "request-routing" in message["content"]
-        for message in requests[0]["body"]["messages"]
+        "request-routing" in message["content"] for message in requests[0]["body"]["messages"]
     )
 
 
@@ -196,12 +195,10 @@ def test_cli_routes_a_non_english_request_through_a_semantic_route(
     }
     assert len(requests) == 2
     assert any(
-        "request-routing" in message["content"]
-        for message in requests[0]["body"]["messages"]
+        "request-routing" in message["content"] for message in requests[0]["body"]["messages"]
     )
     assert not any(
-        "request-routing" in message["content"]
-        for message in requests[1]["body"]["messages"]
+        "request-routing" in message["content"] for message in requests[1]["body"]["messages"]
     )
 
 
@@ -244,8 +241,7 @@ def test_cli_requests_clarification_when_the_request_family_is_ambiguous(
     assert response["citations"] == []
     assert response["clarification"] == {
         "message": (
-            "Please clarify whether you need a specification, compatibility result, "
-            "or procedure."
+            "Please clarify whether you need a specification, compatibility result, or procedure."
         ),
         "missing_information": ["question family", "task"],
     }

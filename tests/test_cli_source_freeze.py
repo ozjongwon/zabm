@@ -317,6 +317,71 @@ def test_cli_rejects_an_unreviewed_change_to_a_frozen_source_pack(tmp_path: Path
     assert report_path.read_bytes() == frozen_report_bytes
 
 
+def test_cli_replaces_a_frozen_smoke_report_with_an_explicit_review(
+    tmp_path: Path,
+) -> None:
+    manifest_path, data_dir, _ = prepare_freeze_fixture(tmp_path)
+    smoke_set_path, retrieval_config_path = write_retrieval_smoke_fixture(tmp_path)
+    report_path = tmp_path / "retrieval-smoke-report.json"
+    freeze_path = tmp_path / "source-freeze.json"
+    initial = run_cli(
+        "retrieval-smoke",
+        "--manifest",
+        str(manifest_path),
+        "--smoke-set",
+        str(smoke_set_path),
+        "--retrieval-config",
+        str(retrieval_config_path),
+        "--data-dir",
+        str(data_dir),
+        "--report",
+        str(report_path),
+        "--freeze",
+        str(freeze_path),
+        "--maintainer-review",
+        "ticket-08-test-review",
+        "--json",
+    )
+    assert initial.returncode == 0, initial.stderr
+    original_freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+
+    smoke_set = json.loads(smoke_set_path.read_text(encoding="utf-8"))
+    smoke_set["review_note"] = "replacement after reviewed ingestion rebuild"
+    write_json(smoke_set_path, smoke_set)
+
+    replacement = run_cli(
+        "retrieval-smoke",
+        "--manifest",
+        str(manifest_path),
+        "--smoke-set",
+        str(smoke_set_path),
+        "--retrieval-config",
+        str(retrieval_config_path),
+        "--data-dir",
+        str(data_dir),
+        "--report",
+        str(report_path),
+        "--freeze",
+        str(freeze_path),
+        "--replace-freeze",
+        "--maintainer-review",
+        "ticket-12-replacement-review",
+        "--json",
+    )
+
+    assert replacement.returncode == 0, replacement.stderr
+    replaced_freeze = json.loads(freeze_path.read_text(encoding="utf-8"))
+    assert replaced_freeze["maintainer_review"] == "ticket-12-replacement-review"
+    assert (
+        replaced_freeze["smoke_set_sha256"]
+        == hashlib.sha256(smoke_set_path.read_bytes()).hexdigest()
+    )
+    assert (
+        replaced_freeze["retrieval_smoke_report_sha256"]
+        != original_freeze["retrieval_smoke_report_sha256"]
+    )
+
+
 def test_cli_rejects_a_smoke_set_that_misses_an_evidence_family(tmp_path: Path) -> None:
     manifest_path, data_dir, _ = prepare_freeze_fixture(tmp_path)
     smoke_set_path, retrieval_config_path = write_retrieval_smoke_fixture(tmp_path)
