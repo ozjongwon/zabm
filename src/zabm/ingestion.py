@@ -12,7 +12,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-PARSER_VERSION = "pdf-ingestion-v5"
+PARSER_VERSION = "pdf-ingestion-v6"
 FONTTOOLS_VERSION = package_version("fonttools")
 PYPDF_VERSION = package_version("pypdf")
 PROFILE_SCHEMA_VERSION = "1"

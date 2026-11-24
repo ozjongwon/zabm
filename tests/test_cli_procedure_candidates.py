@@ -67,8 +67,7 @@ def test_cli_rejects_numbered_page_furniture_and_records_why(tmp_path: Path) -> 
     page = catalog["sources"][0]["pages"][0]
 
     assert [
-        (candidate["text"], candidate["reason"])
-        for candidate in page["rejected_step_candidates"]
+        (candidate["text"], candidate["reason"]) for candidate in page["rejected_step_candidates"]
     ] == [
         ("Remove the wheel .......... 7", "source-reference"),
         ("Clamp bolt 5 N m", "table-value"),
@@ -111,8 +110,7 @@ def test_cli_rejects_numbered_items_without_a_procedure_section(tmp_path: Path) 
     page = catalog["sources"][0]["pages"][0]
 
     assert [
-        (candidate["text"], candidate["reason"])
-        for candidate in page["rejected_step_candidates"]
+        (candidate["text"], candidate["reason"]) for candidate in page["rejected_step_candidates"]
     ] == [
         ("Inspect the frame.", "missing-procedure-heading"),
         ("Check the brakes.", "missing-procedure-heading"),
@@ -136,8 +134,7 @@ def test_cli_rejects_a_numbered_line_that_joins_two_columns(tmp_path: Path) -> N
     page = catalog["sources"][0]["pages"][0]
 
     assert [
-        (candidate["text"], candidate["reason"])
-        for candidate in page["rejected_step_candidates"]
+        (candidate["text"], candidate["reason"]) for candidate in page["rejected_step_candidates"]
     ] == [
         ("Remove the brake pad. 2 Install the brake pad.", "mixed-column"),
     ]
@@ -159,8 +156,7 @@ def test_cli_rejects_numbered_heading_fragments_without_an_action(tmp_path: Path
     page = catalog["sources"][0]["pages"][0]
 
     assert [
-        (candidate["text"], candidate["reason"])
-        for candidate in page["rejected_step_candidates"]
+        (candidate["text"], candidate["reason"]) for candidate in page["rejected_step_candidates"]
     ] == [("Part", "missing-action-text")]
 
 
@@ -182,12 +178,11 @@ def test_cli_rejects_discontinuous_step_numbering_in_a_section(tmp_path: Path) -
     page = catalog["sources"][0]["pages"][0]
 
     assert [
-        (candidate["text"], candidate["reason"])
-        for candidate in page["rejected_step_candidates"]
+        (candidate["text"], candidate["reason"]) for candidate in page["rejected_step_candidates"]
     ] == [
         ("Inspect the brake pad.", "numbering-discontinuous"),
         ("Install the brake pad.", "numbering-discontinuous"),
     ]
-    assert [
-        block["text"] for block in page["blocks"] if block["kind"] == "step"
-    ] == ["Remove the brake pad."]
+    assert [block["text"] for block in page["blocks"] if block["kind"] == "step"] == [
+        "Remove the brake pad."
+    ]

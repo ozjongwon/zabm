@@ -23,6 +23,8 @@ from zabm.ingestion import (
     BlockClassification,
     ColumnBand,
     DocumentProfile,
+    EndBoundaryProfile,
+    EndBoundaryStrategy,
     HeadingNode,
     IngestionProfileProvenance,
     IngestionProfilesFile,
@@ -231,6 +233,7 @@ class RetrievalSource(BaseModel):
 class ProcedureEndEvidence(BaseModel):
     text: str
     after_step: int
+    strategy: EndBoundaryStrategy = "explicit-marker"
 
 
 class StoredProcedure(BaseModel):
@@ -238,9 +241,13 @@ class StoredProcedure(BaseModel):
     document_id: str
     title: str
     heading_path: list[str]
+    start_boundary: str
+    end_boundary: str | None
+    end_strategy: EndBoundaryStrategy | None
     page_numbers: list[int]
     steps: list[ProcedureStep]
     end_evidence: list[ProcedureEndEvidence] = Field(default_factory=list[ProcedureEndEvidence])
+    completeness_notes: list[str] = Field(default_factory=list[str])
     validation_issues: list[str] = Field(default_factory=list[str])
 
 
@@ -345,6 +352,23 @@ class _ParsedStep:
     section_sequence: int
     section_title: str
     heading_path: list[str]
+    line_index: int
+    section_level: int
+
+
+@dataclass
+class _HeadingEvent:
+    physical_page: int
+    line_index: int
+    level: int
+    heading_path: list[str]
+
+
+@dataclass
+class _TextEvent:
+    physical_page: int
+    line_index: int
+    text: str
 
 
 @dataclass
@@ -353,6 +377,10 @@ class _PageParse:
     steps: list[_ParsedStep]
     step_issues: dict[int, list[str]]
     end_evidence: dict[int, list[ProcedureEndEvidence]]
+    completeness_notes: dict[int, list[str]]
+    heading_events: list[_HeadingEvent]
+    end_marker_events: list[_TextEvent]
+    completeness_note_events: list[_TextEvent]
     section_paths: dict[int, list[str]]
     heading_stack: list[HeadingNode]
     document_id: str
@@ -429,7 +457,7 @@ def ingest_retrieval(
                 pages=[parsed.page for parsed in parsed_pages],
             )
         )
-        for procedure in _group_procedures(parsed_pages):
+        for procedure in _group_procedures(parsed_pages, selected_profile.end_boundaries):
             procedures.append(procedure)
             validation_issues.extend(
                 f"{procedure.procedure_id}: {issue}" for issue in procedure.validation_issues
@@ -707,8 +735,16 @@ def _parse_page(
     steps: list[_ParsedStep] = []
     step_issues: dict[int, list[str]] = {}
     end_evidence: dict[int, list[ProcedureEndEvidence]] = {}
+    completeness_notes: dict[int, list[str]] = {}
+    heading_events: list[_HeadingEvent] = []
+    end_marker_events: list[_TextEvent] = []
+    completeness_note_events: list[_TextEvent] = []
     current_title: str = section_title
     current_path: list[str] = heading_path
+    initial_heading = (
+        heading_hierarchy.headings[0] if heading_hierarchy.headings else preceding_heading
+    )
+    current_level = initial_heading.level if initial_heading is not None else 1
     section_sequence = 0
     section_paths = {section_sequence: list(current_path)}
     current_step: ProcedureStep | None = None
@@ -767,9 +803,18 @@ def _parse_page(
             next_path = list(heading.heading_path)
             if heading_count > 0 or next_path != current_path:
                 section_sequence += 1
+            heading_events.append(
+                _HeadingEvent(
+                    physical_page=physical_page,
+                    line_index=index,
+                    level=heading.level,
+                    heading_path=next_path,
+                )
+            )
             heading_count += 1
             current_title = heading.title
             current_path = next_path
+            current_level = heading.level
             section_paths[section_sequence] = list(current_path)
             current_step = None
             pending_warnings.clear()
@@ -787,7 +832,23 @@ def _parse_page(
             continue
 
         line_text = line.text
+        if NAVIGATION_CUE.match(line_text) or TRUNCATION_CUE.search(line_text):
+            completeness_notes.setdefault(section_sequence, []).append(line_text)
+            completeness_note_events.append(
+                _TextEvent(
+                    physical_page=physical_page,
+                    line_index=index,
+                    text=line_text,
+                )
+            )
         if _matches_procedure_end(line_text, profile.end_boundaries.markers):
+            end_marker_events.append(
+                _TextEvent(
+                    physical_page=physical_page,
+                    line_index=index,
+                    text=line_text,
+                )
+            )
             section_numbers = [
                 parsed_step.step.number
                 for parsed_step in steps
@@ -807,6 +868,7 @@ def _parse_page(
                 content_lines,
                 index,
                 column_id=line.column_id,
+                markers=profile.end_boundaries.markers,
             )
             blocks.append(
                 _classified_evidence(
@@ -839,12 +901,29 @@ def _parse_page(
                     _warning_severity(candidate.text) is not None
                     or SERVICE_HEADING.fullmatch(candidate.text) is not None
                     or candidate_classification.kind in {"figure", "table", "warning", "heading"}
+                    or any(span.span_id in headings_by_span for span in candidate.spans)
                     or INLINE_STEP.match(candidate.text) is not None
                     or STEP_NUMBER.fullmatch(candidate.text) is not None
                 ):
                     break
                 candidate_text = candidate.text
+                if NAVIGATION_CUE.match(candidate_text) or TRUNCATION_CUE.search(candidate_text):
+                    completeness_notes.setdefault(section_sequence, []).append(candidate_text)
+                    completeness_note_events.append(
+                        _TextEvent(
+                            physical_page=physical_page,
+                            line_index=index,
+                            text=candidate_text,
+                        )
+                    )
                 if _matches_procedure_end(candidate_text, profile.end_boundaries.markers):
+                    end_marker_events.append(
+                        _TextEvent(
+                            physical_page=physical_page,
+                            line_index=index,
+                            text=candidate_text,
+                        )
+                    )
                     end_evidence.setdefault(section_sequence, []).append(
                         ProcedureEndEvidence(text=candidate_text, after_step=step.number)
                     )
@@ -891,13 +970,13 @@ def _parse_page(
                     section_sequence=section_sequence,
                     section_title=current_title,
                     heading_path=list(current_path),
+                    line_index=step.line_index,
+                    section_level=current_level,
                 )
             )
             section_id = section_ids[step.number_line_index]
             if section_id in numbering_issues and section_id not in emitted_numbering_issues:
-                step_issues.setdefault(section_sequence, []).append(
-                    numbering_issues[section_id]
-                )
+                step_issues.setdefault(section_sequence, []).append(numbering_issues[section_id])
                 emitted_numbering_issues.add(section_id)
             current_step = procedure_step
             step_issues.setdefault(section_sequence, []).extend(
@@ -959,6 +1038,10 @@ def _parse_page(
         steps=steps,
         step_issues=step_issues,
         end_evidence=end_evidence,
+        completeness_notes=completeness_notes,
+        heading_events=heading_events,
+        end_marker_events=end_marker_events,
+        completeness_note_events=completeness_note_events,
         section_paths=section_paths,
         heading_stack=_active_heading_stack(
             heading_hierarchy.headings,
@@ -1482,11 +1565,7 @@ def _step_starts(
             accepted.extend(section_starts)
             continue
         first_break = next(
-            (
-                index
-                for index, (left, right) in enumerate(pairwise(numbers))
-                if right != left + 1
-            ),
+            (index for index, (left, right) in enumerate(pairwise(numbers)) if right != left + 1),
             None,
         )
         if first_break is None:
@@ -1505,9 +1584,7 @@ def _step_starts(
                 )
                 for start in section_starts[first_break + 1 :]
             )
-    line_positions = {
-        line.spans[0].span_id: index for index, line in enumerate(lines)
-    }
+    line_positions = {line.spans[0].span_id: index for index, line in enumerate(lines)}
     return (
         sorted(accepted, key=lambda start: start.line_index),
         sorted(rejected, key=lambda candidate: line_positions[candidate.line_id]),
@@ -1547,9 +1624,7 @@ def _step_rejection_reason(
         return "mixed-column"
     if not text or not any(character.isalpha() for character in text):
         return "missing-action-text"
-    if not _contains_procedure_action(text, profile) and len(
-        re.findall(r"[^\W_]+", text)
-    ) < 2:
+    if not _contains_procedure_action(text, profile) and len(re.findall(r"[^\W_]+", text)) < 2:
         return "missing-action-text"
     if not _is_procedure_section_heading(section_context, profile):
         return "missing-procedure-heading"
@@ -1561,8 +1636,7 @@ def _step_rejection_reason(
 def _has_mixed_columns(line: _Line) -> bool:
     spans = sorted(line.spans, key=lambda span: span.page_box.x_min)
     return any(
-        right.page_box.x_min - left.page_box.x_max >= 0.18
-        for left, right in pairwise(spans)
+        right.page_box.x_min - left.page_box.x_max >= 0.18 for left, right in pairwise(spans)
     )
 
 
@@ -1602,6 +1676,7 @@ def _collect_warning(
     heading_index: int,
     *,
     column_id: str,
+    markers: Sequence[str],
 ) -> tuple[str, int]:
     heading = lines[heading_index].text
     severity = _warning_severity(heading)
@@ -1616,7 +1691,11 @@ def _collect_warning(
         text = line.text
         if not text or STEP_NUMBER.fullmatch(text) or INLINE_STEP.match(text):
             break
-        if "This concludes" in text or "Proceed to" in text:
+        if (
+            NAVIGATION_CUE.match(text)
+            or TRUNCATION_CUE.search(text)
+            or _matches_procedure_end(text, markers)
+        ):
             break
         if last_y - line.y > 25:
             break
@@ -1647,12 +1726,18 @@ def _looks_like_table_cells(cells: list[str]) -> bool:
     return numeric_cells >= 2 or all(len(cell.split()) <= 6 for cell in cells)
 
 
-def _group_procedures(parsed_pages: list[_PageParse]) -> list[StoredProcedure]:
+def _group_procedures(
+    parsed_pages: list[_PageParse],
+    end_profile: EndBoundaryProfile,
+) -> list[StoredProcedure]:
     grouped: dict[tuple[str, str, int], list[ProcedureStep]] = {}
     paths: dict[tuple[str, str, int], list[str]] = {}
     page_numbers: dict[tuple[str, str, int], list[int]] = {}
     step_issues: dict[tuple[str, str, int], list[str]] = {}
     end_evidence: dict[tuple[str, str, int], list[ProcedureEndEvidence]] = {}
+    completeness_notes: dict[tuple[str, str, int], list[str]] = {}
+    section_levels: dict[tuple[str, str, int], int] = {}
+    final_positions: dict[tuple[str, str, int], tuple[int, int]] = {}
     order: list[tuple[str, str, int]] = []
     active_key: tuple[str, str, int] | None = None
     active_title: str | None = None
@@ -1690,6 +1775,8 @@ def _group_procedures(parsed_pages: list[_PageParse]) -> list[StoredProcedure]:
                 page_numbers[key] = []
                 step_issues[key] = []
                 end_evidence[key] = []
+                completeness_notes[key] = []
+                section_levels[key] = section_steps[0].section_level
                 order.append(key)
 
             grouped[key].extend(parsed_step.step for parsed_step in section_steps)
@@ -1697,6 +1784,11 @@ def _group_procedures(parsed_pages: list[_PageParse]) -> list[StoredProcedure]:
                 page_numbers[key].append(parsed.page.physical_page)
             step_issues[key].extend(parsed.step_issues.get(sequence, []))
             end_evidence[key].extend(parsed.end_evidence.get(sequence, []))
+            completeness_notes[key].extend(parsed.completeness_notes.get(sequence, []))
+            final_positions[key] = (
+                parsed.page.physical_page,
+                section_steps[-1].line_index,
+            )
             active_key = key
             active_title = title
             previous_page = parsed.page.physical_page
@@ -1714,21 +1806,115 @@ def _group_procedures(parsed_pages: list[_PageParse]) -> list[StoredProcedure]:
                 deduplicated[step.number] = step
         issues.extend(step_issues[key])
         ordered_steps = [deduplicated[number] for number in sorted(deduplicated)]
+        final_step = max(deduplicated)
+        note_events = _events_before_next_heading(
+            parsed_pages,
+            events=(event for parsed in parsed_pages for event in parsed.completeness_note_events),
+            after_position=final_positions[key],
+        )
+        completeness_notes[key].extend(event.text for event in note_events)
+        if not any(evidence.after_step == final_step for evidence in end_evidence[key]):
+            end_marker_events = _events_before_next_heading(
+                parsed_pages,
+                events=(event for parsed in parsed_pages for event in parsed.end_marker_events),
+                after_position=final_positions[key],
+            )
+            if end_marker_events:
+                end_evidence[key].append(
+                    ProcedureEndEvidence(
+                        text=end_marker_events[0].text,
+                        after_step=final_step,
+                        strategy="explicit-marker",
+                    )
+                )
+        if end_profile.strategy == "section-boundary" and not any(
+            evidence.after_step == final_step for evidence in end_evidence[key]
+        ):
+            boundary = _next_section_boundary(
+                parsed_pages,
+                after_position=final_positions[key],
+                procedure_level=section_levels[key],
+            )
+            if boundary is not None:
+                end_evidence[key].append(
+                    ProcedureEndEvidence(
+                        text=boundary,
+                        after_step=final_step,
+                        strategy="section-boundary",
+                    )
+                )
+        end = next(
+            (evidence for evidence in end_evidence[key] if evidence.after_step == final_step),
+            None,
+        )
         first_page = min(page_numbers[key])
         procedure_id = f"{document_id}#{_slug(title)}-p{first_page}"
+        notes = list(dict.fromkeys(completeness_notes[key]))
         procedures.append(
             StoredProcedure(
                 procedure_id=procedure_id,
                 document_id=document_id,
                 title=title,
                 heading_path=paths[key],
+                start_boundary=" > ".join(paths[key]),
+                end_boundary=end.text if end is not None else None,
+                end_strategy=end.strategy if end is not None else end_profile.strategy,
                 page_numbers=sorted(page_numbers[key]),
                 steps=ordered_steps,
                 end_evidence=end_evidence[key],
+                completeness_notes=notes,
                 validation_issues=issues,
             )
         )
     return procedures
+
+
+def _next_section_boundary(
+    parsed_pages: Sequence[_PageParse],
+    *,
+    after_position: tuple[int, int],
+    procedure_level: int,
+) -> str | None:
+    events = sorted(
+        (event for parsed in parsed_pages for event in parsed.heading_events),
+        key=lambda event: (event.physical_page, event.line_index),
+    )
+    for event in events:
+        if (event.physical_page, event.line_index) <= after_position:
+            continue
+        if event.level <= procedure_level:
+            return " > ".join(event.heading_path)
+        return None
+    return None
+
+
+def _events_before_next_heading(
+    parsed_pages: Sequence[_PageParse],
+    *,
+    events: Iterable[_TextEvent],
+    after_position: tuple[int, int],
+) -> list[_TextEvent]:
+    heading = next(
+        (
+            event
+            for event in sorted(
+                (event for parsed in parsed_pages for event in parsed.heading_events),
+                key=lambda event: (event.physical_page, event.line_index),
+            )
+            if (event.physical_page, event.line_index) > after_position
+        ),
+        None,
+    )
+    heading_position = (heading.physical_page, heading.line_index) if heading is not None else None
+    return [
+        event
+        for event in sorted(
+            events,
+            key=lambda event: (event.physical_page, event.line_index),
+        )
+        if (event.physical_page, event.line_index) > after_position
+        and (heading_position is None or (event.physical_page, event.line_index) < heading_position)
+    ]
 
 
 def procedure_completeness_issues(procedure: StoredProcedure) -> list[str]:
@@ -1750,8 +1936,12 @@ def procedure_completeness_issues(procedure: StoredProcedure) -> list[str]:
         if TRUNCATION_CUE.search(step.text):
             issues.append("the source marks the procedure as partial or truncated")
             break
-    final_step = max(numbers)
-    if not any(end.after_step == final_step for end in procedure.end_evidence):
+    if (
+        any(TRUNCATION_CUE.search(note) for note in procedure.completeness_notes)
+        and "the source marks the procedure as partial or truncated" not in issues
+    ):
+        issues.append("the source marks the procedure as partial or truncated")
+    if procedure.end_boundary is None:
         issues.append("the source-defined procedure end was not found")
     return issues
 
