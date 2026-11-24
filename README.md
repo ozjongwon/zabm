@@ -174,7 +174,24 @@ Every generated `retrieval.json` records the parser version, profile schema and
 manifest versions, the profile-manifest SHA-256, and each source's selected
 profile ID, version, and canonical profile SHA-256. It also records the pinned
 `pypdf` and `fonttools` versions used for extraction. These fields also appear
-in the `zabm ingest --json` report.
+in the `zabm ingest --json` report. The retrieval catalog additionally records
+the source-manifest and per-source SHA-256 values, while the ingestion report
+records SHA-256 checksums for the three canonical generated artifacts.
+
+Use `zabm ingest --diagnostics` to inspect page classifications, confidence and
+outcome, detected columns and languages, headings, and accepted or rejected
+candidate steps. The JSON report and `generated/ingestion-report.json` contain
+the same diagnostics without dumping full page text. Normal ingestion reports
+accepted and rejected candidate-step counts, grouped by rejection reason.
+
+When the parser version, PDF dependencies, profile schema or content, source
+manifest, or transcription evidence differs from the existing retrieval
+catalog, ingestion stops before writing derived evidence. Review the listed
+provenance changes, then repeat the command with `--rebuild-review
+<review-reference>`. A completed build records whether it was an initial build,
+unchanged, or reviewed, and the new retrieval checksum is reported with the
+other canonical artifacts. Any such rebuild requires a replacement source-pack
+freeze, a rerun of the retrieval smoke set, and a complete evaluation rerun.
 
 ## Local grounded model path
 

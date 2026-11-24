@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
+from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -256,6 +258,7 @@ class RetrievalSource(BaseModel):
     title: str
     manufacturer: str
     revision: str | None = None
+    source_sha256: str
     ingestion_profile: IngestionProfileProvenance
     procedure_language: str = "en"
     action_aliases: dict[str, list[str]] = Field(default_factory=dict[str, list[str]])
@@ -323,6 +326,58 @@ class TranscriptionRequiredPage(BaseModel):
     reason: str
 
 
+class CandidateStepDiagnostic(BaseModel):
+    line_id: str
+    text: str
+    decision: Literal["accepted", "rejected"]
+    reason: StepRejectionReason | None = None
+
+
+class IngestionHeadingDiagnostic(BaseModel):
+    text: str
+    heading_path: list[str]
+
+
+class IngestionPageDiagnostic(BaseModel):
+    document_id: str
+    physical_page: int
+    page_kind: PageKind
+    classification_confidence: float
+    classification_uncertain: bool
+    classification_uncertainty: str | None
+    ingestion_outcome: PageIngestionOutcome
+    ingestion_outcome_reason: str | None
+    columns: list[ColumnBand]
+    languages: list[str]
+    headings: list[IngestionHeadingDiagnostic]
+    candidate_steps: list[CandidateStepDiagnostic]
+
+
+class IngestionDiagnostics(BaseModel):
+    source_pack_id: str
+    pages: list[IngestionPageDiagnostic]
+
+
+class ProcedureCandidateCounts(BaseModel):
+    accepted_steps: int
+    rejected_steps: int
+    rejected_by_reason: dict[StepRejectionReason, int] = Field(
+        default_factory=dict[StepRejectionReason, int]
+    )
+
+
+class RebuildDecision(BaseModel):
+    status: Literal["initial-build", "unchanged", "reviewed"]
+    review: str | None = None
+    changed_components: list[str] = Field(default_factory=list[str])
+    previous_retrieval_sha256: str | None = None
+    required_actions: list[str] = Field(default_factory=list[str])
+
+
+class RebuildReviewRequired(ValueError):
+    pass
+
+
 class RetrievalIngestReport(BaseModel):
     source_pack_id: str
     ingestion_provenance: IngestionProvenance
@@ -336,6 +391,9 @@ class RetrievalIngestReport(BaseModel):
     transcription_required_pages: list[TranscriptionRequiredPage] = Field(
         default_factory=list[TranscriptionRequiredPage]
     )
+    ingestion_diagnostics: IngestionDiagnostics
+    procedure_candidate_counts: ProcedureCandidateCounts
+    rebuild_decision: RebuildDecision
     validation_issues: list[str]
 
 
@@ -945,6 +1003,124 @@ class _PageParse:
     document_id: str
 
 
+REBUILD_ACTIONS = [
+    "create a replacement source-pack freeze",
+    "rerun the retrieval smoke set",
+    "rerun the complete evaluation set",
+]
+
+
+def assess_ingestion_rebuild(
+    manifest_path: Path,
+    ingestion_profiles_path: Path,
+    data_dir: Path,
+    *,
+    ingestion_profiles: IngestionProfilesFile | None = None,
+    transcriptions_path: Path | None = None,
+    review: str | None = None,
+) -> RebuildDecision:
+    manifest = load_source_manifest(manifest_path)
+    profiles = ingestion_profiles or load_ingestion_profiles(ingestion_profiles_path)
+    selected_profiles = [
+        SelectedProfileProvenance(
+            document_id=source.id,
+            profile_id=(
+                profile := resolve_document_profile(
+                    profiles,
+                    source_id=source.id,
+                    metadata=source.ingestion_metadata,
+                    reference=source.ingestion_profile,
+                )
+            ).id,
+            profile_version=profile.version,
+            profile_sha256=profile_sha256(profile),
+        )
+        for source in manifest.sources
+    ]
+    expected = IngestionProvenance(
+        parser_version=PARSER_VERSION,
+        fonttools_version=FONTTOOLS_VERSION,
+        pypdf_version=PYPDF_VERSION,
+        profile_schema_version=profiles.profile_schema_version,
+        profile_manifest_version=profiles.profile_manifest_version,
+        profile_manifest_sha256=file_sha256(ingestion_profiles_path),
+        source_manifest_sha256=file_sha256(manifest_path),
+        transcription_evidence_sha256=(
+            file_sha256(transcriptions_path) if transcriptions_path is not None else None
+        ),
+        profiles=selected_profiles,
+    )
+    catalog_path = data_dir / "generated" / "retrieval.json"
+    if not catalog_path.is_file():
+        return RebuildDecision(status="initial-build")
+
+    previous_retrieval_sha256 = file_sha256(catalog_path)
+    try:
+        previous_payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"existing retrieval artifact cannot be assessed: {exc}") from exc
+    previous = previous_payload.get("ingestion_provenance", {})
+    changed = _changed_ingestion_components(previous, expected)
+    if not changed:
+        return RebuildDecision(
+            status="unchanged",
+            previous_retrieval_sha256=previous_retrieval_sha256,
+        )
+
+    clean_review = review.strip() if review is not None else ""
+    if not clean_review:
+        actions = "; ".join(REBUILD_ACTIONS)
+        raise RebuildReviewRequired(
+            "ingestion provenance changed "
+            f"({', '.join(changed)}); parser, profile, or dependency rebuilds require "
+            f"--rebuild-review and these follow-up actions: {actions}"
+        )
+    return RebuildDecision(
+        status="reviewed",
+        review=clean_review,
+        changed_components=changed,
+        previous_retrieval_sha256=previous_retrieval_sha256,
+        required_actions=REBUILD_ACTIONS,
+    )
+
+
+def _changed_ingestion_components(
+    previous: dict[str, Any],
+    expected: IngestionProvenance,
+) -> list[str]:
+    comparisons = {
+        "parser_version": previous.get("parser_version"),
+        "font_extraction_dependencies": (
+            previous.get("fonttools_version"),
+            previous.get("pypdf_version"),
+        ),
+        "profile_schema_version": previous.get("profile_schema_version"),
+        "profile_manifest_version": previous.get("profile_manifest_version"),
+        "profile_manifest_sha256": previous.get("profile_manifest_sha256"),
+        "source_manifest_sha256": previous.get("source_manifest_sha256"),
+        "transcription_evidence_sha256": previous.get("transcription_evidence_sha256"),
+        "profiles": previous.get("profiles"),
+    }
+    expected_values = {
+        "parser_version": expected.parser_version,
+        "font_extraction_dependencies": (
+            expected.fonttools_version,
+            expected.pypdf_version,
+        ),
+        "profile_schema_version": expected.profile_schema_version,
+        "profile_manifest_version": expected.profile_manifest_version,
+        "profile_manifest_sha256": expected.profile_manifest_sha256,
+        "source_manifest_sha256": expected.source_manifest_sha256,
+        "transcription_evidence_sha256": expected.transcription_evidence_sha256,
+        "profiles": [profile.model_dump(mode="json") for profile in expected.profiles],
+    }
+    return [
+        component
+        for component, previous_value in comparisons.items()
+        if previous_value != expected_values[component]
+    ]
+
+
 def ingest_retrieval(
     manifest_path: Path,
     pdf_dir: Path,
@@ -954,12 +1130,21 @@ def ingest_retrieval(
     ingestion_profiles: IngestionProfilesFile | None = None,
     transcriptions_path: Path | None = None,
     requested_language: str | None = None,
+    rebuild_review: str | None = None,
 ) -> RetrievalIngestReport:
     manifest = load_source_manifest(manifest_path)
     if ingestion_profiles is not None and ingestion_profiles_path is None:
         raise ValueError("preloaded ingestion profiles require their source manifest path")
     profile_path = ingestion_profiles_path or DEFAULT_INGESTION_PROFILES
     profiles = ingestion_profiles or load_ingestion_profiles(profile_path)
+    rebuild_decision = assess_ingestion_rebuild(
+        manifest_path,
+        profile_path,
+        data_dir,
+        ingestion_profiles=profiles,
+        transcriptions_path=transcriptions_path,
+        review=rebuild_review,
+    )
     transcription_file = (
         load_procedure_transcriptions(transcriptions_path)
         if transcriptions_path is not None
@@ -1029,6 +1214,7 @@ def ingest_retrieval(
             title=source.title,
             manufacturer=source.manufacturer,
             revision=source.revision,
+            source_sha256=source.sha256,
             ingestion_profile=profile_provenance,
             procedure_language=selected_profile.language.primary_language,
             action_aliases=selected_profile.action_aliases,
@@ -1062,6 +1248,7 @@ def ingest_retrieval(
         profile_schema_version=profiles.profile_schema_version,
         profile_manifest_version=profiles.profile_manifest_version,
         profile_manifest_sha256=file_sha256(profile_path),
+        source_manifest_sha256=file_sha256(manifest_path),
         transcription_evidence_sha256=(
             file_sha256(transcriptions_path) if transcriptions_path is not None else None
         ),
@@ -1082,6 +1269,8 @@ def ingest_retrieval(
         not procedure.validation_issues and not procedure_completeness_issues(procedure)
         for procedure in procedures
     )
+    diagnostics = _ingestion_diagnostics(manifest.manifest_version, sources, procedures)
+    candidate_counts = _procedure_candidate_counts(sources, procedures)
     return RetrievalIngestReport(
         source_pack_id=manifest.manifest_version,
         ingestion_provenance=ingestion_provenance,
@@ -1115,8 +1304,97 @@ def ingest_retrieval(
             for page in source.pages
             if page.ingestion_outcome == "transcription-required"
         ],
+        ingestion_diagnostics=diagnostics,
+        procedure_candidate_counts=candidate_counts,
+        rebuild_decision=rebuild_decision,
         validation_issues=validation_issues,
     )
+
+
+def _procedure_candidate_counts(
+    sources: Sequence[RetrievalSource],
+    procedures: Sequence[StoredProcedure],
+) -> ProcedureCandidateCounts:
+    accepted_steps = sum(
+        len(procedure.steps) for procedure in procedures if procedure.evidence_plane == "pdf-text"
+    )
+    rejected_by_reason: Counter[StepRejectionReason] = Counter(
+        candidate.reason
+        for source in sources
+        for page in source.pages
+        for candidate in page.rejected_step_candidates
+    )
+    return ProcedureCandidateCounts(
+        accepted_steps=accepted_steps,
+        rejected_steps=sum(rejected_by_reason.values()),
+        rejected_by_reason=dict(sorted(rejected_by_reason.items())),
+    )
+
+
+def _ingestion_diagnostics(
+    source_pack_id: str,
+    sources: Sequence[RetrievalSource],
+    procedures: Sequence[StoredProcedure],
+) -> IngestionDiagnostics:
+    accepted_by_page: dict[tuple[str, int], list[CandidateStepDiagnostic]] = {}
+    for procedure in procedures:
+        if procedure.evidence_plane != "pdf-text":
+            continue
+        for step in procedure.steps:
+            key = (step.citation.document_id, step.citation.physical_page)
+            accepted_by_page.setdefault(key, []).append(
+                CandidateStepDiagnostic(
+                    line_id=step.evidence.spans[0].line_id,
+                    text=step.text,
+                    decision="accepted",
+                )
+            )
+
+    pages: list[IngestionPageDiagnostic] = []
+    for source in sources:
+        for page in source.pages:
+            headings = list(
+                {
+                    (block.text, tuple(block.heading_path)): IngestionHeadingDiagnostic(
+                        text=block.text,
+                        heading_path=block.heading_path,
+                    )
+                    for block in page.blocks
+                    if block.kind == "heading"
+                }.values()
+            )
+            rejected = [
+                CandidateStepDiagnostic(
+                    line_id=candidate.line_id,
+                    text=candidate.text,
+                    decision="rejected",
+                    reason=candidate.reason,
+                )
+                for candidate in page.rejected_step_candidates
+            ]
+            pages.append(
+                IngestionPageDiagnostic(
+                    document_id=source.document_id,
+                    physical_page=page.physical_page,
+                    page_kind=page.page_kind,
+                    classification_confidence=page.classification_confidence,
+                    classification_uncertain=page.classification_uncertain,
+                    classification_uncertainty=page.classification_uncertainty,
+                    ingestion_outcome=page.ingestion_outcome,
+                    ingestion_outcome_reason=page.ingestion_outcome_reason,
+                    columns=page.columns,
+                    languages=page.languages,
+                    headings=headings,
+                    candidate_steps=[
+                        *accepted_by_page.get(
+                            (source.document_id, page.physical_page),
+                            [],
+                        ),
+                        *rejected,
+                    ],
+                )
+            )
+    return IngestionDiagnostics(source_pack_id=source_pack_id, pages=pages)
 
 
 def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:

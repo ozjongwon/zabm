@@ -35,6 +35,8 @@ from zabm.ingestion import (
 )
 from zabm.procedures import (
     ProcedureEvidenceInspection,
+    RetrievalIngestReport,
+    assess_ingestion_rebuild,
     ingest_retrieval,
     inspect_procedure_evidence,
 )
@@ -56,6 +58,7 @@ from zabm.specifications import (
     ingest_sources,
     load_source_manifest,
     verify_source_files,
+    write_json,
 )
 
 PINNED_PYTHON = "3.13.5"
@@ -182,6 +185,8 @@ def _ingest_command(
     ingestion_profiles_path: Path,
     transcriptions_path: Path,
     language: str | None,
+    diagnostics: bool,
+    rebuild_review: str | None,
     as_json: bool,
 ) -> int:
     try:
@@ -206,6 +211,14 @@ def _ingest_command(
                 raise FrozenSourcePackError(f"source freeze {source_freeze} does not exist")
             verify_frozen_source_pack(source_freeze, manifest)
         verify_source_files(manifest, pdf_dir)
+        assess_ingestion_rebuild(
+            manifest,
+            ingestion_profiles_path,
+            data_dir,
+            ingestion_profiles=ingestion_profiles,
+            transcriptions_path=transcriptions_path,
+            review=rebuild_review,
+        )
         report = ingest_sources(manifest, evidence, pdf_dir, data_dir)
         compatibility_report = ingest_compatibility(
             manifest,
@@ -221,6 +234,7 @@ def _ingest_command(
             ingestion_profiles=ingestion_profiles,
             transcriptions_path=transcriptions_path,
             requested_language=language,
+            rebuild_review=rebuild_review,
         )
     except (
         OSError,
@@ -238,32 +252,37 @@ def _ingest_command(
         "retrieval.json": data_dir / "generated" / "retrieval.json",
     }
     artifact_checksums = {name: file_sha256(path) for name, path in artifact_paths.items()}
+    combined_report = {
+        **report.model_dump(mode="json"),
+        "compatibility_rule_count": compatibility_report.compatibility_rule_count,
+        "eligible_compatibility_rule_count": (
+            compatibility_report.eligible_compatibility_rule_count
+        ),
+        "retrieval_page_count": retrieval_report.page_count,
+        "ingestion_provenance": retrieval_report.ingestion_provenance.model_dump(mode="json"),
+        "page_alignment": retrieval_report.page_alignment.model_dump(mode="json"),
+        "table_row_count": retrieval_report.table_row_count,
+        "warning_count": retrieval_report.warning_count,
+        "procedure_count": retrieval_report.procedure_count,
+        "eligible_procedure_count": retrieval_report.eligible_procedure_count,
+        "verified_transcription_count": retrieval_report.verified_transcription_count,
+        "transcription_required_pages": [
+            page.model_dump(mode="json") for page in retrieval_report.transcription_required_pages
+        ],
+        "ingestion_diagnostics": retrieval_report.ingestion_diagnostics.model_dump(mode="json"),
+        "procedure_candidate_counts": (
+            retrieval_report.procedure_candidate_counts.model_dump(mode="json")
+        ),
+        "rebuild_decision": retrieval_report.rebuild_decision.model_dump(mode="json"),
+        "artifact_checksums": artifact_checksums,
+        "validation_issues": [
+            *report.validation_issues,
+            *compatibility_report.validation_issues,
+            *retrieval_report.validation_issues,
+        ],
+    }
+    write_json(data_dir / "generated" / "ingestion-report.json", combined_report)
     if as_json:
-        combined_report = {
-            **report.model_dump(mode="json"),
-            "compatibility_rule_count": compatibility_report.compatibility_rule_count,
-            "eligible_compatibility_rule_count": (
-                compatibility_report.eligible_compatibility_rule_count
-            ),
-            "retrieval_page_count": retrieval_report.page_count,
-            "ingestion_provenance": retrieval_report.ingestion_provenance.model_dump(mode="json"),
-            "page_alignment": retrieval_report.page_alignment.model_dump(mode="json"),
-            "table_row_count": retrieval_report.table_row_count,
-            "warning_count": retrieval_report.warning_count,
-            "procedure_count": retrieval_report.procedure_count,
-            "eligible_procedure_count": retrieval_report.eligible_procedure_count,
-            "verified_transcription_count": retrieval_report.verified_transcription_count,
-            "transcription_required_pages": [
-                page.model_dump(mode="json")
-                for page in retrieval_report.transcription_required_pages
-            ],
-            "artifact_checksums": artifact_checksums,
-            "validation_issues": [
-                *report.validation_issues,
-                *compatibility_report.validation_issues,
-                *retrieval_report.validation_issues,
-            ],
-        }
         print(json.dumps(combined_report, indent=2, sort_keys=True))
     else:
         print(
@@ -287,6 +306,25 @@ def _ingest_command(
             f"{alignment.physical_page_count} parsed, "
             f"{alignment.text_page_count} with text."
         )
+        candidate_counts = retrieval_report.procedure_candidate_counts
+        print(
+            f"Procedure candidates: {candidate_counts.accepted_steps} accepted, "
+            f"{candidate_counts.rejected_steps} rejected."
+        )
+        if candidate_counts.rejected_by_reason:
+            reasons = ", ".join(
+                f"{reason}={count}" for reason, count in candidate_counts.rejected_by_reason.items()
+            )
+            print(f"Procedure candidate rejections: {reasons}")
+        rebuild_decision = retrieval_report.rebuild_decision
+        decision = rebuild_decision.status
+        if rebuild_decision.review:
+            decision = f"{decision} ({rebuild_decision.review})"
+        print(f"Ingestion rebuild: {decision}.")
+        for action in rebuild_decision.required_actions:
+            print(f"- required after parser/profile rebuild: {action}")
+        if diagnostics:
+            _render_ingestion_diagnostics(retrieval_report)
         for name, checksum in artifact_checksums.items():
             print(f"- {name}: sha256 {checksum}")
         for issue in [
@@ -296,6 +334,33 @@ def _ingest_command(
         ]:
             print(f"- rejected: {issue}", file=sys.stderr)
     return 0
+
+
+def _render_ingestion_diagnostics(report: RetrievalIngestReport) -> None:
+    print("Page classification:")
+    for page in report.ingestion_diagnostics.pages:
+        certainty = "uncertain" if page.classification_uncertain else "classified"
+        print(
+            f"- {page.document_id} page {page.physical_page}: {page.page_kind} "
+            f"({certainty}, {page.classification_confidence:.2f}, "
+            f"{page.ingestion_outcome})"
+        )
+        columns = ", ".join(
+            f"{column.id}[{column.x_min:.2f}-{column.x_max:.2f}]" for column in page.columns
+        )
+        print(f"  columns: {columns or 'none'}")
+        print(f"  languages: {', '.join(page.languages) or 'none'}")
+        if page.classification_uncertainty:
+            print(f"  classification note: {page.classification_uncertainty}")
+        if page.ingestion_outcome_reason:
+            print(f"  outcome reason: {page.ingestion_outcome_reason}")
+        for heading in page.headings:
+            print(f"  heading: {' > '.join(heading.heading_path)}")
+        for step in page.candidate_steps:
+            if step.decision == "accepted":
+                print(f"  accepted step: {step.text}")
+            else:
+                print(f"  rejected {step.reason}: {step.text}")
 
 
 def _render_response(response: CanonicalResponse) -> str:
@@ -931,6 +996,18 @@ def _parser() -> argparse.ArgumentParser:
         "--language",
         help="Preferred extracted language code; defaults to each profile's primary language.",
     )
+    ingest.add_argument(
+        "--rebuild-review",
+        help=(
+            "Stable review reference required when parser, profile, or dependency "
+            "provenance changes."
+        ),
+    )
+    ingest.add_argument(
+        "--diagnostics",
+        action="store_true",
+        help="Print page classifications, layout, headings, and candidate-step decisions.",
+    )
     ingest.add_argument("--json", action="store_true", help="Emit a JSON report.")
 
     ask = commands.add_parser(
@@ -1183,6 +1260,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.ingestion_profiles,
             args.transcriptions,
             args.language,
+            args.diagnostics,
+            args.rebuild_review,
             args.json,
         )
     if args.command == "ask":

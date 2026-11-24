@@ -8,8 +8,8 @@ files.
 
 - Completed in `bicycle-mechanics-assistant-v1`: tickets 02 through 11.
 - Pending in `bicycle-mechanics-assistant-v1`: tickets 01 and 12 through 19.
-- Completed in `general-pdf-ingestion`: tickets 01 through 11.
-- Pending in `general-pdf-ingestion`: ticket 12.
+- Completed in `general-pdf-ingestion`: tickets 01 through 12.
+- Pending in `general-pdf-ingestion`: none.
 - Ticket 13 is partially implemented in the current working tree and should be
   completed and verified before moving to the ingestion refactor.
 - Ticket 01 in `bicycle-mechanics-assistant-v1` still requires clean-machine
@@ -31,7 +31,7 @@ files.
 | 10 | [general-pdf-ingestion/11](general-pdf-ingestion/issues/11-procedure-action-vocabulary.md) | Add reviewed procedure action aliases without weakening identity filters. | Complete |
 | 11 | [general-pdf-ingestion/10](general-pdf-ingestion/issues/10-duplicate-and-continuation-handling.md) | Resolve duplicate steps, repeated headings, and continuation pages. | Complete |
 | 12 | [general-pdf-ingestion/09](general-pdf-ingestion/issues/09-figure-ocr-and-transcription-policy.md) | Keep figure-only and OCR-only content ineligible until human verification. | Complete |
-| 13 | [general-pdf-ingestion/12](general-pdf-ingestion/issues/12-ingestion-diagnostics-and-rebuild-policy.md) | Add diagnostics, parser provenance, and rebuild consequences. | Blocked by orders 02, 04, 07-09 |
+| 13 | [general-pdf-ingestion/12](general-pdf-ingestion/issues/12-ingestion-diagnostics-and-rebuild-policy.md) | Add diagnostics, parser provenance, and rebuild consequences. | Complete |
 | 14 | [bicycle-mechanics-assistant-v1/19](bicycle-mechanics-assistant-v1/issues/19-language-neutral-intent-routing.md) | Replace English keyword routing with validated semantic routing. | Ready |
 | 15 | [bicycle-mechanics-assistant-v1/15](bicycle-mechanics-assistant-v1/issues/15-web-chat-adapter.md) | Add the local web adapter over the canonical application service. | Ready |
 | 16 | [bicycle-mechanics-assistant-v1/14](bicycle-mechanics-assistant-v1/issues/14-langsmith-result-mirror.md) | Mirror evaluation results without making LangSmith canonical. | Ready |

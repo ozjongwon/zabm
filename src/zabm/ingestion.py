@@ -13,7 +13,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-PARSER_VERSION = "pdf-ingestion-v10"
+PARSER_VERSION = "pdf-ingestion-v11"
 FONTTOOLS_VERSION = package_version("fonttools")
 PYPDF_VERSION = package_version("pypdf")
 PROFILE_SCHEMA_VERSION = "1"
@@ -421,6 +421,7 @@ class IngestionProvenance(_ContractModel):
     profile_schema_version: str
     profile_manifest_version: str
     profile_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     transcription_evidence_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     profiles: list[SelectedProfileProvenance]
 
