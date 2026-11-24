@@ -20,7 +20,8 @@ weights, or generated evidence.
   workspace there instead of using `/tmp`.
 - `/home/ollama` for the Ollama server and model weights. The installer creates
   it through `sudo` when absent and assigns it to the invoking user. A
-  pre-existing directory must already be writable by that user.
+  pre-existing directory keeps its owner and group; missing write access is
+  granted to the invoking user through a POSIX ACL.
 
 Inspect the plan first:
 

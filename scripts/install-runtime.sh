@@ -29,6 +29,7 @@ readonly VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
 readonly PROVIDER_URL="http://127.0.0.1:11434/v1"
 
 DRY_RUN=false
+BASE_INSTALLED=false
 TEMP_DIR=""
 SMOKE_WEB_PID=""
 SMOKE_TEMP_FILES=()
@@ -214,10 +215,14 @@ ollama_reports_pinned_version() {
 }
 
 install_runtime_base() {
+  if [[ "${BASE_INSTALLED}" == true ]]; then
+    return
+  fi
   log "installing the locked runtime environment and application"
   run env \
     ZABM_OS_RELEASE_FILE="${OS_RELEASE_FILE}" \
     "${REPO_ROOT}/scripts/install-dev.sh" --profile runtime
+  BASE_INSTALLED=true
 }
 
 install_model_server() {
@@ -603,6 +608,7 @@ print_plan() {
 }
 
 check_disk_space() {
+  local acl_path
   local available_gib
   local available_kib
   local current_group
@@ -624,8 +630,24 @@ check_disk_space() {
       fi
     fi
   fi
+  if [[ ! -w "${RUNTIME_HOME}" ]]; then
+    command -v setfacl >/dev/null 2>&1 || install_runtime_base
+    command -v setfacl >/dev/null 2>&1 ||
+      die "setfacl is required to grant access without changing ownership of ${RUNTIME_HOME}"
+    log "granting $(id -un) access to ${RUNTIME_HOME} while preserving its owner and group"
+    run sudo setfacl -m "u:${current_user}:rwx" "${RUNTIME_HOME}" ||
+      die "sudo could not update the access ACL for ${RUNTIME_HOME}"
+    run sudo setfacl -d -m "u:${current_user}:rwx" "${RUNTIME_HOME}" ||
+      die "sudo could not set the default access ACL for ${RUNTIME_HOME}"
+    for acl_path in "${SERVER_DIR}" "${MODEL_DIR}" "${STATE_DIR}"; do
+      if [[ -e "${acl_path}" ]]; then
+        run sudo setfacl -R -m "u:${current_user}:rwx" "${acl_path}" ||
+          die "sudo could not update the access ACL for ${acl_path}"
+      fi
+    done
+  fi
   [[ -w "${RUNTIME_HOME}" ]] ||
-    die "${RUNTIME_HOME} must be writable by the user running the installer; provision ownership with sudo or run as its owner"
+    die "${RUNTIME_HOME} is still not writable after applying access control"
   mkdir -p "${STATE_DIR}" ||
     die "cannot create the state directory under ${RUNTIME_HOME}"
   [[ -w "${STATE_DIR}" ]] ||

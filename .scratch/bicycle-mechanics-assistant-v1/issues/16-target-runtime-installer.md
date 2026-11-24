@@ -24,7 +24,7 @@
   GGUFs, generated local-provider configuration, an idempotent server launcher,
   source/evidence rebuild, and installed-target CLI plus web smoke. Added
   installer plan/rejection/config/idempotence tests and a clean-host acceptance
-  procedure. Full Pyright, repo-wide Ruff checks, and 226 tests pass. Clean
+  procedure. Full Pyright, repo-wide Ruff checks, and 227 tests pass. Clean
   Debian 13 and Ubuntu 24.04 execution still requires the documented
   disposable-host acceptance because no container or second target is
   available in this workspace.
@@ -37,6 +37,7 @@
   explicit override for test or exceptional deployments.
 - 2026-11-25: The installer now provisions an absent `/home/ollama` through
   `sudo` and assigns it to the invoking user. It refuses to change ownership
-  of a pre-existing non-writable `/home/ollama` and reports the permission
-  problem before downloading.
+  of a pre-existing `/home/ollama`; when the invoking user lacks write access,
+  it uses a POSIX ACL with inherited access for new runtime directories while
+  preserving the directory's existing owner and group.
 

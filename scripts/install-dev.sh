@@ -12,6 +12,7 @@ readonly VENV_DIR="${REPO_ROOT}/.venv"
 readonly REQUIREMENTS_DIR="${REPO_ROOT}/requirements"
 
 readonly RUNTIME_APT_PACKAGES=(
+  acl
   ca-certificates
   curl
   libgomp1

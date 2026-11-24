@@ -299,3 +299,41 @@ main --runtime-home {shlex.quote(str(runtime_home))}
     assert result.returncode != 0
     assert "at least 12 GiB is required" in result.stderr
     assert "phase: runtime base" not in result.stdout
+
+
+def test_runtime_installer_grants_access_without_changing_runtime_home_ownership(
+    tmp_path: Path,
+) -> None:
+    runtime_home = tmp_path / "ollama"
+    runtime_home.mkdir()
+    runtime_home.chmod(0o500)
+    owner_before = runtime_home.stat().st_uid, runtime_home.stat().st_gid
+    command = f"""
+source {shlex.quote(str(RUNTIME_INSTALLER))}
+RUNTIME_HOME={shlex.quote(str(runtime_home))}
+STATE_DIR={shlex.quote(str(runtime_home / "state"))}
+setfacl() {{ :; }}
+sudo() {{
+  if [[ "$1" == "setfacl" ]]; then
+    chmod u+w "$RUNTIME_HOME"
+  fi
+}}
+df() {{
+  printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n'
+  printf 'fake 100000000 1000 98000000 2%% /\\n'
+}}
+check_disk_space
+"""
+
+    result = subprocess.run(
+        ["bash", "-c", command],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "preserving its owner and group" in result.stdout
+    assert "chown" not in result.stdout + result.stderr
+    assert (runtime_home.stat().st_uid, runtime_home.stat().st_gid) == owner_before

@@ -39,7 +39,8 @@ models, logs, and large temporary extraction files use `/home/ollama`, with
 the Ollama server and weights stored beneath that required runtime home. The
 installer creates that directory through `sudo` when absent, assigns it to the
 invoking user, and checks for 12 GiB free before downloading. A pre-existing
-`/home/ollama` must already be writable by the invoking user.
+`/home/ollama` keeps its existing owner and group; if the invoking user lacks
+write access, the installer grants it through a POSIX ACL.
 
 Model weights live under `/home/ollama/models` and can be fetched or verified
 without reinstalling the runtime:
