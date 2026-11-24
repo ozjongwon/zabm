@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
 from zabm.classification import DeterministicPageBlockClassifier, page_allows_procedure_extraction
+from zabm.headings import DeterministicHeadingReconstructor
 from zabm.ingestion import (
     DEFAULT_INGESTION_PROFILES,
     FONTTOOLS_VERSION,
@@ -22,6 +23,7 @@ from zabm.ingestion import (
     BlockClassification,
     ColumnBand,
     DocumentProfile,
+    HeadingNode,
     IngestionProfileProvenance,
     IngestionProfilesFile,
     IngestionProvenance,
@@ -266,6 +268,7 @@ class _PageParse:
     step_issues: dict[int, list[str]]
     end_evidence: dict[int, list[ProcedureEndEvidence]]
     section_paths: dict[int, list[str]]
+    heading_stack: list[HeadingNode]
     document_id: str
 
 
@@ -314,8 +317,10 @@ def ingest_retrieval(
             raise OSError(f"source {source.id} does not match the manifest hash")
 
         reader = PdfReader(source_path)
-        parsed_pages = [
-            _parse_page(
+        parsed_pages: list[_PageParse] = []
+        preceding_headings: list[HeadingNode] = []
+        for index, page in enumerate(reader.pages, start=1):
+            parsed_page = _parse_page(
                 page,
                 physical_page=index,
                 source_id=source.id,
@@ -325,9 +330,10 @@ def ingest_retrieval(
                 manifest_version=manifest.manifest_version,
                 profile=selected_profile,
                 requested_language=requested_language,
+                preceding_headings=preceding_headings,
             )
-            for index, page in enumerate(reader.pages, start=1)
-        ]
+            parsed_pages.append(parsed_page)
+            preceding_headings = parsed_page.heading_stack
         sources.append(
             RetrievalSource(
                 document_id=source.id,
@@ -531,6 +537,7 @@ def _parse_page(
     manifest_version: str,
     profile: DocumentProfile,
     requested_language: str | None,
+    preceding_headings: Sequence[HeadingNode],
 ) -> _PageParse:
     raw_text = page.extract_text() or ""
     layout = _page_layout(
@@ -557,6 +564,17 @@ def _parse_page(
         layout,
         profile,
     )
+    heading_hierarchy = DeterministicHeadingReconstructor().reconstruct(
+        layout,
+        classification,
+        profile,
+        preceding_headings=preceding_headings,
+    )
+    headings_by_span = {
+        span_id: heading
+        for heading in heading_hierarchy.headings
+        for span_id in heading.source_span_ids
+    }
     blocks_by_span = {
         span_id: block for block in classification.blocks for span_id in block.span_ids
     }
@@ -569,16 +587,6 @@ def _parse_page(
     content_classifications = [
         blocks_by_span[line.spans[0].span_id] for line in lines if line.y >= 35
     ]
-    footer_title = max(
-        (
-            fragment.text
-            for line in footer_lines
-            for fragment in line.spans
-            if fragment.page_box.x_min < 500 and not STEP_NUMBER.fullmatch(fragment.text)
-        ),
-        key=len,
-        default="",
-    )
     footer_number = next(
         (
             int(fragment.text)
@@ -593,9 +601,22 @@ def _parse_page(
     context_line = primary_content_lines[0] if primary_content_lines else None
     top_text = context_line.text if context_line is not None else source_title
     top_number, top_title = _printed_page_and_title(top_text, physical_page)
-    section_title = footer_title or top_title
+    preceding_heading = preceding_headings[-1] if preceding_headings else None
+    section_title = (
+        heading_hierarchy.headings[0].title
+        if heading_hierarchy.headings
+        else preceding_heading.title
+        if preceding_heading is not None
+        else top_title
+    )
     printed_page = footer_number if footer_lines else top_number
-    heading_path = [section_title]
+    heading_path = (
+        list(heading_hierarchy.headings[0].heading_path)
+        if heading_hierarchy.headings
+        else list(preceding_heading.heading_path)
+        if preceding_heading is not None
+        else [section_title]
+    )
     blocks: list[EvidenceBlock] = []
     steps: list[_ParsedStep] = []
     step_issues: dict[int, list[str]] = {}
@@ -619,27 +640,24 @@ def _parse_page(
     step_starts = _step_starts(content_lines, allowed=allowed_step_lines)
     start_by_index = {start.line_index: start for start in step_starts}
     index = 0
+    heading_count = 0
     while index < len(content_lines):
         line = content_lines[index]
-        if index == 0 and section_title in line.text:
-            blocks.append(
-                _classified_evidence(
-                    EvidenceBlock(
-                        kind="heading",
-                        text=line.text,
-                        heading_path=list(current_path),
-                    ),
-                    content_classifications[index],
-                )
-            )
-            index += 1
-            continue
-
-        service_match = SERVICE_HEADING.fullmatch(line.text)
-        if service_match:
-            current_title = service_match.group(1).strip()
-            current_path = [section_title, line.text]
-            section_sequence += 1
+        heading = next(
+            (
+                headings_by_span[span.span_id]
+                for span in line.spans
+                if span.span_id in headings_by_span
+            ),
+            None,
+        )
+        if heading is not None:
+            next_path = list(heading.heading_path)
+            if heading_count > 0 or next_path != current_path:
+                section_sequence += 1
+            heading_count += 1
+            current_title = heading.title
+            current_path = next_path
             section_paths[section_sequence] = list(current_path)
             current_step = None
             pending_warnings.clear()
@@ -821,8 +839,34 @@ def _parse_page(
         step_issues=step_issues,
         end_evidence=end_evidence,
         section_paths=section_paths,
+        heading_stack=_active_heading_stack(
+            heading_hierarchy.headings,
+            preceding_headings,
+        ),
         document_id=source_id,
     )
+
+
+def _active_heading_stack(
+    current: Sequence[HeadingNode],
+    preceding: Sequence[HeadingNode],
+) -> list[HeadingNode]:
+    if not current:
+        return list(preceding)
+    headings_by_id = {heading.heading_id: heading for heading in [*preceding, *current]}
+    stack: list[HeadingNode] = []
+    seen: set[str] = set()
+    cursor: HeadingNode | None = current[-1]
+    while cursor is not None and cursor.heading_id not in seen:
+        stack.append(cursor)
+        seen.add(cursor.heading_id)
+        cursor = (
+            headings_by_id.get(cursor.parent_heading_id)
+            if cursor.parent_heading_id is not None
+            else None
+        )
+    stack.reverse()
+    return stack
 
 
 def _classified_evidence(
