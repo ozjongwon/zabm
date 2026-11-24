@@ -33,7 +33,9 @@ from zabm.ingestion import (
     PageBox,
     PageKind,
     PdfPageObservation,
+    RejectedStepCandidate,
     SelectedProfileProvenance,
+    StepRejectionReason,
     load_ingestion_profiles,
     normalize_pdf_text,
     profile_sha256,
@@ -67,6 +69,87 @@ WARNING_HEADINGS: dict[str, Literal["warning", "notice"]] = {
 STEP_NUMBER = re.compile(r"^\d{1,2}$")
 INLINE_STEP = re.compile(r"^(\d{1,2})\s+(.+)$")
 SERVICE_HEADING = re.compile(r"^(?:\d+/)?\d+ Hour Service\s+(.+)$", re.IGNORECASE)
+PROCEDURE_HEADING_ACTIONS = (
+    "adjust",
+    "align",
+    "assemble",
+    "bleed",
+    "bring",
+    "carry",
+    "center",
+    "change",
+    "check",
+    "clamp",
+    "clean",
+    "close",
+    "connect",
+    "cut",
+    "deflate",
+    "depress",
+    "disconnect",
+    "engage",
+    "fasten",
+    "fill",
+    "fit",
+    "hold",
+    "inflate",
+    "insert",
+    "inspect",
+    "install",
+    "keep",
+    "lift",
+    "loosen",
+    "lubricate",
+    "measure",
+    "mount",
+    "move",
+    "open",
+    "overhaul",
+    "place",
+    "pour",
+    "press",
+    "protect",
+    "pull",
+    "push",
+    "release",
+    "remove",
+    "repair",
+    "replace",
+    "route",
+    "rotate",
+    "service",
+    "set",
+    "shorten",
+    "slide",
+    "snap",
+    "spin",
+    "stop",
+    "support",
+    "tighten",
+    "thread",
+    "turn",
+    "unbolt",
+    "unclip",
+    "unplug",
+    "wipe",
+    "work",
+)
+PROCEDURE_HEADING_ACTION_FORMS = {
+    "adjust": {"adjustment", "adjustments"},
+    "align": {"alignment", "alignments"},
+    "assemble": {"assembly", "assemblies"},
+    "bleed": {"bled"},
+    "cut": {"cutting"},
+    "fit": {"fitted", "fitting"},
+    "hold": {"held"},
+    "install": {"installation", "installations"},
+    "inspect": {"inspection", "inspections"},
+    "lubricate": {"lubrication"},
+    "remove": {"removal", "removals"},
+    "replace": {"replacement", "replacements"},
+    "set": {"setting"},
+    "stop": {"stopping"},
+}
 NAVIGATION_CUE = re.compile(
     r"^(?:proceed to|this concludes|stop here|end of procedure)\b",
     re.IGNORECASE,
@@ -132,6 +215,9 @@ class RetrievalPage(BaseModel):
     classification_uncertainty: str | None = None
     text: str
     blocks: list[EvidenceBlock]
+    rejected_step_candidates: list[RejectedStepCandidate] = Field(
+        default_factory=list[RejectedStepCandidate]
+    )
 
 
 class RetrievalSource(BaseModel):
@@ -627,6 +713,7 @@ def _parse_page(
     section_paths = {section_sequence: list(current_path)}
     current_step: ProcedureStep | None = None
     pending_warnings: list[ProcedureWarning] = []
+    emitted_numbering_issues: set[int] = set()
 
     allowed_step_lines: set[int] = (
         {
@@ -637,7 +724,32 @@ def _parse_page(
         if extraction_allowed
         else set()
     )
-    step_starts = _step_starts(content_lines, allowed=allowed_step_lines)
+    section_context = preceding_heading.title if preceding_heading is not None else top_title
+    section_contexts: list[str] = []
+    section_ids: list[int] = []
+    section_id = 0
+    for line in content_lines:
+        heading = next(
+            (
+                headings_by_span[span.span_id]
+                for span in line.spans
+                if span.span_id in headings_by_span
+            ),
+            None,
+        )
+        if heading is not None:
+            section_context = heading.title
+            section_id += 1
+        section_contexts.append(section_context)
+        section_ids.append(section_id)
+    step_starts, rejected_step_candidates, numbering_issues = _step_starts(
+        content_lines,
+        classifications=content_classifications,
+        allowed=allowed_step_lines,
+        section_contexts=section_contexts,
+        section_ids=section_ids,
+        profile=profile,
+    )
     start_by_index = {start.line_index: start for start in step_starts}
     index = 0
     heading_count = 0
@@ -727,6 +839,8 @@ def _parse_page(
                     _warning_severity(candidate.text) is not None
                     or SERVICE_HEADING.fullmatch(candidate.text) is not None
                     or candidate_classification.kind in {"figure", "table", "warning", "heading"}
+                    or INLINE_STEP.match(candidate.text) is not None
+                    or STEP_NUMBER.fullmatch(candidate.text) is not None
                 ):
                     break
                 candidate_text = candidate.text
@@ -779,6 +893,12 @@ def _parse_page(
                     heading_path=list(current_path),
                 )
             )
+            section_id = section_ids[step.number_line_index]
+            if section_id in numbering_issues and section_id not in emitted_numbering_issues:
+                step_issues.setdefault(section_sequence, []).append(
+                    numbering_issues[section_id]
+                )
+                emitted_numbering_issues.add(section_id)
             current_step = procedure_step
             step_issues.setdefault(section_sequence, []).extend(
                 f"step {step.number}: {issue}" for issue in issues
@@ -832,6 +952,7 @@ def _parse_page(
         classification_uncertainty=classification.rejection_reason,
         text=raw_text,
         blocks=blocks,
+        rejected_step_candidates=rejected_step_candidates,
     )
     return _PageParse(
         page=page_model,
@@ -1259,24 +1380,51 @@ def _matches_procedure_end(text: str, markers: Sequence[str]) -> bool:
     )
 
 
-def _step_starts(lines: list[_Line], *, allowed: set[int] | None = None) -> list[_StepStart]:
+def _step_starts(
+    lines: list[_Line],
+    *,
+    classifications: Sequence[BlockClassification],
+    allowed: set[int] | None = None,
+    section_contexts: Sequence[str],
+    section_ids: Sequence[int],
+    profile: DocumentProfile,
+) -> tuple[list[_StepStart], list[RejectedStepCandidate], dict[int, str]]:
     starts: list[_StepStart] = []
+    rejected: list[RejectedStepCandidate] = []
     linked_content: set[int] = set()
     for index, line in enumerate(lines):
-        if allowed is not None and index not in allowed:
+        if classifications[index].kind == "heading":
             continue
         inline = INLINE_STEP.match(line.text)
         if inline is not None:
+            text = inline.group(2).strip()
+            reason = _step_rejection_reason(
+                text,
+                classification=classifications[index],
+                allowed=allowed is not None and index in allowed,
+                section_context=section_contexts[index],
+                profile=profile,
+                mixed_column=_has_mixed_columns(line),
+            )
+            if reason is not None:
+                rejected.append(
+                    RejectedStepCandidate(
+                        line_id=line.spans[0].span_id,
+                        text=text,
+                        reason=reason,
+                    )
+                )
+                continue
             starts.append(
                 _StepStart(
                     int(inline.group(1)),
                     index,
                     index,
-                    inline.group(2).strip(),
+                    text,
                 )
             )
             continue
-        if not STEP_NUMBER.fullmatch(line.text) or line.x > 70:
+        if not STEP_NUMBER.fullmatch(line.text):
             continue
         candidates = [
             candidate_index
@@ -1289,15 +1437,164 @@ def _step_starts(lines: list[_Line], *, allowed: set[int] | None = None) -> list
         if candidates:
             content_index = min(candidates, key=lambda candidate: abs(lines[candidate].y - line.y))
             linked_content.add(content_index)
+            text = lines[content_index].text
+            reason = _step_rejection_reason(
+                text,
+                classification=classifications[content_index],
+                allowed=allowed is not None and content_index in allowed,
+                section_context=section_contexts[content_index],
+                profile=profile,
+                mixed_column=_has_mixed_columns(lines[content_index]),
+            )
+            if reason is not None:
+                rejected.append(
+                    RejectedStepCandidate(
+                        line_id=line.spans[0].span_id,
+                        text=text,
+                        reason=reason,
+                    )
+                )
+                continue
             starts.append(
                 _StepStart(
                     int(line.text),
                     index,
                     content_index,
-                    lines[content_index].text,
+                    text,
                 )
             )
-    return sorted(starts, key=lambda start: start.line_index)
+        else:
+            rejected.append(
+                RejectedStepCandidate(
+                    line_id=line.spans[0].span_id,
+                    text=line.text,
+                    reason="missing-action-text",
+                )
+            )
+    starts_by_section: dict[int, list[_StepStart]] = {}
+    for start in starts:
+        starts_by_section.setdefault(section_ids[start.line_index], []).append(start)
+    accepted: list[_StepStart] = []
+    numbering_issues: dict[int, str] = {}
+    for section_id, section_starts in starts_by_section.items():
+        numbers = [start.number for start in section_starts]
+        if any(right == left for left, right in pairwise(numbers)):
+            accepted.extend(section_starts)
+            continue
+        first_break = next(
+            (
+                index
+                for index, (left, right) in enumerate(pairwise(numbers))
+                if right != left + 1
+            ),
+            None,
+        )
+        if first_break is None:
+            accepted.extend(section_starts)
+        else:
+            accepted.extend(section_starts[: first_break + 1])
+            numbering_issues[section_id] = (
+                f"numbered step {numbers[first_break + 1]} is discontinuous "
+                f"after step {numbers[first_break]}"
+            )
+            rejected.extend(
+                RejectedStepCandidate(
+                    line_id=lines[start.line_index].spans[0].span_id,
+                    text=start.text,
+                    reason="numbering-discontinuous",
+                )
+                for start in section_starts[first_break + 1 :]
+            )
+    line_positions = {
+        line.spans[0].span_id: index for index, line in enumerate(lines)
+    }
+    return (
+        sorted(accepted, key=lambda start: start.line_index),
+        sorted(rejected, key=lambda candidate: line_positions[candidate.line_id]),
+        numbering_issues,
+    )
+
+
+MEASUREMENT_VALUE = re.compile(
+    r"\b\d+(?:\.\d+)?\s*(?:N\s*[·.]?\s*m|Nm|mm|cm|in(?:-lb)?|lbf|lb-ft)\b",
+    re.IGNORECASE,
+)
+SOURCE_REFERENCE = re.compile(
+    r"(?:\.{3,}\s*\d{1,3}\s*$|"
+    r"\b(?:see|refer to)\s+(?:section|page)\b|"
+    r"\b(?:section|page)\s+\d{1,3}\s*$)",
+    re.IGNORECASE,
+)
+FIGURE_CALLOUT = re.compile(r"^(?:figure|fig\.|illustration|diagram)\b", re.IGNORECASE)
+
+
+def _step_rejection_reason(
+    text: str,
+    *,
+    classification: BlockClassification,
+    allowed: bool,
+    section_context: str,
+    profile: DocumentProfile,
+    mixed_column: bool,
+) -> StepRejectionReason | None:
+    if SOURCE_REFERENCE.search(text):
+        return "source-reference"
+    if classification.kind == "table" or MEASUREMENT_VALUE.search(text):
+        return "table-value"
+    if classification.kind == "figure" or FIGURE_CALLOUT.search(text):
+        return "figure-callout"
+    if mixed_column:
+        return "mixed-column"
+    if not text or not any(character.isalpha() for character in text):
+        return "missing-action-text"
+    if not _contains_procedure_action(text, profile) and len(
+        re.findall(r"[^\W_]+", text)
+    ) < 2:
+        return "missing-action-text"
+    if not _is_procedure_section_heading(section_context, profile):
+        return "missing-procedure-heading"
+    if not allowed or classification.kind != "procedure-step":
+        return "non-procedure-block"
+    return None
+
+
+def _has_mixed_columns(line: _Line) -> bool:
+    spans = sorted(line.spans, key=lambda span: span.page_box.x_min)
+    return any(
+        right.page_box.x_min - left.page_box.x_max >= 0.18
+        for left, right in pairwise(spans)
+    )
+
+
+def _is_procedure_section_heading(text: str, profile: DocumentProfile) -> bool:
+    normalized = re.sub(r"^\s*(?:\d+(?:\.\d+)*[.)]?\s+)", "", text).casefold()
+    return _contains_procedure_action(normalized, profile)
+
+
+def _contains_procedure_action(text: str, profile: DocumentProfile) -> bool:
+    normalized = text.casefold()
+    aliases = {
+        variant.casefold()
+        for action, variants in profile.action_aliases.items()
+        for variant in (action, *variants)
+        if variant.strip()
+    }
+    if any(alias in normalized for alias in aliases):
+        return True
+    words = re.findall(r"[^\W_]+", normalized)
+    return any(
+        word
+        in {
+            action,
+            f"{action}s",
+            f"{action}ed",
+            f"{action}ing",
+            *PROCEDURE_HEADING_ACTION_FORMS.get(action, set()),
+        }
+        or (action.endswith("e") and word in {f"{action}d", f"{action[:-1]}ing"})
+        for word in words
+        for action in PROCEDURE_HEADING_ACTIONS
+    )
 
 
 def _collect_warning(

@@ -12,7 +12,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-PARSER_VERSION = "pdf-ingestion-v4"
+PARSER_VERSION = "pdf-ingestion-v5"
 FONTTOOLS_VERSION = package_version("fonttools")
 PYPDF_VERSION = package_version("pypdf")
 PROFILE_SCHEMA_VERSION = "1"
@@ -36,6 +36,16 @@ PageKind = Literal[
     "paragraph",
     "procedure-step",
     "unknown",
+]
+StepRejectionReason = Literal[
+    "source-reference",
+    "table-value",
+    "figure-callout",
+    "missing-action-text",
+    "mixed-column",
+    "missing-procedure-heading",
+    "numbering-discontinuous",
+    "non-procedure-block",
 ]
 ReadingOrder = Literal["left-to-right", "right-to-left"]
 EndBoundaryStrategy = Literal["explicit-marker", "section-boundary"]
@@ -69,6 +79,12 @@ def normalize_pdf_text(text: str) -> str:
 
 class _ContractModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class RejectedStepCandidate(_ContractModel):
+    line_id: str
+    text: str
+    reason: StepRejectionReason
 
 
 class IngestionProfileReference(_ContractModel):
