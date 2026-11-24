@@ -4,7 +4,7 @@
 
 **Blocked by:** 05, 06, 09.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The web chat accepts a maintenance question and renders the canonical application-service response.
 - [x] The web UI has no separate answer path, retrieval path, evidence gate, compatibility decision, or numerical verification logic.
