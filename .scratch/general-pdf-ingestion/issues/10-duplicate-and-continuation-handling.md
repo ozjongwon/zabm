@@ -6,7 +6,7 @@ must remain separate candidates or be rejected rather than merged silently.
 
 **Blocked by:** 06, 07.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Group procedures by authoritative document and heading path in addition to title.
 - [x] Distinguish page continuation from a repeated procedure with the same title.
