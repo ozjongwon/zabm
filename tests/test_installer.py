@@ -156,3 +156,57 @@ def test_runtime_installer_dry_run_reports_the_complete_target_plan(
     assert "installed-target smoke" in result.stdout
     assert "one supported answer" in result.stdout
     assert "sk-test-do-not-print" not in result.stdout + result.stderr
+
+
+def test_runtime_configuration_and_launcher_are_secret_free_and_idempotent(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    config_home = tmp_path / "config"
+    env = os.environ.copy()
+    env.update(
+        {
+            "HOME": str(home),
+            "XDG_CONFIG_HOME": str(config_home),
+            "XDG_DATA_HOME": str(tmp_path / "data"),
+            "OPENAI_API_KEY": "sk-test-do-not-print",
+        }
+    )
+    generate = f"source {RUNTIME_INSTALLER}; write_runtime_config; write_runtime_launcher"
+
+    first = subprocess.run(
+        ["bash", "-c", generate],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert first.returncode == 0, first.stderr
+
+    config = config_home / "zabm" / "runtime.env"
+    launcher = home / ".local" / "bin" / "zabm-runtime"
+    config_before = config.stat()
+    launcher_before = launcher.stat()
+    config_contents = config.read_text(encoding="utf-8")
+    launcher_contents = launcher.read_text(encoding="utf-8")
+
+    assert config.stat().st_mode & 0o777 == 0o600
+    assert launcher.stat().st_mode & 0o777 == 0o755
+    assert "ZABM_PROVIDER_API_KEY=\n" in config_contents
+    assert "set -a\n" in launcher_contents
+    assert "sk-test-do-not-print" not in config_contents + launcher_contents
+
+    second = subprocess.run(
+        ["bash", "-c", generate],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert second.returncode == 0, second.stderr
+    assert config.stat().st_ino == config_before.st_ino
+    assert launcher.stat().st_ino == launcher_before.st_ino
+    assert config.stat().st_mtime_ns == config_before.st_mtime_ns
+    assert launcher.stat().st_mtime_ns == launcher_before.st_mtime_ns

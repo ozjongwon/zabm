@@ -52,6 +52,11 @@ must print nothing.
 
 ## Runtime profile
 
+This narrower profile installs the locked application environment and runtime
+packages only. It is not the complete target installer. Use
+`./scripts/install-runtime.sh` for the model server, external weights, evidence
+stores, and installed-target smoke.
+
 Use a second fresh checkout so the development environment remains available
 for comparison:
 

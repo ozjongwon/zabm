@@ -280,8 +280,9 @@ write_runtime_config() {
     printf 'ZABM_MODEL=%s\n' "${RUNTIME_CHAT_MODEL_NAME}"
     printf 'ZABM_EMBEDDING_MODEL=%s\n' "${RUNTIME_EMBEDDING_MODEL_NAME}"
     printf 'ZABM_PROVIDER_CONFIGURATION=%s\n' "${RUNTIME_PROVIDER_CONFIGURATION}"
+    printf 'ZABM_PROVIDER_API_KEY=\n'
     printf 'ZABM_DEBUG=0\n'
-    printf 'OLLAMA_MODELS=%s\n' "${MODEL_DIR}"
+    printf 'OLLAMA_MODELS=%q\n' "${MODEL_DIR}"
   } > "${generated}"
   write_if_changed "${CONFIG_FILE}" 600 "${generated}"
 }
@@ -294,7 +295,9 @@ write_runtime_launcher() {
   {
     printf '#!/usr/bin/env bash\n'
     printf 'set -Eeuo pipefail\n'
+    printf 'set -a\n'
     printf 'source %q\n' "${CONFIG_FILE}"
+    printf 'set +a\n'
     printf 'if [[ "${ZABM_RUNTIME_AUTOSTART:-1}" != "0" ]]; then\n'
     printf '  %q >/dev/null\n' "${REPO_ROOT}/scripts/start-runtime-server.sh"
     printf 'fi\n'
@@ -386,7 +389,7 @@ download_verified_model() {
   local partial
   partial="$(mktemp "${destination}.partial.XXXXXX")"
   log "downloading $(basename -- "${destination}")"
-  run curl \
+  if ! run curl \
     --fail \
     --location \
     --proto '=https' \
@@ -394,7 +397,10 @@ download_verified_model() {
     --show-error \
     --silent \
     --output "${partial}" \
-    "${url}"
+    "${url}"; then
+    rm -f -- "${partial}"
+    die "model download failed for $(basename -- "${destination}")"
+  fi
   if ! printf '%s  %s\n' "${expected_sha256}" "${partial}" |
     sha256sum --check --status; then
     rm -f -- "${partial}"
@@ -591,9 +597,9 @@ main() {
   run_installed_smoke
 
   log "target runtime is ready"
-  log "CLI: source ${CONFIG_FILE} && ./.venv/bin/python -m zabm ask \"...\""
-  log "web: source ${CONFIG_FILE} && ./.venv/bin/python -m zabm web --data-dir ${DATA_DIR}"
-  log "launcher: ${BIN_DIR}/zabm-runtime ask \"...\""
+  log "CLI: ${BIN_DIR}/zabm-runtime ask \"...\""
+  log "web: ${BIN_DIR}/zabm-runtime web --data-dir ${DATA_DIR}"
+  log "server: ./scripts/start-runtime-server.sh"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
