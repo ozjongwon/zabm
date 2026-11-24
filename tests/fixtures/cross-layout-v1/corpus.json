@@ -15,10 +15,26 @@
       "multilingual-evidence"
     ],
     "contents_pages": [
-      "contents-rejected"
+      "contents-rejected",
+      "dotted-contents-rejected"
+    ],
+    "index_pages": [
+      "index-rejected"
+    ],
+    "advertisement_pages": [
+      "advertisement-rejected"
+    ],
+    "navigation_pages": [
+      "navigation-rejected"
+    ],
+    "uncertain_pages": [
+      "uncertain-rejected"
     ],
     "torque_table_pages": [
       "torque-table-rejected"
+    ],
+    "mixed_table_and_procedure": [
+      "mixed-table-evidence"
     ],
     "contact_information_pages": [
       "contact-rejected"
@@ -31,6 +47,16 @@
     ],
     "figure_only_pages": [
       "figure-only-rejected"
+    ],
+    "warning_pages": [
+      "warning-page-rejected"
+    ],
+    "paragraph_pages": [
+      "paragraph-page-rejected"
+    ],
+    "magura_false_positives": [
+      "magura-contents-rejected",
+      "magura-torque-table-rejected"
     ],
     "repeated_headers": [
       "single-column-evidence"
@@ -115,6 +141,54 @@
       ]
     },
     {
+      "id": "dotted-contents-page",
+      "title": "Corpus Dotted Contents",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Overview"],
+            [690, 72, "1 Rear hub overhaul .......... 12"],
+            [672, 72, "2 Brake bleed ................ 17"],
+            [654, 72, "This concludes the overview."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mixed-table-procedure",
+      "title": "Corpus Mixed Table Manual",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "26 Replace the chain"],
+            [690, 72, "Part    Tool    Torque"],
+            [672, 72, "9 Chain tool    5 N·m"],
+            [654, 72, "1 Remove the chain."],
+            [636, 72, "2 Install the chain."],
+            [618, 72, "This concludes the Replace the chain."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "index-page",
+      "title": "Corpus Index",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Index"],
+            [690, 72, "A Adjustments 12"],
+            [672, 72, "B Bearings 18"],
+            [654, 72, "C Cables 24"],
+            [636, 72, "This concludes the index."]
+          ]
+        }
+      ]
+    },
+    {
       "id": "contact-page",
       "title": "Corpus Contact Information",
       "manufacturer": "Cross Layout Fixtures",
@@ -126,6 +200,46 @@
             [672, 72, "2 Email support for technical questions."],
             [654, 72, "This concludes the contact information."]
           ]
+        }
+      ]
+    },
+    {
+      "id": "advertisement-page",
+      "title": "Corpus Advertisement",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Advertisement"],
+            [690, 72, "1 Buy the Trail Post spring now."],
+            [672, 72, "2 Shop accessories at example.com."],
+            [654, 72, "This concludes the advertisement."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "navigation-page",
+      "title": "Corpus Navigation",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Navigation"],
+            [690, 72, "1 Proceed to section 5."],
+            [672, 72, "2 See section 8 for service."],
+            [654, 72, "This concludes the navigation."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "uncertain-page",
+      "title": "Corpus Uncertain",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": []
         }
       ]
     },
@@ -155,6 +269,79 @@
             [690, 72, "1 Figure callout"],
             [672, 72, "2 Figure callout"],
             [654, 72, "This concludes the figure callouts."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "warning-page",
+      "title": "Corpus Warning Only",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "WARNING"],
+            [702, 72, "Never ride with worn brake pads."],
+            [684, 72, "This concludes the warning."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "paragraph-page",
+      "title": "Corpus Paragraph Only",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "Brake overview"],
+            [702, 72, "Support the frame safely."],
+            [684, 72, "A regular check keeps the brake safe."],
+            [666, 72, "Check the pressure point before each ride."],
+            [648, 72, "Inspect the pad clearance."],
+            [630, 72, "Keep the rotor free from oil."],
+            [612, 72, "Replace worn pads in matched pairs."],
+            [594, 72, "This concludes the overview."]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "magura-contents-layout",
+      "title": "MAGURA GUSTAV PRO Contents Regression",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [720, 72, "2"],
+            [702, 72, "Contents"],
+            [684, 72, "1 Introduction 3"],
+            [666, 72, "2.1 Types of pointers used 3"],
+            [648, 72, "4.6 Establishing the hydraulic connection 11"],
+            [630, 72, "5.3 Changing the brake pads 16"],
+            [612, 72, "6 Tightening torques 22"]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "magura-torque-layout",
+      "title": "MAGURA GUSTAV PRO Torque Regression",
+      "manufacturer": "Cross Layout Fixtures",
+      "pages": [
+        {
+          "lines": [
+            [
+              720,
+              72,
+              "6 Tightening torques 7 Liability and warranty 8 On our own behalf"
+            ],
+            [702, 72, "Name Key Tightening torque"],
+            [684, 72, "Brake lever clamping screw T25 4 Nm"],
+            [666, 72, "QM adapter retaining screws 5 mm 6 Nm"],
+            [648, 72, "Brake calliper retaining screws 5 mm 6 Nm"],
+            [630, 72, "7 Liability and warranty"],
+            [612, 72, "Wear and tear is not subject to liability."]
           ]
         }
       ]
@@ -322,8 +509,7 @@
       "question": "What are the steps in the cover?",
       "expected": {
         "match_count": 0
-      },
-      "known_gap": "03"
+      }
     },
     {
       "id": "contents-rejected",
@@ -332,8 +518,43 @@
       "question": "What are the steps in the contents?",
       "expected": {
         "match_count": 0
-      },
-      "known_gap": "03"
+      }
+    },
+    {
+      "id": "index-rejected",
+      "kind": "evidence",
+      "document_id": "index-page",
+      "question": "What are the steps in the index?",
+      "expected": {
+        "match_count": 0
+      }
+    },
+    {
+      "id": "advertisement-rejected",
+      "kind": "evidence",
+      "document_id": "advertisement-page",
+      "question": "What are the steps in the advertisement?",
+      "expected": {
+        "match_count": 0
+      }
+    },
+    {
+      "id": "navigation-rejected",
+      "kind": "evidence",
+      "document_id": "navigation-page",
+      "question": "What are the steps in the navigation?",
+      "expected": {
+        "match_count": 0
+      }
+    },
+    {
+      "id": "uncertain-rejected",
+      "kind": "evidence",
+      "document_id": "uncertain-page",
+      "question": "What are the steps in the uncertain page?",
+      "expected": {
+        "match_count": 0
+      }
     },
     {
       "id": "torque-table-rejected",
@@ -342,8 +563,42 @@
       "question": "What are the steps in the torque table?",
       "expected": {
         "match_count": 0
-      },
-      "known_gap": "03"
+      }
+    },
+    {
+      "id": "dotted-contents-rejected",
+      "kind": "evidence",
+      "document_id": "dotted-contents-page",
+      "question": "What are the steps in the overview?",
+      "expected": {
+        "match_count": 0
+      }
+    },
+    {
+      "id": "mixed-table-evidence",
+      "kind": "evidence",
+      "document_id": "mixed-table-procedure",
+      "question": "What are the steps to replace the chain?",
+      "expected": {
+        "match_count": 1,
+        "complete": true,
+        "title": "Replace the chain",
+        "steps": [
+          {
+            "number": 1,
+            "text": "Remove the chain.",
+            "warnings": []
+          },
+          {
+            "number": 2,
+            "text": "Install the chain.",
+            "warnings": []
+          }
+        ],
+        "printed_pages": [
+          26
+        ]
+      }
     },
     {
       "id": "contact-rejected",
@@ -352,8 +607,7 @@
       "question": "What are the steps in the contact information?",
       "expected": {
         "match_count": 0
-      },
-      "known_gap": "03"
+      }
     },
     {
       "id": "legal-rejected",
@@ -362,8 +616,7 @@
       "question": "What are the steps in the legal notice?",
       "expected": {
         "match_count": 0
-      },
-      "known_gap": "03"
+      }
     },
     {
       "id": "figure-only-rejected",
@@ -372,8 +625,43 @@
       "question": "What are the steps in the figure only?",
       "expected": {
         "match_count": 0
-      },
-      "known_gap": "03"
+      }
+    },
+    {
+      "id": "warning-page-rejected",
+      "kind": "evidence",
+      "document_id": "warning-page",
+      "question": "What are the steps in the warning?",
+      "expected": {
+        "match_count": 0
+      }
+    },
+    {
+      "id": "paragraph-page-rejected",
+      "kind": "evidence",
+      "document_id": "paragraph-page",
+      "question": "What are the steps in the brake overview?",
+      "expected": {
+        "match_count": 0
+      }
+    },
+    {
+      "id": "magura-contents-rejected",
+      "kind": "evidence",
+      "document_id": "magura-contents-layout",
+      "question": "What are the steps in the contents?",
+      "expected": {
+        "match_count": 0
+      }
+    },
+    {
+      "id": "magura-torque-table-rejected",
+      "kind": "evidence",
+      "document_id": "magura-torque-layout",
+      "question": "What are the steps in the tightening torques?",
+      "expected": {
+        "match_count": 0
+      }
     },
     {
       "id": "single-column-evidence",

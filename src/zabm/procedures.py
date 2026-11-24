@@ -13,12 +13,20 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 
+from zabm.classification import DeterministicPageBlockClassifier, page_allows_procedure_extraction
 from zabm.ingestion import (
     DEFAULT_INGESTION_PROFILES,
     PARSER_VERSION,
+    BlockClassification,
+    DocumentProfile,
     IngestionProfileProvenance,
     IngestionProfilesFile,
     IngestionProvenance,
+    LayoutSpan,
+    LayoutStageResult,
+    NormalizedBox,
+    PageKind,
+    PdfPageObservation,
     SelectedProfileProvenance,
     load_ingestion_profiles,
     profile_sha256,
@@ -94,6 +102,9 @@ class EvidenceBlock(BaseModel):
     text: str
     heading_path: list[str]
     cells: list[str] = Field(default_factory=list[str])
+    classified_kind: PageKind = "paragraph"
+    classification_confidence: float = 0.0
+    classification_uncertainty: str | None = None
 
 
 class RetrievalPage(BaseModel):
@@ -101,6 +112,10 @@ class RetrievalPage(BaseModel):
     printed_page: int
     section: str
     heading_path: list[str]
+    page_kind: PageKind = "unknown"
+    classification_confidence: float = 0.0
+    classification_uncertain: bool = True
+    classification_uncertainty: str | None = None
     text: str
     blocks: list[EvidenceBlock]
 
@@ -199,6 +214,7 @@ class _Line:
 @dataclass
 class _StepStart:
     number: int
+    number_line_index: int
     line_index: int
     text: str
 
@@ -274,7 +290,7 @@ def ingest_retrieval(
                 manufacturer=source.manufacturer,
                 retrieval_date=source.retrieval_date,
                 manifest_version=manifest.manifest_version,
-                end_markers=selected_profile.end_boundaries.markers,
+                profile=selected_profile,
             )
             for index, page in enumerate(reader.pages, start=1)
         ]
@@ -477,12 +493,37 @@ def _parse_page(
     manufacturer: str,
     retrieval_date: date,
     manifest_version: str,
-    end_markers: Sequence[str],
+    profile: DocumentProfile,
 ) -> _PageParse:
     raw_text = page.extract_text() or ""
     lines = _positioned_lines(page)
+    layout = _page_layout(
+        page,
+        lines,
+        document_id=source_id,
+        physical_page=physical_page,
+        profile=profile,
+    )
+    classification = DeterministicPageBlockClassifier().classify(
+        PdfPageObservation(
+            document_id=source_id,
+            physical_page=physical_page,
+            page_width=float(page.mediabox.width),
+            page_height=float(page.mediabox.height),
+            text=raw_text,
+        ),
+        layout,
+        profile,
+    )
+    extraction_allowed = page_allows_procedure_extraction(
+        classification.page_kind,
+        uncertain=classification.uncertain,
+    )
     footer_lines = [line for line in lines if line.y < 35]
     content_lines = [line for line in lines if line.y >= 35]
+    content_classifications = [
+        block for line, block in zip(lines, classification.blocks, strict=True) if line.y >= 35
+    ]
     footer_title = max(
         (
             fragment.text
@@ -519,14 +560,30 @@ def _parse_page(
     current_step: ProcedureStep | None = None
     pending_warnings: list[ProcedureWarning] = []
 
-    step_starts = _step_starts(content_lines)
+    allowed_step_lines: set[int] = (
+        {
+            index
+            for index, block in enumerate(content_classifications)
+            if block.kind == "procedure-step"
+        }
+        if extraction_allowed
+        else set()
+    )
+    step_starts = _step_starts(content_lines, allowed=allowed_step_lines)
     start_by_index = {start.line_index: start for start in step_starts}
     index = 0
     while index < len(content_lines):
         line = content_lines[index]
         if index == 0 and section_title in line.text:
             blocks.append(
-                EvidenceBlock(kind="heading", text=line.text, heading_path=list(current_path))
+                _classified_evidence(
+                    EvidenceBlock(
+                        kind="heading",
+                        text=line.text,
+                        heading_path=list(current_path),
+                    ),
+                    content_classifications[index],
+                )
             )
             index += 1
             continue
@@ -540,13 +597,20 @@ def _parse_page(
             current_step = None
             pending_warnings.clear()
             blocks.append(
-                EvidenceBlock(kind="heading", text=line.text, heading_path=list(current_path))
+                _classified_evidence(
+                    EvidenceBlock(
+                        kind="heading",
+                        text=line.text,
+                        heading_path=list(current_path),
+                    ),
+                    content_classifications[index],
+                )
             )
             index += 1
             continue
 
         line_text = _left_column_text(line)
-        if _matches_procedure_end(line_text, end_markers):
+        if _matches_procedure_end(line_text, profile.end_boundaries.markers):
             section_numbers = [
                 parsed_step.step.number
                 for parsed_step in steps
@@ -561,12 +625,16 @@ def _parse_page(
 
         warning_severity = _warning_severity(line.text)
         if warning_severity is not None:
+            warning_classification = content_classifications[index]
             warning_text, index = _collect_warning(content_lines, index)
             blocks.append(
-                EvidenceBlock(
-                    kind="warning",
-                    text=warning_text,
-                    heading_path=list(current_path),
+                _classified_evidence(
+                    EvidenceBlock(
+                        kind="warning",
+                        text=warning_text,
+                        heading_path=list(current_path),
+                    ),
+                    warning_classification,
                 )
             )
             warning = ProcedureWarning(severity=warning_severity, text=warning_text)
@@ -582,13 +650,15 @@ def _parse_page(
             index += 1
             while index < len(content_lines) and index not in start_by_index:
                 candidate = content_lines[index]
+                candidate_classification = content_classifications[index]
                 if (
                     _warning_severity(candidate.text) is not None
                     or SERVICE_HEADING.fullmatch(candidate.text) is not None
+                    or candidate_classification.kind in {"figure", "table", "warning", "heading"}
                 ):
                     break
                 candidate_text = _left_column_text(candidate)
-                if _matches_procedure_end(candidate_text, end_markers):
+                if _matches_procedure_end(candidate_text, profile.end_boundaries.markers):
                     end_evidence.setdefault(section_sequence, []).append(
                         ProcedureEndEvidence(text=candidate_text, after_step=step.number)
                     )
@@ -639,7 +709,12 @@ def _parse_page(
             step_issues.setdefault(section_sequence, []).extend(
                 f"step {step.number}: {issue}" for issue in issues
             )
-            blocks.append(EvidenceBlock(kind="step", text=text, heading_path=list(current_path)))
+            blocks.append(
+                _classified_evidence(
+                    EvidenceBlock(kind="step", text=text, heading_path=list(current_path)),
+                    content_classifications[step.number_line_index],
+                )
+            )
             continue
 
         spaced_cells = [cell.strip() for cell in re.split(r"\s{2,}", line.text) if cell.strip()]
@@ -652,11 +727,14 @@ def _parse_page(
             "table" if len(cells) >= 3 and _has_table_spacing(line, spaced_cells) else "paragraph"
         )
         blocks.append(
-            EvidenceBlock(
-                kind=kind,
-                text=line.text,
-                heading_path=list(current_path),
-                cells=cells if kind == "table" else [],
+            _classified_evidence(
+                EvidenceBlock(
+                    kind=kind,
+                    text=line.text,
+                    heading_path=list(current_path),
+                    cells=cells if kind == "table" else [],
+                ),
+                content_classifications[index],
             )
         )
         index += 1
@@ -666,6 +744,10 @@ def _parse_page(
         printed_page=printed_page,
         section=section_title,
         heading_path=current_path,
+        page_kind=classification.page_kind,
+        classification_confidence=classification.confidence,
+        classification_uncertain=classification.uncertain,
+        classification_uncertainty=classification.rejection_reason,
         text=raw_text,
         blocks=blocks,
     )
@@ -676,6 +758,19 @@ def _parse_page(
         end_evidence=end_evidence,
         section_paths=section_paths,
         document_id=source_id,
+    )
+
+
+def _classified_evidence(
+    block: EvidenceBlock,
+    classification: BlockClassification,
+) -> EvidenceBlock:
+    return block.model_copy(
+        update={
+            "classified_kind": classification.kind,
+            "classification_confidence": classification.confidence,
+            "classification_uncertainty": classification.uncertainty,
+        }
     )
 
 
@@ -702,6 +797,69 @@ def _positioned_lines(page: Any) -> list[_Line]:
     return lines
 
 
+def _page_layout(
+    page: Any,
+    lines: list[_Line],
+    *,
+    document_id: str,
+    physical_page: int,
+    profile: DocumentProfile,
+) -> LayoutStageResult:
+    page_width = float(page.mediabox.width)
+    page_height = float(page.mediabox.height)
+    spans: list[LayoutSpan] = []
+    for index, line in enumerate(lines):
+        left = min(fragment.x for fragment in line.fragments)
+        right = max(fragment.x + max(4.0, len(fragment.text) * 5.0) for fragment in line.fragments)
+        spans.append(
+            LayoutSpan(
+                span_id=f"{document_id}:p{physical_page}:s{index}",
+                document_id=document_id,
+                physical_page=physical_page,
+                text=line.text,
+                box=_normalized_box(
+                    left,
+                    right,
+                    line.y - 2.0,
+                    line.y + 8.0,
+                    page_width,
+                    page_height,
+                ),
+            )
+        )
+    return LayoutStageResult(
+        document_id=document_id,
+        physical_page=physical_page,
+        columns=profile.layout.columns,
+        spans=spans,
+        reading_order=[span.span_id for span in spans],
+        languages=(
+            [region.language for region in profile.language.regions]
+            or [profile.language.primary_language]
+        ),
+    )
+
+
+def _normalized_box(
+    x_min: float,
+    x_max: float,
+    y_min: float,
+    y_max: float,
+    page_width: float,
+    page_height: float,
+) -> NormalizedBox:
+    safe_x_min = min(0.999, max(0.0, x_min / page_width))
+    safe_x_max = min(1.0, max(safe_x_min + 0.001, x_max / page_width))
+    safe_y_min = min(0.999, max(0.0, y_min / page_height))
+    safe_y_max = min(1.0, max(safe_y_min + 0.001, y_max / page_height))
+    return NormalizedBox(
+        x_min=safe_x_min,
+        y_min=safe_y_min,
+        x_max=safe_x_max,
+        y_max=safe_y_max,
+    )
+
+
 def _printed_page_and_title(text: str, physical_page: int) -> tuple[int, str]:
     match = re.match(r"^(\d{1,3})(?:\s+|(?=[A-Z]))(.+)$", text)
     if match is None:
@@ -716,13 +874,22 @@ def _matches_procedure_end(text: str, markers: Sequence[str]) -> bool:
     )
 
 
-def _step_starts(lines: list[_Line]) -> list[_StepStart]:
+def _step_starts(lines: list[_Line], *, allowed: set[int] | None = None) -> list[_StepStart]:
     starts: list[_StepStart] = []
     linked_content: set[int] = set()
     for index, line in enumerate(lines):
+        if allowed is not None and index not in allowed:
+            continue
         inline = INLINE_STEP.match(line.text)
         if inline is not None:
-            starts.append(_StepStart(int(inline.group(1)), index, inline.group(2).strip()))
+            starts.append(
+                _StepStart(
+                    int(inline.group(1)),
+                    index,
+                    index,
+                    inline.group(2).strip(),
+                )
+            )
             continue
         if not STEP_NUMBER.fullmatch(line.text) or line.x > 70:
             continue
@@ -740,6 +907,7 @@ def _step_starts(lines: list[_Line]) -> list[_StepStart]:
             starts.append(
                 _StepStart(
                     int(line.text),
+                    index,
                     content_index,
                     _left_column_text(lines[content_index]),
                 )

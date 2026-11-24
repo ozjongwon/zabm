@@ -10,7 +10,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-PARSER_VERSION = "pdf-ingestion-v1"
+PARSER_VERSION = "pdf-ingestion-v2"
 PROFILE_SCHEMA_VERSION = "1"
 SUPPORTED_PROFILE_VERSIONS = frozenset({"1"})
 DEFAULT_INGESTION_PROFILES = (
@@ -24,6 +24,7 @@ PageKind = Literal[
     "contact",
     "legal",
     "advertisement",
+    "navigation",
     "table",
     "figure",
     "warning",
@@ -312,6 +313,7 @@ class PageBlockClassificationResult(_ContractModel):
     document_id: str
     physical_page: int = Field(ge=1)
     page_kind: PageKind
+    confidence: float = Field(ge=0, le=1)
     blocks: list[BlockClassification]
     uncertain: bool
     rejection_reason: str | None = None

@@ -17,8 +17,31 @@ from test_cli_procedure import run_cli
 CORPUS = load_corpus()
 CASES = {case["id"]: case for case in CORPUS["cases"]}
 KNOWN_GAP_REASONS = {
-    "03": "ticket 03 page and block classification is not implemented yet",
     "04": "ticket 04 layout-aware spans and fonts is not implemented yet",
+}
+EXPECTED_PAGE_KINDS = {
+    "cover-page": "cover",
+    "contents-page": "contents",
+    "dotted-contents-page": "contents",
+    "index-page": "index",
+    "contact-page": "contact",
+    "legal-page": "legal",
+    "advertisement-page": "advertisement",
+    "navigation-page": "navigation",
+    "torque-table-page": "table",
+    "figure-only-page": "figure",
+    "warning-page": "warning",
+    "paragraph-page": "paragraph",
+    "single-column": "procedure-step",
+    "two-column": "procedure-step",
+    "uncertain-page": "unknown",
+}
+EXPECTED_BLOCK_KINDS = {
+    "single-column": {"heading", "warning", "procedure-step"},
+    "two-column": {"heading", "warning", "procedure-step", "figure"},
+    "torque-table-page": {"heading", "table"},
+    "contents-page": {"heading", "paragraph"},
+    "paragraph-page": {"heading", "paragraph"},
 }
 
 
@@ -35,11 +58,19 @@ def test_corpus_contract_names_every_required_layout_and_page_kind() -> None:
         "two_column_procedures",
         "multilingual_multi_column_pages",
         "contents_pages",
+        "index_pages",
+        "advertisement_pages",
+        "navigation_pages",
+        "uncertain_pages",
         "torque_table_pages",
+        "mixed_table_and_procedure",
         "contact_information_pages",
         "legal_pages",
         "cover_pages",
         "figure_only_pages",
+        "warning_pages",
+        "paragraph_pages",
+        "magura_false_positives",
         "repeated_headers",
         "warnings",
         "page_numbers",
@@ -106,6 +137,53 @@ def test_corpus_pdf_generation_is_deterministic(tmp_path: Path) -> None:
     assert first.profile_path.read_bytes() == second.profile_path.read_bytes()
 
 
+def test_corpus_records_page_and_block_classifications(
+    corpus_workspace: CorpusWorkspace,
+) -> None:
+    catalog = read_catalog(corpus_workspace)
+    pages_by_document = {
+        source["document_id"]: source["pages"]
+        for source in catalog["sources"]
+        if source["document_id"] in EXPECTED_PAGE_KINDS
+    }
+
+    assert {
+        document_id: source_pages[0]["page_kind"]
+        for document_id, source_pages in pages_by_document.items()
+    } == EXPECTED_PAGE_KINDS
+    for source_pages in pages_by_document.values():
+        for page in source_pages:
+            assert 0 <= page["classification_confidence"] <= 1
+            if page["page_kind"] == "unknown":
+                assert page["classification_uncertain"] is True
+                assert page["classification_uncertainty"]
+            else:
+                assert page["classification_uncertain"] is False
+    for document_id, expected_kinds in EXPECTED_BLOCK_KINDS.items():
+        blocks = [block for page in pages_by_document[document_id] for block in page["blocks"]]
+        assert {block["classified_kind"] for block in blocks} >= expected_kinds
+
+
+def test_page_furniture_is_retained_but_not_classified_as_steps(
+    corpus_workspace: CorpusWorkspace,
+) -> None:
+    catalog = read_catalog(corpus_workspace)
+    page = next(
+        page
+        for source in catalog["sources"]
+        if source["document_id"] == "single-column"
+        for page in source["pages"]
+        if page["physical_page"] == 1
+    )
+
+    assert "Release the hub clamp before disassembly." in page["text"]
+    assert page["text"].strip().endswith("12")
+    assert all(
+        block["classified_kind"] != "procedure-step" or block["text"].strip() != "12"
+        for block in page["blocks"]
+    )
+
+
 def test_two_column_completion_requires_the_declarative_profile(
     tmp_path: Path,
 ) -> None:
@@ -132,6 +210,50 @@ def test_two_column_completion_requires_the_declarative_profile(
     match = inspection["matches"][0]
     assert match["complete"] is False
     assert any("procedure end was not found" in issue for issue in match["validation_issues"])
+
+
+def test_profile_page_classification_exception_fails_closed_for_procedures(
+    tmp_path: Path,
+) -> None:
+    workspace = materialize_corpus(tmp_path)
+    profiles = json.loads(workspace.profile_path.read_text(encoding="utf-8"))
+    two_column = next(
+        profile for profile in profiles["profiles"] if profile["id"] == "two-column-en"
+    )
+    two_column["page_classification"]["exceptions"] = [
+        {
+            "physical_page": 1,
+            "kind": "table",
+            "reason": "Maintainer-reviewed exception for this layout.",
+        }
+    ]
+    workspace.profile_path.write_text(json.dumps(profiles), encoding="utf-8")
+
+    ingest_corpus(workspace)
+    catalog = read_catalog(workspace)
+    page = next(
+        page
+        for source in catalog["sources"]
+        if source["document_id"] == "two-column"
+        for page in source["pages"]
+    )
+
+    assert page["page_kind"] == "table"
+    assert page["classification_confidence"] == 1.0
+    assert page["classification_uncertain"] is False
+    assert page["blocks"][0]["classification_uncertainty"].startswith(
+        "profile page classification exception:"
+    )
+    result = run_cli(
+        "evidence",
+        "What are the steps to bleed the brake?",
+        "--data-dir",
+        str(workspace.data_dir),
+        "--json",
+    )
+    assert result.returncode == 0, result.stderr
+    inspection: dict[str, Any] = json.loads(result.stdout)
+    assert inspection["matches"] == []
 
 
 def _assert_evidence_case(
