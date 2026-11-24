@@ -1,4 +1,4 @@
-.PHONY: install install-runtime health download ingest smoke coverage evaluation-set evaluation evaluation-fixture acceptance lint typecheck test verify
+.PHONY: install install-runtime runtime-server runtime-models runtime-smoke health download ingest smoke coverage evaluation-set evaluation evaluation-fixture acceptance lint typecheck test verify
 
 PYTHON := .venv/bin/python
 RUFF := .venv/bin/ruff
@@ -11,7 +11,16 @@ install:
 	./scripts/install-dev.sh
 
 install-runtime:
-	./scripts/install-dev.sh --profile runtime
+	./scripts/install-runtime.sh
+
+runtime-server:
+	./scripts/start-runtime-server.sh
+
+runtime-models:
+	./scripts/fetch-runtime-models.sh
+
+runtime-smoke:
+	./scripts/runtime-smoke.sh
 
 health:
 	$(PYTHON) -m zabm health

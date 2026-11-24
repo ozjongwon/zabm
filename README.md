@@ -21,15 +21,38 @@ result is determined by the lock files rather than earlier workspace state.
 Use `--dry-run` to validate platform and dependency inputs without changing the
 machine.
 
-A runtime-only environment can be prepared with:
+Install the complete target runtime on a clean Debian 13 or Ubuntu 24.04
+x86_64 machine with:
 
 ```bash
-./scripts/install-dev.sh --profile runtime
+./scripts/install-runtime.sh
 ```
 
-The runtime profile installs only `requirements/runtime.lock`. Development,
-test, and evaluation dependencies stay in separate lock files and are installed
-only by the development profile.
+The target installer uses only `requirements/runtime.lock`, installs a pinned
+Ollama OpenAI-compatible server, fetches hash-verified model weights outside
+the repository, rebuilds the frozen evidence stores, and verifies the CLI, web
+chat, local chat and embedding provider, and one supported answer. Use
+`--dry-run` to inspect the complete plan without changing the machine.
+
+Model weights live under `${XDG_DATA_HOME:-$HOME/.local/share}/zabm-runtime/models`
+and can be fetched or re-verified without reinstalling the runtime:
+
+```bash
+./scripts/fetch-runtime-models.sh
+```
+
+The installed `zabm-runtime` launcher starts the local server when needed and
+delegates to the same locked CLI:
+
+```bash
+zabm-runtime ask \
+  "What torque should I use for the RockShox Reverb Standard Remote clamp bolt?"
+zabm-runtime web --data-dir .zabm
+```
+
+Run `./scripts/runtime-smoke.sh` after a reboot or service change. See
+[Target runtime acceptance](docs/target-runtime-acceptance.md) for the clean
+host procedure and evidence to record.
 
 ## Checks
 
@@ -644,11 +667,11 @@ those documents.
 
 ## NVIDIA prerequisite
 
-The installer detects `nvidia-smi` but never installs, upgrades, or replaces the
-kernel GPU driver. If a machine has NVIDIA hardware and `nvidia-smi` is missing,
-install the NVIDIA driver from the Debian or Ubuntu packages recommended for
-that kernel, reboot, and verify `nvidia-smi` before running GPU model or
-embedding workloads. CPU-only development can proceed without it.
+The target installer validates `nvidia-smi -L` but never installs, upgrades, or
+replaces the kernel GPU driver. If a machine has NVIDIA hardware and
+`nvidia-smi` is missing or cannot see a GPU, install the NVIDIA driver from the
+Debian or Ubuntu packages recommended for that kernel, reboot, and verify
+`nvidia-smi -L`. The local server falls back to CPU when the driver is absent.
 
 ## Environment changes
 

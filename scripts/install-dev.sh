@@ -11,7 +11,14 @@ readonly UV_INSTALL_DIR="${HOME:?HOME must be set}/.local/bin"
 readonly VENV_DIR="${REPO_ROOT}/.venv"
 readonly REQUIREMENTS_DIR="${REPO_ROOT}/requirements"
 
-readonly APT_PACKAGES=(
+readonly RUNTIME_APT_PACKAGES=(
+  ca-certificates
+  curl
+  libgomp1
+  zstd
+)
+
+readonly DEVELOPMENT_APT_PACKAGES=(
   build-essential
   ca-certificates
   curl
@@ -28,6 +35,7 @@ DRY_RUN=false
 UV_BIN=""
 VENV_PYTHON=""
 TEMP_DIR=""
+APT_PACKAGES=()
 
 usage() {
   cat <<'EOF'
@@ -156,16 +164,31 @@ validate_platform() {
 
 check_inputs() {
   local path
+  local required_inputs=(
+    "${REPO_ROOT}/pyproject.toml"
+    "${REPO_ROOT}/.python-version"
+    "${REQUIREMENTS_DIR}/runtime.lock"
+  )
 
-  for path in \
-    "${REPO_ROOT}/pyproject.toml" \
-    "${REPO_ROOT}/.python-version" \
-    "${REQUIREMENTS_DIR}/runtime.lock" \
-    "${REQUIREMENTS_DIR}/development.lock" \
-    "${REQUIREMENTS_DIR}/test.lock" \
-    "${REQUIREMENTS_DIR}/evaluation.lock"; do
+  if [[ "${PROFILE}" == "development" ]]; then
+    required_inputs+=(
+      "${REQUIREMENTS_DIR}/development.lock"
+      "${REQUIREMENTS_DIR}/test.lock"
+      "${REQUIREMENTS_DIR}/evaluation.lock"
+    )
+  fi
+
+  for path in "${required_inputs[@]}"; do
     [[ -f "${path}" ]] || die "required installer input is missing: ${path#"${REPO_ROOT}/"}"
   done
+}
+
+select_apt_packages() {
+  if [[ "${PROFILE}" == "runtime" ]]; then
+    APT_PACKAGES=("${RUNTIME_APT_PACKAGES[@]}")
+  else
+    APT_PACKAGES=("${DEVELOPMENT_APT_PACKAGES[@]}")
+  fi
 }
 
 check_nvidia_prerequisites() {
@@ -345,6 +368,7 @@ print_plan() {
 main() {
   parse_args "$@"
   validate_platform
+  select_apt_packages
   check_inputs
   check_nvidia_prerequisites
 

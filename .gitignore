@@ -22,4 +22,5 @@ data/cache/
 var/
 artifacts/
 .zabm/
+.runtime/
 pdf-doc/
