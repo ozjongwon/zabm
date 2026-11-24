@@ -35,4 +35,8 @@
   and the large Ollama archive plus extraction workspace now live there
   instead of the often-small `/tmp` filesystem. `--runtime-home` remains an
   explicit override for test or exceptional deployments.
+- 2026-11-25: The installer now provisions an absent `/home/ollama` through
+  `sudo` and assigns it to the invoking user. It refuses to change ownership
+  of a pre-existing non-writable `/home/ollama` and reports the permission
+  problem before downloading.
 

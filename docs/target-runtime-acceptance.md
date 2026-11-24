@@ -18,7 +18,9 @@ weights, or generated evidence.
 - At least 12 GiB free on the runtime-home filesystem. The installer checks
   this before downloading and keeps the large Ollama archive and extraction
   workspace there instead of using `/tmp`.
-- A writable `/home/ollama` directory for the Ollama server and model weights.
+- `/home/ollama` for the Ollama server and model weights. The installer creates
+  it through `sudo` when absent and assigns it to the invoking user. A
+  pre-existing directory must already be writable by that user.
 
 Inspect the plan first:
 

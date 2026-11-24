@@ -605,12 +605,31 @@ print_plan() {
 check_disk_space() {
   local available_gib
   local available_kib
+  local current_group
+  local current_user
   local required_kib
 
-  mkdir -p "${RUNTIME_HOME}" "${STATE_DIR}" ||
-    die "cannot create runtime home ${RUNTIME_HOME}; choose a writable path with --runtime-home"
-  [[ -w "${RUNTIME_HOME}" && -w "${STATE_DIR}" ]] ||
-    die "${RUNTIME_HOME} must be writable by the user running the installer; run as the Ollama owner or provision that directory with appropriate ownership"
+  current_user="$(id -u)"
+  current_group="$(id -g)"
+  if [[ ! -d "${RUNTIME_HOME}" ]]; then
+    if ! mkdir -p "${RUNTIME_HOME}" 2>/dev/null; then
+      if ((EUID == 0)); then
+        die "cannot create runtime home ${RUNTIME_HOME}"
+      elif command -v sudo >/dev/null 2>&1; then
+        log "creating ${RUNTIME_HOME} and assigning it to $(id -un)"
+        run sudo install -d -m 0755 -o "${current_user}" -g "${current_group}" "${RUNTIME_HOME}" ||
+          die "sudo could not create runtime home ${RUNTIME_HOME}"
+      else
+        die "cannot create ${RUNTIME_HOME}; run as root or install sudo and retry"
+      fi
+    fi
+  fi
+  [[ -w "${RUNTIME_HOME}" ]] ||
+    die "${RUNTIME_HOME} must be writable by the user running the installer; provision ownership with sudo or run as its owner"
+  mkdir -p "${STATE_DIR}" ||
+    die "cannot create the state directory under ${RUNTIME_HOME}"
+  [[ -w "${STATE_DIR}" ]] ||
+    die "${STATE_DIR} must be writable by the user running the installer"
   available_kib="$(df -Pk "${RUNTIME_HOME}" | awk 'NR == 2 {print $4}')"
   required_kib=$((MIN_RUNTIME_FREE_GIB * 1024 * 1024))
   [[ -n "${available_kib}" ]] ||
