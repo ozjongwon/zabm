@@ -237,6 +237,22 @@ def test_multilingual_spans_and_steps_remain_language_isolated(
     )
 
 
+def test_multi_column_procedure_evidence_never_joins_distinct_columns(
+    corpus_workspace: CorpusWorkspace,
+) -> None:
+    catalog = read_catalog(corpus_workspace)
+    procedure = next(
+        procedure for procedure in catalog["procedures"] if procedure["document_id"] == "two-column"
+    )
+
+    for step in procedure["steps"]:
+        evidence_spans = step["evidence"]["spans"]
+        assert len({span["column_id"] for span in evidence_spans}) == 1
+        assert all(span["span_id"] in step["evidence"]["span_ids"] for span in evidence_spans)
+        for warning in step["warnings"]:
+            assert len({span["column_id"] for span in warning["evidence"]["spans"]}) == 1
+
+
 def test_font_weight_and_style_hints_are_preserved_in_spans(tmp_path: Path) -> None:
     workspace = materialize_corpus(tmp_path)
     document_id = "styled-layout"
@@ -531,7 +547,10 @@ def _assert_evidence_case(
         {
             "number": step["number"],
             "text": step["text"],
-            "warnings": step["warnings"],
+            "warnings": [
+                {"severity": warning["severity"], "text": warning["text"]}
+                for warning in step["warnings"]
+            ],
         }
         for step in match["steps"]
     ] == expected["steps"]

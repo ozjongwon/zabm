@@ -37,6 +37,8 @@ from zabm.ingestion import (
     PdfPageObservation,
     RejectedStepCandidate,
     SelectedProfileProvenance,
+    SourceEvidenceSpan,
+    SourceExcerpt,
     StepRejectionReason,
     load_ingestion_profiles,
     normalize_pdf_text,
@@ -55,8 +57,6 @@ from zabm.response import (
     StoredCitation,
 )
 from zabm.specifications import (
-    CitationTarget,
-    citation_issues,
     file_sha256,
     load_source_manifest,
     write_json,
@@ -199,6 +199,18 @@ class EvidenceBlock(BaseModel):
     classification_uncertainty: str | None = None
 
 
+class StoredProcedureWarning(ProcedureWarning):
+    evidence: SourceExcerpt
+
+
+class StoredProcedureStep(BaseModel):
+    number: int
+    text: str
+    warnings: list[StoredProcedureWarning] = Field(default_factory=list[StoredProcedureWarning])
+    citation: StoredCitation
+    evidence: SourceExcerpt
+
+
 class RetrievalPage(BaseModel):
     physical_page: int
     printed_page: int
@@ -245,7 +257,7 @@ class StoredProcedure(BaseModel):
     end_boundary: str | None
     end_strategy: EndBoundaryStrategy | None
     page_numbers: list[int]
-    steps: list[ProcedureStep]
+    steps: list[StoredProcedureStep]
     end_evidence: list[ProcedureEndEvidence] = Field(default_factory=list[ProcedureEndEvidence])
     completeness_notes: list[str] = Field(default_factory=list[str])
     validation_issues: list[str] = Field(default_factory=list[str])
@@ -285,7 +297,7 @@ class ProcedureEvidenceMatch(BaseModel):
     complete: bool
     validation_issues: list[str]
     pages: list[RetrievalPage]
-    steps: list[ProcedureStep]
+    steps: list[StoredProcedureStep]
 
 
 class ProcedureEvidenceInspection(BaseModel):
@@ -338,6 +350,201 @@ class _Line:
         return " ".join(span.raw_text for span in self.spans)
 
 
+def _source_excerpt(
+    spans: list[LayoutSpan],
+    *,
+    printed_page: int,
+    section: str,
+    heading_path: list[str],
+) -> SourceExcerpt:
+    raw_text = _excerpt_raw_text(spans)
+    first = spans[0]
+    return SourceExcerpt(
+        document_id=first.document_id,
+        physical_page=first.physical_page,
+        printed_page=printed_page,
+        section=section,
+        heading_path=heading_path,
+        span_ids=[span.span_id for span in spans],
+        spans=[_source_evidence_span(span) for span in spans],
+        raw_text=raw_text,
+        normalized_text=normalize_pdf_text(raw_text),
+    )
+
+
+def _source_evidence_span(span: LayoutSpan) -> SourceEvidenceSpan:
+    return SourceEvidenceSpan(
+        span_id=span.span_id,
+        line_id=span.line_id,
+        document_id=span.document_id,
+        physical_page=span.physical_page,
+        column_id=span.column_id,
+        language=span.language,
+        raw_text=span.raw_text,
+        normalized_text=span.text,
+        box=span.box,
+        page_box=span.page_box,
+    )
+
+
+def _excerpt_raw_text(spans: Sequence[LayoutSpan | SourceEvidenceSpan]) -> str:
+    line_groups: list[list[LayoutSpan | SourceEvidenceSpan]] = []
+    for span in spans:
+        if not line_groups or line_groups[-1][0].line_id != span.line_id:
+            line_groups.append([span])
+        else:
+            line_groups[-1].append(span)
+    return "\n".join(" ".join(span.raw_text for span in line_spans) for line_spans in line_groups)
+
+
+def _source_excerpt_issues(
+    excerpt: SourceExcerpt,
+    citation: StoredCitation,
+    *,
+    source_document_id: str,
+    source_spans: Sequence[LayoutSpan] | None,
+    source_printed_page: int | None,
+    expected_text: str,
+    expected_kind: Literal["step", "warning"],
+    expected_heading_path: Sequence[str],
+) -> list[str]:
+    issues: list[str] = []
+    if excerpt.document_id != source_document_id:
+        issues.append("evidence excerpt document does not match its source")
+    if citation.document_id != source_document_id:
+        issues.append("citation document does not match its source")
+    if citation.document_id != excerpt.document_id:
+        issues.append("citation document does not match the evidence excerpt")
+    if citation.physical_page != excerpt.physical_page:
+        issues.append("citation physical page does not match the evidence excerpt")
+    if citation.printed_page != excerpt.printed_page:
+        issues.append("citation printed page does not match the evidence excerpt")
+    if source_spans is None:
+        issues.append(f"physical page {citation.physical_page} has no catalog spans")
+    elif source_printed_page != citation.printed_page:
+        issues.append(
+            f"printed page {citation.printed_page} does not match source page {source_printed_page}"
+        )
+    if citation.section != excerpt.section:
+        issues.append("citation section does not match the evidence excerpt")
+    if list(excerpt.heading_path) != list(expected_heading_path):
+        issues.append("evidence excerpt heading path does not match its procedure")
+
+    excerpt_span_ids = [span.span_id for span in excerpt.spans]
+    if excerpt.span_ids != excerpt_span_ids:
+        issues.append("evidence excerpt span identifiers do not match its spans")
+    if len(set(excerpt.span_ids)) != len(excerpt.span_ids):
+        issues.append("evidence excerpt repeats a source span")
+    if len({span.column_id for span in excerpt.spans}) > 1:
+        issues.append("evidence excerpt crosses source columns")
+    languages = {span.language for span in excerpt.spans if span.language is not None}
+    if len(languages) > 1:
+        issues.append("evidence excerpt mixes source languages")
+
+    resolved_spans: list[LayoutSpan] = []
+    if source_spans is not None:
+        spans_by_id = {span.span_id: span for span in source_spans}
+        positions = {span.span_id: index for index, span in enumerate(source_spans)}
+        for evidence_span in excerpt.spans:
+            source_span = spans_by_id.get(evidence_span.span_id)
+            if source_span is None:
+                issues.append(
+                    f"evidence excerpt span {evidence_span.span_id} does not resolve "
+                    "on the cited physical page"
+                )
+                continue
+            expected_span = _source_evidence_span(source_span)
+            if evidence_span != expected_span:
+                issues.append(
+                    f"evidence excerpt span {evidence_span.span_id} does not match "
+                    "its catalog source"
+                )
+            else:
+                resolved_spans.append(source_span)
+        resolved_positions = [
+            positions[span.span_id] for span in resolved_spans if span.span_id in positions
+        ]
+        if resolved_positions != sorted(set(resolved_positions)):
+            issues.append("evidence excerpt spans do not follow source reading order")
+
+    resolved_raw_text = _excerpt_raw_text(resolved_spans or excerpt.spans)
+    if excerpt.raw_text != resolved_raw_text:
+        issues.append("evidence excerpt raw text does not resolve from its source spans")
+    if excerpt.normalized_text != normalize_pdf_text(resolved_raw_text):
+        issues.append("evidence excerpt normalized text does not resolve from its source spans")
+
+    expected_normalized_text = normalize_pdf_text(expected_text)
+    if expected_kind == "step":
+        step_text = re.sub(r"^\d{1,2}\s+", "", excerpt.normalized_text, count=1)
+        if step_text != expected_normalized_text:
+            issues.append("evidence excerpt does not resolve to the stored step text")
+    else:
+        raw_lines = resolved_raw_text.splitlines()
+        heading = raw_lines[0] if raw_lines else ""
+        if _warning_severity(heading) is None:
+            issues.append("warning evidence does not resolve to a warning heading")
+        warning_body = normalize_pdf_text("\n".join(raw_lines[1:]))
+        if warning_body != expected_normalized_text:
+            issues.append("evidence excerpt does not resolve to the stored warning text")
+    return issues
+
+
+def resolve_procedure_evidence(
+    procedure: StoredProcedure,
+    sources: Iterable[RetrievalSource],
+) -> StoredProcedure:
+    source_pages: dict[int, RetrievalPage] = {}
+    for source in sources:
+        if source.document_id == procedure.document_id:
+            source_pages = {page.physical_page: page for page in source.pages}
+            break
+    accepted_steps: list[StoredProcedureStep] = []
+    evidence_issues: list[str] = []
+    for step in procedure.steps:
+        page = source_pages.get(step.citation.physical_page)
+        step_issues = _source_excerpt_issues(
+            step.evidence,
+            step.citation,
+            source_document_id=procedure.document_id,
+            source_spans=page.spans if page is not None else None,
+            source_printed_page=page.printed_page if page is not None else None,
+            expected_text=step.text,
+            expected_kind="step",
+            expected_heading_path=procedure.heading_path,
+        )
+        for warning in step.warnings:
+            step_issues.extend(
+                _source_excerpt_issues(
+                    warning.evidence,
+                    step.citation,
+                    source_document_id=procedure.document_id,
+                    source_spans=page.spans if page is not None else None,
+                    source_printed_page=page.printed_page if page is not None else None,
+                    expected_text=warning.text,
+                    expected_kind="warning",
+                    expected_heading_path=procedure.heading_path,
+                )
+            )
+        if step_issues:
+            evidence_issues.extend(
+                f"step {step.number}: {issue}" for issue in dict.fromkeys(step_issues)
+            )
+        else:
+            accepted_steps.append(step)
+
+    if not evidence_issues:
+        return procedure
+    return procedure.model_copy(
+        update={
+            "steps": accepted_steps,
+            "validation_issues": list(
+                dict.fromkeys([*procedure.validation_issues, *evidence_issues])
+            ),
+        },
+        deep=True,
+    )
+
+
 @dataclass
 class _StepStart:
     number: int
@@ -348,7 +555,7 @@ class _StepStart:
 
 @dataclass
 class _ParsedStep:
-    step: ProcedureStep
+    step: StoredProcedureStep
     section_sequence: int
     section_title: str
     heading_path: list[str]
@@ -458,9 +665,11 @@ def ingest_retrieval(
             )
         )
         for procedure in _group_procedures(parsed_pages, selected_profile.end_boundaries):
-            procedures.append(procedure)
+            resolved_procedure = resolve_procedure_evidence(procedure, sources)
+            procedures.append(resolved_procedure)
             validation_issues.extend(
-                f"{procedure.procedure_id}: {issue}" for issue in procedure.validation_issues
+                f"{resolved_procedure.procedure_id}: {issue}"
+                for issue in resolved_procedure.validation_issues
             )
 
     ingestion_provenance = IngestionProvenance(
@@ -556,8 +765,8 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
             source_pack_id=catalog.source_pack_id,
         )
 
-    procedure = matches[0]
-    issues = procedure.validation_issues + procedure_completeness_issues(procedure)
+    procedure = resolve_procedure_evidence(matches[0], catalog.sources)
+    issues = procedure_completeness_issues(procedure)
     if issues:
         return _not_found(
             f"only partial procedure evidence was available: {issues[0]}",
@@ -593,7 +802,18 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
         procedure=ProcedureAnswer(
             title=procedure.title,
             heading_path=procedure.heading_path,
-            steps=procedure.steps,
+            steps=[
+                ProcedureStep(
+                    number=step.number,
+                    text=step.text,
+                    warnings=[
+                        ProcedureWarning(severity=warning.severity, text=warning.text)
+                        for warning in step.warnings
+                    ],
+                    citation=step.citation,
+                )
+                for step in procedure.steps
+            ],
         ),
         citations=citations,
         source_pack_id=catalog.source_pack_id,
@@ -618,7 +838,8 @@ def inspect_procedure_evidence(question: str, data_dir: Path) -> ProcedureEviden
     for procedure in catalog.procedures:
         if not _matches_question(procedure.title, question):
             continue
-        issues = procedure.validation_issues + procedure_completeness_issues(procedure)
+        resolved = resolve_procedure_evidence(procedure, catalog.sources)
+        issues = procedure_completeness_issues(resolved)
         matches.append(
             ProcedureEvidenceMatch(
                 procedure_id=procedure.procedure_id,
@@ -630,7 +851,7 @@ def inspect_procedure_evidence(question: str, data_dir: Path) -> ProcedureEviden
                     pages_by_source[procedure.document_id][page_number]
                     for page_number in procedure.page_numbers
                 ],
-                steps=procedure.steps,
+                steps=resolved.steps,
             )
         )
     return ProcedureEvidenceInspection(
@@ -747,8 +968,8 @@ def _parse_page(
     current_level = initial_heading.level if initial_heading is not None else 1
     section_sequence = 0
     section_paths = {section_sequence: list(current_path)}
-    current_step: ProcedureStep | None = None
-    pending_warnings: list[ProcedureWarning] = []
+    current_step: StoredProcedureStep | None = None
+    pending_warnings: list[StoredProcedureWarning] = []
     emitted_numbering_issues: set[int] = set()
 
     allowed_step_lines: set[int] = (
@@ -864,7 +1085,7 @@ def _parse_page(
         warning_severity = _warning_severity(line.text)
         if warning_severity is not None:
             warning_classification = content_classifications[index]
-            warning_text, index = _collect_warning(
+            warning_text, index, warning_spans = _collect_warning(
                 content_lines,
                 index,
                 column_id=line.column_id,
@@ -880,17 +1101,56 @@ def _parse_page(
                     warning_classification,
                 )
             )
-            warning = ProcedureWarning(severity=warning_severity, text=warning_text)
+            warning = StoredProcedureWarning(
+                severity=warning_severity,
+                text=warning_text,
+                evidence=_source_excerpt(
+                    warning_spans,
+                    printed_page=printed_page,
+                    section=current_title,
+                    heading_path=list(current_path),
+                ),
+            )
+            warning_issues = _source_excerpt_issues(
+                warning.evidence,
+                StoredCitation(
+                    document_id=source_id,
+                    title=source_title,
+                    manufacturer=manufacturer,
+                    printed_page=printed_page,
+                    physical_page=physical_page,
+                    section=current_title,
+                    retrieval_date=retrieval_date,
+                    source_manifest_version=manifest_version,
+                ),
+                source_document_id=source_id,
+                source_spans=layout.spans,
+                source_printed_page=printed_page,
+                expected_text=warning_text,
+                expected_kind="warning",
+                expected_heading_path=current_path,
+            )
             if current_step is None:
-                pending_warnings.append(warning)
+                if not warning_issues:
+                    pending_warnings.append(warning)
+                else:
+                    pending_warnings.clear()
             else:
-                current_step.warnings.append(warning)
+                if warning_issues:
+                    step_issues.setdefault(section_sequence, []).extend(
+                        f"step {current_step.number}: {issue}" for issue in warning_issues
+                    )
+                    steps[:] = [parsed for parsed in steps if parsed.step is not current_step]
+                    current_step = None
+                else:
+                    current_step.warnings.append(warning)
             continue
 
         step = start_by_index.get(index)
         if step is not None:
             step_column_id = content_lines[step.line_index].column_id
             body_lines: list[str] = [step.text]
+            body_spans: list[LayoutSpan] = list(content_lines[step.line_index].spans)
             index += 1
             while index < len(content_lines) and index not in start_by_index:
                 candidate = content_lines[index]
@@ -936,6 +1196,7 @@ def _parse_page(
                     and not NAVIGATION_CUE.match(candidate_text)
                 ):
                     body_lines.append(candidate_text)
+                    body_spans.extend(candidate.spans)
                 index += 1
             text = normalize_pdf_text("\n".join(body_lines))
             citation = StoredCitation(
@@ -948,22 +1209,61 @@ def _parse_page(
                 retrieval_date=retrieval_date,
                 source_manifest_version=manifest_version,
             )
-            issues = citation_issues(
-                CitationTarget(
-                    printed_page=printed_page,
-                    physical_page=physical_page,
-                    section=current_title,
-                ),
-                [text, *(warning.text for warning in pending_warnings)],
-                [""] * (physical_page - 1) + [normalize_pdf_text(raw_text)],
+            evidence = _source_excerpt(
+                body_spans,
+                printed_page=printed_page,
+                section=current_title,
+                heading_path=list(current_path),
             )
-            procedure_step = ProcedureStep(
+            procedure_step = StoredProcedureStep(
                 number=step.number,
                 text=text,
                 warnings=list(pending_warnings),
                 citation=citation,
+                evidence=evidence,
+            )
+            issues = _source_excerpt_issues(
+                procedure_step.evidence,
+                procedure_step.citation,
+                source_document_id=source_id,
+                source_spans=layout.spans,
+                source_printed_page=printed_page,
+                expected_text=procedure_step.text,
+                expected_kind="step",
+                expected_heading_path=current_path,
             )
             pending_warnings.clear()
+            section_id = section_ids[step.number_line_index]
+            if section_id in numbering_issues and section_id not in emitted_numbering_issues:
+                step_issues.setdefault(section_sequence, []).append(numbering_issues[section_id])
+                emitted_numbering_issues.add(section_id)
+            step_issues.setdefault(section_sequence, []).extend(
+                f"step {step.number}: {issue}" for issue in issues
+            )
+            if issues:
+                logger.debug(
+                    "procedure-evidence-rejected document=%s page=%d step=%d issues=%s",
+                    source_id,
+                    physical_page,
+                    step.number,
+                    issues,
+                )
+            blocks.append(
+                _classified_evidence(
+                    EvidenceBlock(kind="step", text=text, heading_path=list(current_path)),
+                    content_classifications[step.number_line_index],
+                )
+            )
+            if issues:
+                current_step = None
+                rejected_step_candidates.append(
+                    RejectedStepCandidate(
+                        line_id=content_lines[step.number_line_index].spans[0].line_id,
+                        text=step.text,
+                        reason="evidence-mismatch",
+                    )
+                )
+                continue
             steps.append(
                 _ParsedStep(
                     step=procedure_step,
@@ -974,20 +1274,7 @@ def _parse_page(
                     section_level=current_level,
                 )
             )
-            section_id = section_ids[step.number_line_index]
-            if section_id in numbering_issues and section_id not in emitted_numbering_issues:
-                step_issues.setdefault(section_sequence, []).append(numbering_issues[section_id])
-                emitted_numbering_issues.add(section_id)
             current_step = procedure_step
-            step_issues.setdefault(section_sequence, []).extend(
-                f"step {step.number}: {issue}" for issue in issues
-            )
-            blocks.append(
-                _classified_evidence(
-                    EvidenceBlock(kind="step", text=text, heading_path=list(current_path)),
-                    content_classifications[step.number_line_index],
-                )
-            )
             continue
 
         raw_line_text = line.raw_text
@@ -1677,11 +1964,12 @@ def _collect_warning(
     *,
     column_id: str,
     markers: Sequence[str],
-) -> tuple[str, int]:
+) -> tuple[str, int, list[LayoutSpan]]:
     heading = lines[heading_index].text
     severity = _warning_severity(heading)
     assert severity is not None
     body: list[str] = []
+    evidence_spans = list(lines[heading_index].spans)
     last_y = lines[heading_index].y
     index = heading_index + 1
     while index < len(lines):
@@ -1700,9 +1988,10 @@ def _collect_warning(
         if last_y - line.y > 25:
             break
         body.append(text)
+        evidence_spans.extend(line.spans)
         last_y = line.y
         index += 1
-    return normalize_pdf_text("\n".join(body)), index
+    return normalize_pdf_text("\n".join(body)), index, evidence_spans
 
 
 def _warning_severity(text: str) -> Literal["warning", "notice"] | None:
@@ -1730,7 +2019,7 @@ def _group_procedures(
     parsed_pages: list[_PageParse],
     end_profile: EndBoundaryProfile,
 ) -> list[StoredProcedure]:
-    grouped: dict[tuple[str, str, int], list[ProcedureStep]] = {}
+    grouped: dict[tuple[str, str, int], list[StoredProcedureStep]] = {}
     paths: dict[tuple[str, str, int], list[str]] = {}
     page_numbers: dict[tuple[str, str, int], list[int]] = {}
     step_issues: dict[tuple[str, str, int], list[str]] = {}
@@ -1797,7 +2086,7 @@ def _group_procedures(
     for key in order:
         document_id, title, _ = key
         steps = grouped[key]
-        deduplicated: dict[int, ProcedureStep] = {}
+        deduplicated: dict[int, StoredProcedureStep] = {}
         issues: list[str] = []
         for step in steps:
             if step.number in deduplicated:

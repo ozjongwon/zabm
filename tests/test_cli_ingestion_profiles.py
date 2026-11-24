@@ -237,7 +237,7 @@ def test_cli_selects_a_document_profile_and_records_retrieval_provenance(
     )
 
     profile_manifest_sha256 = hashlib.sha256(profile_path.read_bytes()).hexdigest()
-    assert report["ingestion_provenance"]["parser_version"] == "pdf-ingestion-v6"
+    assert report["ingestion_provenance"]["parser_version"] == "pdf-ingestion-v7"
     assert report["ingestion_provenance"]["profile_manifest_version"] == "profiles-v1"
     assert report["ingestion_provenance"]["profile_manifest_sha256"] == profile_manifest_sha256
     assert catalog["ingestion_provenance"] == report["ingestion_provenance"]

@@ -96,9 +96,10 @@ def test_artifact_records_an_explicit_end_and_preserves_audit_text(tmp_path: Pat
     assert procedure["end_boundary"] == "This concludes the bleed procedure."
     assert procedure["end_strategy"] == "explicit-marker"
     assert procedure["completeness_notes"] == ["This concludes the bleed procedure."]
-    assert procedure["steps"][0]["warnings"] == [
-        {"severity": "warning", "text": "Do not spill hydraulic fluid."}
-    ]
+    assert [
+        {"severity": warning["severity"], "text": warning["text"]}
+        for warning in procedure["steps"][0]["warnings"]
+    ] == [{"severity": "warning", "text": "Do not spill hydraulic fluid."}]
 
     response = _ask(workspace, "What are the steps to bleed the brake?")
     assert response["status"] == "supported"
@@ -246,9 +247,10 @@ def test_warning_collection_stops_before_an_explicit_end_marker(tmp_path: Path) 
 
     procedure = catalog["procedures"][0]
     assert procedure["end_boundary"] == "End of procedure"
-    assert procedure["steps"][0]["warnings"] == [
-        {"severity": "warning", "text": "Do not spill hydraulic fluid."}
-    ]
+    assert [
+        {"severity": warning["severity"], "text": warning["text"]}
+        for warning in procedure["steps"][0]["warnings"]
+    ] == [{"severity": "warning", "text": "Do not spill hydraulic fluid."}]
 
     response = _ask(workspace, "What are the steps to bleed the brake?")
     assert response["status"] == "supported"

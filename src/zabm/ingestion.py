@@ -12,7 +12,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-PARSER_VERSION = "pdf-ingestion-v6"
+PARSER_VERSION = "pdf-ingestion-v7"
 FONTTOOLS_VERSION = package_version("fonttools")
 PYPDF_VERSION = package_version("pypdf")
 PROFILE_SCHEMA_VERSION = "1"
@@ -46,6 +46,7 @@ StepRejectionReason = Literal[
     "missing-procedure-heading",
     "numbering-discontinuous",
     "non-procedure-block",
+    "evidence-mismatch",
 ]
 ReadingOrder = Literal["left-to-right", "right-to-left"]
 EndBoundaryStrategy = Literal["explicit-marker", "section-boundary"]
@@ -353,6 +354,31 @@ class LayoutSpan(_ContractModel):
     bold: bool = False
     italic: bool = False
     language: str | None = None
+
+
+class SourceEvidenceSpan(_ContractModel):
+    span_id: str
+    line_id: str
+    document_id: str
+    physical_page: int = Field(ge=1)
+    column_id: str
+    language: str | None = None
+    raw_text: str
+    normalized_text: str
+    box: NormalizedBox
+    page_box: PageBox
+
+
+class SourceExcerpt(_ContractModel):
+    document_id: str
+    physical_page: int = Field(ge=1)
+    printed_page: int = Field(ge=1)
+    section: str = Field(min_length=1)
+    heading_path: list[str] = Field(min_length=1)
+    span_ids: list[str] = Field(min_length=1)
+    spans: list[SourceEvidenceSpan] = Field(min_length=1)
+    raw_text: str
+    normalized_text: str
 
 
 class LayoutStageResult(_ContractModel):

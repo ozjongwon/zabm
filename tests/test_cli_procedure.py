@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
@@ -68,9 +69,14 @@ def _pdf_escape(text: str) -> str:
     return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
 
-def prepare_procedure_fixture(tmp_path: Path, lines: list[str]) -> tuple[Path, Path, Path, Path]:
+def prepare_procedure_fixture(
+    tmp_path: Path,
+    lines: list[str],
+    *,
+    pdf_writer: Callable[[Path, list[str]], None] = write_fixture_pdf,
+) -> tuple[Path, Path, Path, Path]:
     source_path = tmp_path / "manual.pdf"
-    write_fixture_pdf(source_path, lines)
+    pdf_writer(source_path, lines)
     source_hash = hashlib.sha256(source_path.read_bytes()).hexdigest()
 
     manifest_path = tmp_path / "source-manifest.json"

@@ -11,6 +11,7 @@ from zabm.compatibility import CompatibilityCatalog
 from zabm.procedures import (
     RetrievalCatalog,
     procedure_completeness_issues,
+    resolve_procedure_evidence,
 )
 from zabm.response import CanonicalResponse
 from zabm.specifications import SourceRecord, SpecificationCatalog, load_source_manifest
@@ -437,7 +438,11 @@ def _source_coverage(
             else []
         )
         stored_procedures = (
-            [procedure for procedure in retrieval.procedures if procedure.document_id == source_id]
+            [
+                resolve_procedure_evidence(procedure, retrieval.sources)
+                for procedure in retrieval.procedures
+                if procedure.document_id == source_id
+            ]
             if retrieval is not None
             else []
         )
