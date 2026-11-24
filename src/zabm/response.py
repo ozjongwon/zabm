@@ -5,12 +5,52 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+EvidenceIntent = Literal["specification", "compatibility", "procedure", "out_of_scope"]
+
 
 class ProviderIdentity(BaseModel):
     provider: str
     model: str
     embedding_model: str
     configuration: str
+
+
+class RouteEntity(BaseModel):
+    kind: Literal[
+        "manufacturer",
+        "model",
+        "component",
+        "attribute",
+        "side",
+        "task",
+        "component_a",
+        "component_b",
+        "other",
+    ]
+    text: str = Field(min_length=1, max_length=200)
+
+
+class RoutingMetadata(BaseModel):
+    routing_version: str
+    strategy: Literal["model", "prototype"]
+    intent: Literal[
+        "specification",
+        "compatibility",
+        "procedure",
+        "out_of_scope",
+        "ambiguous",
+    ]
+    normalized_question: str = Field(min_length=1, max_length=1000)
+    entities: list[RouteEntity] = Field(
+        default_factory=list[RouteEntity],
+        max_length=32,
+    )
+    missing_fields: list[str] = Field(default_factory=list[str], max_length=20)
+    ambiguous_fields: list[str] = Field(default_factory=list[str], max_length=20)
+    candidate_intents: list[EvidenceIntent] = Field(
+        default_factory=list[EvidenceIntent],
+        max_length=4,
+    )
 
 
 DEFAULT_PROVIDER_IDENTITY = ProviderIdentity(
@@ -137,7 +177,13 @@ class ProcedureAnswer(BaseModel):
 class CanonicalResponse(BaseModel):
     request_id: str
     timestamp: datetime
-    response_type: Literal["specification", "compatibility", "procedure", "out_of_scope"]
+    response_type: Literal[
+        "specification",
+        "compatibility",
+        "procedure",
+        "out_of_scope",
+        "ambiguous",
+    ]
     language: Literal["en"]
     status: Literal[
         "supported",
@@ -155,4 +201,5 @@ class CanonicalResponse(BaseModel):
     conflicts: ConflictReport | None = None
     citations: list[StoredCitation] = Field(default_factory=list[StoredCitation])
     provider: ProviderIdentity = Field(default_factory=default_provider_identity)
+    routing: RoutingMetadata | None = None
     source_pack_id: str

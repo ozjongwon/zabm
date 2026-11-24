@@ -221,7 +221,7 @@ def test_cli_uses_and_records_a_configured_openai_compatible_provider(
         "embedding_model": "local-embedding-model",
         "configuration": "local-test-v1",
     }
-    assert len(requests) == 1
+    assert len(requests) == 2
     assert requests[0]["path"] == "/v1/chat/completions"
     assert requests[0]["body"]["model"] == "local-open-weight-model"
     assert requests[0]["body"]["temperature"] == 0
@@ -768,6 +768,7 @@ def download_and_ingest(
 def provider_server(
     generated: dict[str, Any] | None = None,
     *,
+    route_response: dict[str, Any] | None = None,
     response_body: bytes | None = None,
     embedding_response_body: bytes | None = None,
     embedding_status: int = 200,
@@ -805,6 +806,24 @@ def provider_server(
                 )
             elif response_body is not None:
                 payload = response_body
+            elif any(
+                "request-routing" in message.get("content", "")
+                for message in body.get("messages", [])
+            ):
+                question = json.loads(body["messages"][-1]["content"])["question"]
+                effective_route = route_response or fake_route_for_question(question)
+                payload = json.dumps(
+                    {
+                        "choices": [
+                            {
+                                "message": {
+                                    "role": "assistant",
+                                    "content": json.dumps(effective_route),
+                                }
+                            }
+                        ]
+                    }
+                ).encode()
             else:
                 assert generated is not None
                 content = json.dumps(generated)
@@ -839,3 +858,50 @@ def provider_server(
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+def fake_route_for_question(question: str) -> dict[str, Any]:
+    normalized = question.casefold()
+    out_of_scope_terms = (
+        "buy",
+        "capital",
+        "choose",
+        "commuting",
+        "firmware",
+        "helmet",
+        "photo",
+        "sizing",
+        "training",
+        "upload",
+        "web",
+        "workout",
+    )
+    if any(term in normalized for term in out_of_scope_terms):
+        intent = "out_of_scope"
+    elif any(
+        term in normalized
+        for term in ("compatible", "compatibility", "paired", "use the", "with the")
+    ):
+        intent = "compatibility"
+    elif any(
+        term in normalized
+        for term in (
+            "how do i ",
+            "how to ",
+            "procedure",
+            "steps",
+            "replace the",
+            "replace this",
+        )
+    ):
+        intent = "procedure"
+    else:
+        intent = "specification"
+    return {
+        "intent": intent,
+        "normalized_question": question,
+        "entities": [],
+        "missing_fields": [],
+        "ambiguous_fields": [],
+        "candidate_intents": [],
+    }

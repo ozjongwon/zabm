@@ -6,12 +6,13 @@ files.
 
 ## Current state
 
-- Completed in `bicycle-mechanics-assistant-v1`: tickets 02 through 11.
-- Pending in `bicycle-mechanics-assistant-v1`: tickets 01 and 12 through 19.
+- Completed in `bicycle-mechanics-assistant-v1`: tickets 02 through 11, 13, and
+  19.
+- Pending in `bicycle-mechanics-assistant-v1`: tickets 01, 12, and 14 through
+  18.
 - Completed in `general-pdf-ingestion`: tickets 01 through 12.
 - Pending in `general-pdf-ingestion`: none.
-- Ticket 13 is partially implemented in the current working tree and should be
-  completed and verified before moving to the ingestion refactor.
+- Ticket 13 is complete in commit `a7a84fa`.
 - Ticket 01 in `bicycle-mechanics-assistant-v1` still requires clean-machine
   acceptance on supported Debian and Ubuntu hosts.
 
@@ -19,7 +20,7 @@ files.
 
 | Order | Ticket | Purpose | Readiness |
 | ---: | --- | --- | --- |
-| 01 | [bicycle-mechanics-assistant-v1/13](bicycle-mechanics-assistant-v1/issues/13-remote-openai-compatible-provider.md) | Finish the partially implemented remote provider selection and contract tests. | In progress |
+| 01 | [bicycle-mechanics-assistant-v1/13](bicycle-mechanics-assistant-v1/issues/13-remote-openai-compatible-provider.md) | Finish the partially implemented remote provider selection and contract tests. | Complete |
 | 02 | [general-pdf-ingestion/01](general-pdf-ingestion/issues/01-ingestion-pipeline-and-profile-contract.md) | Define the staged ingestion contract and versioned document profiles. | Ready |
 | 03 | [general-pdf-ingestion/02](general-pdf-ingestion/issues/02-cross-layout-regression-corpus.md) | Build the cross-layout CLI regression corpus. | Blocked by order 02 |
 | 04 | [general-pdf-ingestion/03](general-pdf-ingestion/issues/03-page-and-block-classification.md) | Classify contents, tables, figures, legal text, and body pages. | Blocked by orders 02-03 |
@@ -32,7 +33,7 @@ files.
 | 11 | [general-pdf-ingestion/10](general-pdf-ingestion/issues/10-duplicate-and-continuation-handling.md) | Resolve duplicate steps, repeated headings, and continuation pages. | Complete |
 | 12 | [general-pdf-ingestion/09](general-pdf-ingestion/issues/09-figure-ocr-and-transcription-policy.md) | Keep figure-only and OCR-only content ineligible until human verification. | Complete |
 | 13 | [general-pdf-ingestion/12](general-pdf-ingestion/issues/12-ingestion-diagnostics-and-rebuild-policy.md) | Add diagnostics, parser provenance, and rebuild consequences. | Complete |
-| 14 | [bicycle-mechanics-assistant-v1/19](bicycle-mechanics-assistant-v1/issues/19-language-neutral-intent-routing.md) | Replace English keyword routing with validated semantic routing. | Ready |
+| 14 | [bicycle-mechanics-assistant-v1/19](bicycle-mechanics-assistant-v1/issues/19-language-neutral-intent-routing.md) | Replace English keyword routing with validated semantic routing. | Complete |
 | 15 | [bicycle-mechanics-assistant-v1/15](bicycle-mechanics-assistant-v1/issues/15-web-chat-adapter.md) | Add the local web adapter over the canonical application service. | Ready |
 | 16 | [bicycle-mechanics-assistant-v1/14](bicycle-mechanics-assistant-v1/issues/14-langsmith-result-mirror.md) | Mirror evaluation results without making LangSmith canonical. | Ready |
 | 17 | [bicycle-mechanics-assistant-v1/18](bicycle-mechanics-assistant-v1/issues/18-optional-reviewed-korean-output.md) | Add reviewed Korean output behind a disabled-by-default flag. | Blocked by ingestion completion |
@@ -45,8 +46,8 @@ files.
 
 1. Do not start a ticket until every `Blocked by` ticket is complete.
 2. The first unblocked implementation ticket is
-   `bicycle-mechanics-assistant-v1/13`.
-3. After ticket 13, proceed with `general-pdf-ingestion/01`.
+   `bicycle-mechanics-assistant-v1/15`.
+3. Provider work (ticket 13) and general PDF ingestion are complete.
 4. Human-gated tickets may be reviewed in parallel but must not be marked
    complete without the required review.
 5. Completing an ingestion ticket requires CLI-seam regression coverage and,

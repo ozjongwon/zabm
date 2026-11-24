@@ -11,7 +11,7 @@ from threading import Thread
 from typing import Any, cast
 
 from test_cli_procedure import write_fixture_pdf
-from test_cli_specification import run_cli
+from test_cli_specification import fake_route_for_question, run_cli
 
 
 def _write_json(path: Path, payload: Any) -> None:
@@ -381,6 +381,8 @@ def evaluation_provider_server(
                         for claim in cast(list[dict[str, str]], user["claims"])
                     ]
                 }
+            elif "request-routing" in system:
+                generated = fake_route_for_question(cast(str, user["question"]))
             elif baseline_generated is not None:
                 generated = baseline_generated
             else:
@@ -452,6 +454,10 @@ def test_evaluation_runs_four_baselines_three_times_and_writes_canonical_results
         "model": "evidence-renderer-v1",
         "embedding_model": "canonical-alias-index-v1",
         "configuration": "offline-v1",
+    }
+    assert report["routing"] == {
+        "version": "structured-intent-v1",
+        "strategy": "prototype",
     }
     assert report["conditions"] == {
         "temperature": 0.0,
@@ -628,6 +634,10 @@ def test_evaluation_uses_one_provider_budget_and_run_seed_for_every_baseline(
         "model": "local-test-model",
         "embedding_model": "local-test-embedding",
         "configuration": "evaluation-test-v1",
+    }
+    assert report["routing"] == {
+        "version": "structured-intent-v1",
+        "strategy": "model",
     }
     assert report["source_pack_id"] == "test-evaluation-1"
     assert set(report["configurations"][0]["spread"]["latency_ms"]) == {

@@ -17,177 +17,23 @@ from zabm.providers import ModelProvider
 from zabm.response import (
     CanonicalResponse,
     Claim,
+    Clarification,
     CompatibilityAnswer,
     Failure,
+    RoutingMetadata,
     default_provider_identity,
+)
+from zabm.routing import (
+    ROUTING_VERSION,
+    IntentRouter,
+    ModelIntentRouter,
+    PrototypeIntentRouter,
+    routing_metadata,
 )
 from zabm.specifications import answer_specification
 
 logger = logging.getLogger("zabm.agent")
 
-COMPATIBILITY_CUES = (
-    "compatible",
-    "compatibility",
-    "fit together",
-    "use together",
-    "used together",
-    "work together",
-)
-PROCEDURE_CUES = (
-    "how do i ",
-    "how to ",
-    "procedure",
-    "service steps",
-    "steps",
-    "walk me through",
-)
-PROCEDURE_ACTIONS = {
-    "adjust",
-    "assemble",
-    "bleed",
-    "disassemble",
-    "install",
-    "prepare",
-    "remove",
-    "replace",
-}
-BUYING_CUES = {
-    "best",
-    "buy",
-    "buying",
-    "choose",
-    "purchase",
-    "recommend",
-    "recommendation",
-}
-BICYCLE_NOUNS = {
-    "bicycle",
-    "bike",
-    "clothing",
-    "component",
-    "cycling",
-    "frame",
-    "helmet",
-    "part",
-    "saddle",
-    "seatpost",
-    "shoe",
-    "shoes",
-    "shifting",
-}
-FIT_CUES = {"fitting", "size", "sizing"}
-RIDER_NOUNS = {
-    "body",
-    "crank",
-    "frame",
-    "handlebar",
-    "reach",
-    "rider",
-    "saddle",
-    "stack",
-    "stem",
-}
-TRAINING_CUES = {"coach", "coaching"}
-TRAINING_ACTIVITY_CUES = {"train", "training", "workout"}
-TRAINING_CONTEXT_CUES = {"fitness", "for", "improve", "plan", "program", "race", "schedule"}
-RIDING_CUES = {"ride", "riding"}
-RIDING_CONTEXT_CUES = {
-    "better",
-    "bike",
-    "bicycle",
-    "corner",
-    "descend",
-    "faster",
-    "jump",
-    "position",
-    "skills",
-    "technique",
-}
-INPUT_CUES = {"audio", "image", "photo", "picture", "upload", "voice"}
-WEB_CUES = {"internet", "web", "website"}
-MAINTENANCE_TOKENS = (
-    BICYCLE_NOUNS
-    | PROCEDURE_ACTIONS
-    | {
-        "adjust",
-        "align",
-        "axle",
-        "bar",
-        "battery",
-        "bearing",
-        "bleed",
-        "bolt",
-        "bottom",
-        "brake",
-        "bracket",
-        "cable",
-        "caliper",
-        "cassette",
-        "chain",
-        "charger",
-        "check",
-        "clamp",
-        "clean",
-        "cleat",
-        "cog",
-        "compatible",
-        "compatibility",
-        "controller",
-        "crank",
-        "derailleur",
-        "disc",
-        "fix",
-        "fluid",
-        "fork",
-        "freehub",
-        "grip",
-        "headset",
-        "hose",
-        "housing",
-        "hub",
-        "hydraulic",
-        "inspect",
-        "lever",
-        "light",
-        "lubricate",
-        "maintenance",
-        "motor",
-        "nipple",
-        "overhaul",
-        "pad",
-        "pedal",
-        "procedure",
-        "remote",
-        "repair",
-        "replacement",
-        "rockshox",
-        "rotor",
-        "saddle",
-        "seat",
-        "service",
-        "shifter",
-        "shimano",
-        "shock",
-        "spec",
-        "specification",
-        "spoke",
-        "spring",
-        "sram",
-        "step",
-        "steps",
-        "suspension",
-        "task",
-        "tension",
-        "tire",
-        "tool",
-        "torque",
-        "true",
-        "tube",
-        "tyre",
-        "valve",
-        "wheel",
-    }
-)
 NUMBER_PATTERN = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
 PHRASING_TOKENS = QUESTION_TOKENS | {
     "according",
@@ -231,9 +77,22 @@ def answer_question(
     *,
     seed: int = 0,
     prompt_budget: int | None = None,
+    router: IntentRouter | None = None,
 ) -> CanonicalResponse:
-    response_type = classify_question(question)
-    logger.debug("route question=%s response_type=%s", question, response_type)
+    if router is None:
+        router = (
+            PrototypeIntentRouter() if provider is None else ModelIntentRouter(provider)
+        )
+    route = router.route(question)
+    response_type = route.intent
+    question = route.normalized_question
+    logger.debug(
+        "route question=%s response_type=%s routing_version=%s",
+        question,
+        response_type,
+        ROUTING_VERSION,
+    )
+    metadata = routing_metadata(route, router.strategy)
     if response_type == "out_of_scope":
         response = CanonicalResponse(
             request_id=os.urandom(16).hex(),
@@ -249,7 +108,44 @@ def answer_question(
                 ),
             ),
             provider=provider.identity if provider is not None else default_provider_identity(),
+            routing=metadata,
             source_pack_id="not-consulted",
+        )
+        _log_response(response)
+        return response
+    if response_type == "ambiguous":
+        response = _routing_clarification(
+            response_type="ambiguous",
+            metadata=metadata,
+            missing_information=[
+                "question family",
+                *(
+                    field
+                    for field in (
+                        route.missing_fields + route.ambiguous_fields
+                    )
+                    if field != "question_family"
+                ),
+            ],
+            message=(
+                "Please clarify whether you need a specification, compatibility "
+                "result, or procedure."
+            ),
+            provider=provider,
+        )
+        _log_response(response)
+        return response
+    if route.missing_fields or route.ambiguous_fields:
+        missing = [
+            field.replace("_", " ")
+            for field in route.missing_fields + route.ambiguous_fields
+        ]
+        response = _routing_clarification(
+            response_type=response_type,
+            metadata=metadata,
+            missing_information=missing,
+            message=f"Please identify the exact {' and '.join(missing)}.",
+            provider=provider,
         )
         _log_response(response)
         return response
@@ -260,6 +156,7 @@ def answer_question(
         response = answer_procedure(question, data_dir)
     else:
         response = answer_specification(question, data_dir)
+    response = response.model_copy(update={"routing": metadata})
     if provider is None:
         _log_response(response)
         return response
@@ -278,16 +175,33 @@ def answer_question(
     return phrased
 
 
-def classify_question(
-    question: str,
-) -> Literal["specification", "compatibility", "procedure", "out_of_scope"]:
-    if _is_out_of_scope(question):
-        return "out_of_scope"
-    if _is_compatibility_question(question):
-        return "compatibility"
-    if _is_procedure_question(question):
-        return "procedure"
-    return "specification"
+def _routing_clarification(
+    *,
+    response_type: Literal[
+        "specification",
+        "compatibility",
+        "procedure",
+        "ambiguous",
+    ],
+    metadata: RoutingMetadata,
+    missing_information: list[str],
+    message: str,
+    provider: ModelProvider | None,
+) -> CanonicalResponse:
+    return CanonicalResponse(
+        request_id=os.urandom(16).hex(),
+        timestamp=datetime.now(UTC),
+        response_type=response_type,
+        language="en",
+        status="clarification_required",
+        clarification=Clarification(
+            message=message,
+            missing_information=missing_information,
+        ),
+        provider=provider.identity if provider is not None else default_provider_identity(),
+        routing=metadata,
+        source_pack_id="not-consulted",
+    )
 
 
 def _log_response(response: CanonicalResponse) -> None:
@@ -418,46 +332,3 @@ def _reject_generated_answer(
             "citations": [],
         }
     )
-
-
-def _is_out_of_scope(question: str) -> bool:
-    words = set(re.findall(r"[a-z0-9]+", question.casefold()))
-    if words & BUYING_CUES and words & BICYCLE_NOUNS:
-        return True
-    if words & FIT_CUES and words & RIDER_NOUNS:
-        return True
-    if "fit" in words and words & {"bike", "body", "rider"}:
-        return True
-    if words & TRAINING_CUES:
-        return True
-    if words & TRAINING_ACTIVITY_CUES and words & TRAINING_CONTEXT_CUES:
-        return True
-    if words & WEB_CUES:
-        return True
-    if "firmware" in words:
-        return True
-    if words & INPUT_CUES:
-        return True
-    if words & RIDING_CUES and words & RIDING_CONTEXT_CUES:
-        return True
-    return not words & MAINTENANCE_TOKENS
-
-
-def _is_compatibility_question(question: str) -> bool:
-    normalized_question = question.casefold()
-    if any(cue in normalized_question for cue in COMPATIBILITY_CUES):
-        return True
-    return bool(
-        re.search(
-            r"\b(?:can|could|may|should)\b[^?]*\buse(?:d)?\b[^?]*\bwith\b",
-            normalized_question,
-        )
-    )
-
-
-def _is_procedure_question(question: str) -> bool:
-    normalized_question = question.casefold()
-    if any(cue in normalized_question for cue in PROCEDURE_CUES):
-        return True
-    first_word = normalized_question.strip().split(maxsplit=1)[0].rstrip(".,:;?!")
-    return first_word in PROCEDURE_ACTIONS

@@ -279,7 +279,7 @@ def test_cli_uses_the_local_provider_for_complete_procedure_phrasing(
     assert [claim["claim_id"] for claim in response["claims"]] == [
         sentence["claim_id"] for sentence in generated["sentences"]
     ]
-    assert len(requests) == 1
+    assert len(requests) == 2
 
 
 def test_cli_refuses_a_truncated_procedure_without_returning_steps(tmp_path: Path) -> None:

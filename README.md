@@ -196,7 +196,9 @@ freeze, a rerun of the retrieval smoke set, and a complete evaluation rerun.
 ## Local grounded model path
 
 By default, `zabm ask` uses the deterministic local evidence renderer and needs
-no network service. Select one of four provider modes with `--provider`:
+no network service. Its bounded prototype router classifies the request family
+from multilingual exemplars; no family-specific English cue list chooses the
+answer path. Select one of four provider modes with `--provider`:
 
 | Provider | Purpose |
 | --- | --- |
@@ -222,6 +224,16 @@ The same values can be supplied with `ZABM_PROVIDER`,
 `ZABM_PROVIDER_URL`, `ZABM_MODEL`, `ZABM_EMBEDDING_MODEL`, and
 `ZABM_PROVIDER_CONFIGURATION`. `ZABM_PROVIDER_API_KEY` is read only from the
 environment and is never written to a response.
+
+When a model provider is configured, its first call is a validated
+request-routing call. The route returns an intent, a normalized English
+evidence query, recognized entities, and any missing or ambiguous fields.
+Application code validates that route before loading evidence. Ambiguous
+families and missing identity fields return `clarification_required`; the model
+cannot set terminal status, compatibility outcome, citations, claim links,
+numeric acceptance, or procedure completeness. Every response records the
+`structured-intent-v1` routing strategy alongside the provider, model, and
+configuration identity.
 
 Use the DeepSeek preset with its default `deepseek-flash` model and
 `https://api.deepseek.com` endpoint:
@@ -267,8 +279,8 @@ They use three logger names:
   reciprocal-rank-fusion output during hybrid evaluation.
 
 API keys are never logged. A terminal evidence failure does not produce an LLM
-request, so a `not_found` response may show routing and RAG events without
-`zabm.llm` events.
+answer-generation request, so a `not_found` response may show request-routing
+and RAG events without a phrasing request.
 
 ### Remote-provider smoke procedure
 
@@ -338,10 +350,11 @@ numbers absent from the claim evidence cause the response to be rejected.
 Provider, model, embedding model, configuration, and source-pack identifiers
 are recorded in every canonical response.
 
-Questions outside bicycle maintenance return `out_of_scope` before evidence or
-model access. Missing or ambiguous identity details return
-`clarification_required`; false-premise components and specifications return
-`not_found` without a nearby substitute.
+Questions outside bicycle maintenance return `out_of_scope` before evidence
+access. Missing or ambiguous identity details return `clarification_required`;
+false-premise components and specifications return `not_found` without a nearby
+substitute. Evaluation artifacts record the routing version and strategy used
+for the run.
 
 ## Candidate source pack
 

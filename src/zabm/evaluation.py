@@ -18,7 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pypdf import PdfReader
 
 from zabm import __version__
-from zabm.agent import answer_question, classify_question
+from zabm.agent import answer_question
 from zabm.evaluation_set import (
     EvaluationCategory,
     EvaluationItem,
@@ -45,6 +45,7 @@ from zabm.response import (
     StoredCitation,
     default_provider_identity,
 )
+from zabm.routing import ROUTING_VERSION
 from zabm.source_pack import (
     RetrievalConfiguration,
     RetrievalPath,
@@ -247,6 +248,11 @@ class EvaluationConditions(BaseModel):
     retrieval_top_k: int
 
 
+class RoutingIdentity(BaseModel):
+    version: str
+    strategy: Literal["model", "prototype"]
+
+
 class HardwareIdentity(BaseModel):
     platform: str
     machine: str
@@ -274,6 +280,7 @@ class EvaluationArtifact(BaseModel):
     source_pack_id: str
     source_pack_manifest_sha256: str
     provider: ProviderIdentity
+    routing: RoutingIdentity
     hardware: HardwareIdentity
     runtime: RuntimeIdentity
     conditions: EvaluationConditions
@@ -367,6 +374,10 @@ def run_evaluation(
         source_pack_id=manifest.manifest_version,
         source_pack_manifest_sha256=file_sha256(manifest_path),
         provider=provider_identity,
+        routing=RoutingIdentity(
+            version=ROUTING_VERSION,
+            strategy="model" if provider is not None else "prototype",
+        ),
         hardware=HardwareIdentity(
             platform=platform.platform(),
             machine=platform.machine(),
@@ -627,7 +638,7 @@ def _answer_for_configuration(
             seed,
         )
 
-    response_type = classify_question(question)
+    response_type = expected_response_type
     if response_type == "out_of_scope":
         return CanonicalResponse(
             request_id=os.urandom(16).hex(),

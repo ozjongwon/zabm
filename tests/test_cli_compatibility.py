@@ -388,7 +388,7 @@ def test_cli_uses_the_local_provider_for_compatibility_phrasing(tmp_path: Path) 
     assert response["compatibility"]["outcome"] == "compatible"
     assert response["provider"]["provider"] == "openai-compatible"
     assert response["claims"][0]["text"].endswith("Trail Post A2 or B1 seatpost.")
-    assert len(requests) == 1
+    assert len(requests) == 2
 
 
 def test_cli_returns_not_compatible_for_an_explicit_manufacturer_prohibition(
@@ -457,6 +457,70 @@ def test_cli_routes_use_with_questions_to_compatibility(tmp_path: Path) -> None:
     assert response["status"] == "supported"
     assert response["response_type"] == "compatibility"
     assert response["compatibility"]["outcome"] == "compatible"
+
+
+def test_cli_routes_a_compatibility_paraphrase_by_meaning(tmp_path: Path) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+    route = {
+        "intent": "compatibility",
+        "normalized_question": (
+            "Is the hose barb with barb sleeve compatible with the "
+            "Trail Post A2 seatpost?"
+        ),
+        "entities": [
+            {"kind": "component_a", "text": "hose barb with barb sleeve"},
+            {"kind": "component_b", "text": "Trail Post A2 seatpost"},
+        ],
+        "missing_fields": [],
+        "ambiguous_fields": [],
+        "candidate_intents": [],
+    }
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-barb-trail-post-a2",
+                "text": (
+                    "The hose barb with barb sleeve is compatible with the "
+                    "Trail Post A2 or B1 seatpost."
+                ),
+            }
+        ]
+    }
+
+    with provider_server(generated, route_response=route) as (provider_url, requests):
+        result = run_cli(
+            "ask",
+            "Would the barb and sleeve be a safe pairing for the Trail Post A2 post?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["response_type"] == "compatibility"
+    assert response["compatibility"]["outcome"] == "compatible"
+    assert response["routing"]["normalized_question"] == route["normalized_question"]
+    assert len(requests) == 2
 
 
 def test_cli_returns_cited_unknown_when_evidence_leaves_the_pair_unresolved(
