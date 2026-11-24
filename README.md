@@ -144,6 +144,24 @@ action aliases. Unknown profile or schema versions, ambiguous metadata
 selection, and invalid overrides fail ingestion before any generated evidence
 is written.
 
+Figure-only, callout-only, and text-free or scanned pages remain inspectable in
+the generated catalog but receive the `transcription-required` ingestion
+outcome and do not produce procedures. Human transcriptions are loaded from the
+separate artifact selected with `--transcriptions`; the default is the empty
+`data/evidence/verified-transcriptions.json`. Each transcription records its
+document, physical and printed pages, section and heading path, source box,
+contiguous numbered steps with source boxes, attached warnings, an explicit end
+boundary, and a named reviewer and verification date.
+
+Only entries with `verification.status` set to `human_verified` are accepted,
+and their procedures use the separate `verified-transcription` evidence plane.
+Unverified OCR or vision output is preserved under the page's
+`unverified_transcriptions` field but remains ineligible for answers. The
+ingestion report lists pages awaiting transcription under
+`transcription_required_pages`, and accepted artifact pages use the
+`transcription-verified` outcome. The artifact SHA-256 is recorded in ingestion
+provenance; malformed verified entries fail ingestion closed.
+
 Extraction preserves per-span font name, size, weight/style hints, normalized
 and raw text, line and span IDs, and both normalized and page-point bounding
 boxes. Declared column bands are read in profile order; otherwise deterministic
@@ -369,10 +387,12 @@ claim IDs, physical page locators, rejection messages, structured-evidence
 eligibility, and every rejected or incomplete procedure candidate.
 
 Figure-only material is listed under `unanswerable_content` with its source
-page and reason. It remains answerable only after a human transcribes the
-content, attaches an exact citation, and records verification in the structured
-evidence file. Incomplete procedures remain `not_found`; the coverage inventory
-keeps their completeness or citation defects inspectable.
+page and reason. It becomes answerable only through a human-verified entry in
+the transcription artifact selected by `--transcriptions`, which binds each
+step to its source page and box and records the reviewer and verification date.
+Unverified transcriptions remain ineligible. Incomplete procedures remain
+`not_found`; the coverage inventory keeps their completeness or citation
+defects inspectable.
 
 ## Frozen evaluation set
 

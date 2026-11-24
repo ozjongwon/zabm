@@ -25,22 +25,29 @@ from zabm.ingestion import (
     DocumentProfile,
     EndBoundaryProfile,
     EndBoundaryStrategy,
+    EvidencePlane,
     HeadingNode,
+    HumanTranscriptionVerification,
     IngestionProfileProvenance,
     IngestionProfilesFile,
     IngestionProvenance,
     LayoutSpan,
     LayoutStageResult,
     NormalizedBox,
+    PageBlockClassificationResult,
     PageBox,
+    PageIngestionOutcome,
     PageKind,
     PdfPageObservation,
+    ProcedureTranscription,
     RejectedStepCandidate,
     SelectedProfileProvenance,
     SourceEvidenceSpan,
     SourceExcerpt,
     StepRejectionReason,
+    TranscriptionSourceLocation,
     load_ingestion_profiles,
+    load_procedure_transcriptions,
     normalize_pdf_text,
     profile_sha256,
     resolve_document_profile,
@@ -221,9 +228,16 @@ class RetrievalPage(BaseModel):
     extraction_language: str
     columns: list[ColumnBand] = Field(default_factory=list[ColumnBand])
     spans: list[LayoutSpan] = Field(default_factory=list[LayoutSpan])
+    unverified_transcriptions: list[ProcedureTranscription] = Field(
+        default_factory=list[ProcedureTranscription]
+    )
+    verified_transcription_spans: list[LayoutSpan] = Field(default_factory=list[LayoutSpan])
+    verified_transcription_ids: list[str] = Field(default_factory=list[str])
     reading_order: list[str] = Field(default_factory=list[str])
     languages: list[str] = Field(default_factory=list[str])
     page_kind: PageKind = "unknown"
+    ingestion_outcome: PageIngestionOutcome = "answer-eligible"
+    ingestion_outcome_reason: str | None = None
     classification_confidence: float = 0.0
     classification_uncertain: bool = True
     classification_uncertainty: str | None = None
@@ -248,6 +262,12 @@ class ProcedureEndEvidence(BaseModel):
     strategy: EndBoundaryStrategy = "explicit-marker"
 
 
+class TranscriptionEvidence(BaseModel):
+    transcription_id: str
+    source_location: TranscriptionSourceLocation
+    verification: HumanTranscriptionVerification
+
+
 class StoredProcedure(BaseModel):
     procedure_id: str
     document_id: str
@@ -261,6 +281,8 @@ class StoredProcedure(BaseModel):
     end_evidence: list[ProcedureEndEvidence] = Field(default_factory=list[ProcedureEndEvidence])
     completeness_notes: list[str] = Field(default_factory=list[str])
     validation_issues: list[str] = Field(default_factory=list[str])
+    evidence_plane: EvidencePlane = "pdf-text"
+    verified_transcription: TranscriptionEvidence | None = None
 
 
 class RetrievalCatalog(BaseModel):
@@ -278,6 +300,14 @@ class PageAlignmentReport(BaseModel):
     missing_text_pages: list[str]
 
 
+class TranscriptionRequiredPage(BaseModel):
+    document_id: str
+    physical_page: int
+    printed_page: int
+    page_kind: PageKind
+    reason: str
+
+
 class RetrievalIngestReport(BaseModel):
     source_pack_id: str
     ingestion_provenance: IngestionProvenance
@@ -287,6 +317,10 @@ class RetrievalIngestReport(BaseModel):
     warning_count: int
     procedure_count: int
     eligible_procedure_count: int
+    verified_transcription_count: int = 0
+    transcription_required_pages: list[TranscriptionRequiredPage] = Field(
+        default_factory=list[TranscriptionRequiredPage]
+    )
     validation_issues: list[str]
 
 
@@ -365,6 +399,7 @@ def _source_excerpt(
         printed_page=printed_page,
         section=section,
         heading_path=heading_path,
+        evidence_plane=first.evidence_plane,
         span_ids=[span.span_id for span in spans],
         spans=[_source_evidence_span(span) for span in spans],
         raw_text=raw_text,
@@ -380,11 +415,296 @@ def _source_evidence_span(span: LayoutSpan) -> SourceEvidenceSpan:
         physical_page=span.physical_page,
         column_id=span.column_id,
         language=span.language,
+        evidence_plane=span.evidence_plane,
         raw_text=span.raw_text,
         normalized_text=span.text,
         box=span.box,
         page_box=span.page_box,
     )
+
+
+def _verified_transcription_procedures(
+    source: RetrievalSource,
+    transcriptions: Sequence[ProcedureTranscription],
+    *,
+    retrieval_date: date,
+    manifest_version: str,
+) -> list[StoredProcedure]:
+    pages_by_number = {page.physical_page: page for page in source.pages}
+    procedures: list[StoredProcedure] = []
+    for transcription in transcriptions:
+        verification = transcription.verification
+        location = transcription.location
+        page = pages_by_number.get(location.physical_page)
+        if page is None:
+            raise ValueError(
+                f"verified transcription {transcription.id} references missing physical "
+                f"page {location.physical_page}"
+            )
+        if verification.status.strip() != "human_verified":
+            page.unverified_transcriptions.append(transcription)
+            continue
+        if not verification.verified_by.strip():
+            raise ValueError(f"verified transcription {transcription.id} requires a named reviewer")
+        if verification.verified_at is None:
+            raise ValueError(
+                f"verified transcription {transcription.id} requires a verification date"
+            )
+        if not transcription.title.strip():
+            raise ValueError(f"verified transcription {transcription.id} requires a title")
+        if not location.section.strip():
+            raise ValueError(f"verified transcription {transcription.id} requires a source section")
+        if any(not heading.strip() for heading in location.heading_path):
+            raise ValueError(
+                f"verified transcription {transcription.id} has a blank heading path entry"
+            )
+        if page.printed_page != location.printed_page:
+            raise ValueError(
+                f"verified transcription {transcription.id} printed page "
+                f"{location.printed_page} does not match source page {page.printed_page}"
+            )
+        _validate_transcription_box(
+            location.box,
+            page=page,
+            label=f"verified transcription {transcription.id} source location",
+        )
+        step_numbers = [step.number for step in transcription.steps]
+        if step_numbers != list(range(1, len(step_numbers) + 1)):
+            raise ValueError(
+                f"verified transcription {transcription.id} steps must be contiguous from 1"
+            )
+        if not normalize_pdf_text(transcription.end_boundary):
+            raise ValueError(
+                f"verified transcription {transcription.id} requires end-boundary text"
+            )
+
+        transcription_spans: list[LayoutSpan] = []
+        heading_text = normalize_pdf_text(transcription.title)
+        heading_line_id = (
+            f"{source.document_id}:p{page.physical_page}:"
+            f"transcription:{_slug(transcription.id)}:heading"
+        )
+        transcription_spans.append(
+            _transcription_layout_span(
+                source=source,
+                page=page,
+                transcription_id=transcription.id,
+                line_id=heading_line_id,
+                span_index=0,
+                raw_text=heading_text,
+                box=location.box,
+            )
+        )
+
+        procedure_steps: list[StoredProcedureStep] = []
+        for step in transcription.steps:
+            _validate_transcription_box(
+                step.source_box,
+                page=page,
+                label=f"verified transcription {transcription.id} step {step.number}",
+            )
+            _validate_box_containment(
+                step.source_box,
+                location.box,
+                label=f"verified transcription {transcription.id} step {step.number}",
+            )
+            step_text = normalize_pdf_text(step.text)
+            if not step_text:
+                raise ValueError(
+                    f"verified transcription {transcription.id} step {step.number} has no text"
+                )
+            step_line_id = (
+                f"{source.document_id}:p{page.physical_page}:"
+                f"transcription:{_slug(transcription.id)}:step-{step.number}"
+            )
+            step_span = _transcription_layout_span(
+                source=source,
+                page=page,
+                transcription_id=transcription.id,
+                line_id=step_line_id,
+                span_index=0,
+                raw_text=f"{step.number} {step_text}",
+                box=step.source_box,
+            )
+            transcription_spans.append(step_span)
+            warnings: list[StoredProcedureWarning] = []
+            for warning_index, warning in enumerate(step.warnings, start=1):
+                warning_text = normalize_pdf_text(warning.text)
+                if not warning_text:
+                    raise ValueError(
+                        f"verified transcription {transcription.id} step {step.number} "
+                        f"warning {warning_index} has no text"
+                    )
+                warning_line_id = f"{step_line_id}:warning-{warning_index}"
+                warning_heading_span = _transcription_layout_span(
+                    source=source,
+                    page=page,
+                    transcription_id=transcription.id,
+                    line_id=warning_line_id,
+                    span_index=0,
+                    raw_text=warning.severity.upper(),
+                    box=step.source_box,
+                )
+                warning_body_span = _transcription_layout_span(
+                    source=source,
+                    page=page,
+                    transcription_id=transcription.id,
+                    line_id=f"{warning_line_id}:body",
+                    span_index=0,
+                    raw_text=warning_text,
+                    box=step.source_box,
+                )
+                transcription_spans.extend([warning_heading_span, warning_body_span])
+                warnings.append(
+                    StoredProcedureWarning(
+                        severity=warning.severity,
+                        text=warning_text,
+                        evidence=_source_excerpt(
+                            [warning_heading_span, warning_body_span],
+                            printed_page=page.printed_page,
+                            section=location.section,
+                            heading_path=list(location.heading_path),
+                        ),
+                    )
+                )
+
+            citation = StoredCitation(
+                document_id=source.document_id,
+                title=source.title,
+                manufacturer=source.manufacturer,
+                printed_page=page.printed_page,
+                physical_page=page.physical_page,
+                section=location.section,
+                retrieval_date=retrieval_date,
+                source_manifest_version=manifest_version,
+            )
+            procedure_steps.append(
+                StoredProcedureStep(
+                    number=step.number,
+                    text=step_text,
+                    warnings=warnings,
+                    citation=citation,
+                    evidence=_source_excerpt(
+                        [step_span],
+                        printed_page=page.printed_page,
+                        section=location.section,
+                        heading_path=list(location.heading_path),
+                    ),
+                )
+            )
+
+        end_text = normalize_pdf_text(transcription.end_boundary)
+        end_line_id = (
+            f"{source.document_id}:p{page.physical_page}:"
+            f"transcription:{_slug(transcription.id)}:end"
+        )
+        transcription_spans.append(
+            _transcription_layout_span(
+                source=source,
+                page=page,
+                transcription_id=transcription.id,
+                line_id=end_line_id,
+                span_index=0,
+                raw_text=end_text,
+                box=location.box,
+            )
+        )
+        page.verified_transcription_spans.extend(transcription_spans)
+        page.verified_transcription_ids.append(transcription.id)
+        page.reading_order.extend(span.span_id for span in transcription_spans)
+        page.ingestion_outcome = "transcription-verified"
+        page.ingestion_outcome_reason = "human-verified transcription accepted"
+        procedures.append(
+            StoredProcedure(
+                procedure_id=(
+                    f"{source.document_id}#{_slug(transcription.title)}-"
+                    f"transcription-{_slug(transcription.id)}-p{page.physical_page}"
+                ),
+                document_id=source.document_id,
+                title=transcription.title,
+                heading_path=list(location.heading_path),
+                start_boundary=" > ".join(location.heading_path),
+                end_boundary=end_text,
+                end_strategy="explicit-marker",
+                page_numbers=[page.physical_page],
+                steps=procedure_steps,
+                end_evidence=[
+                    ProcedureEndEvidence(
+                        text=end_text,
+                        after_step=procedure_steps[-1].number,
+                    )
+                ],
+                evidence_plane="verified-transcription",
+                verified_transcription=TranscriptionEvidence(
+                    transcription_id=transcription.id,
+                    source_location=location,
+                    verification=verification,
+                ),
+            )
+        )
+    return procedures
+
+
+def _transcription_layout_span(
+    *,
+    source: RetrievalSource,
+    page: RetrievalPage,
+    transcription_id: str,
+    line_id: str,
+    span_index: int,
+    raw_text: str,
+    box: PageBox,
+) -> LayoutSpan:
+    normalized_text = normalize_pdf_text(raw_text)
+    if not normalized_text:
+        raise ValueError(f"verified transcription {transcription_id} contains blank evidence text")
+    return LayoutSpan(
+        span_id=f"{line_id}:s{span_index}",
+        line_id=line_id,
+        document_id=source.document_id,
+        physical_page=page.physical_page,
+        column_id=f"transcription:{_slug(transcription_id)}",
+        raw_text=raw_text,
+        text=normalized_text,
+        box=_normalized_box(
+            box.x_min,
+            box.x_max,
+            box.y_min,
+            box.y_max,
+            page.page_width,
+            page.page_height,
+        ),
+        page_box=box,
+        language=page.extraction_language,
+        evidence_plane="verified-transcription",
+    )
+
+
+def _validate_transcription_box(
+    box: PageBox,
+    *,
+    page: RetrievalPage,
+    label: str,
+) -> None:
+    tolerance = 1e-6
+    if (
+        box.x_min < -tolerance
+        or box.y_min < -tolerance
+        or box.x_max > page.page_width + tolerance
+        or box.y_max > page.page_height + tolerance
+    ):
+        raise ValueError(f"{label} lies outside physical page {page.physical_page}")
+
+
+def _validate_box_containment(box: PageBox, container: PageBox, *, label: str) -> None:
+    tolerance = 1e-6
+    if (
+        box.x_min < container.x_min - tolerance
+        or box.y_min < container.y_min - tolerance
+        or box.x_max > container.x_max + tolerance
+        or box.y_max > container.y_max + tolerance
+    ):
+        raise ValueError(f"{label} lies outside the verified source location")
 
 
 def _excerpt_raw_text(spans: Sequence[LayoutSpan | SourceEvidenceSpan]) -> str:
@@ -407,6 +727,7 @@ def _source_excerpt_issues(
     expected_text: str,
     expected_kind: Literal["step", "warning"],
     expected_heading_path: Sequence[str],
+    expected_evidence_plane: EvidencePlane = "pdf-text",
 ) -> list[str]:
     issues: list[str] = []
     if excerpt.document_id != source_document_id:
@@ -429,6 +750,8 @@ def _source_excerpt_issues(
         issues.append("citation section does not match the evidence excerpt")
     if list(excerpt.heading_path) != list(expected_heading_path):
         issues.append("evidence excerpt heading path does not match its procedure")
+    if excerpt.evidence_plane != expected_evidence_plane:
+        issues.append("evidence excerpt uses the wrong evidence plane")
 
     excerpt_span_ids = [span.span_id for span in excerpt.spans]
     if excerpt.span_ids != excerpt_span_ids:
@@ -440,6 +763,8 @@ def _source_excerpt_issues(
     languages = {span.language for span in excerpt.spans if span.language is not None}
     if len(languages) > 1:
         issues.append("evidence excerpt mixes source languages")
+    if any(span.evidence_plane != expected_evidence_plane for span in excerpt.spans):
+        issues.append("evidence excerpt spans use the wrong evidence plane")
 
     resolved_spans: list[LayoutSpan] = []
     if source_spans is not None:
@@ -502,15 +827,23 @@ def resolve_procedure_evidence(
     evidence_issues: list[str] = []
     for step in procedure.steps:
         page = source_pages.get(step.citation.physical_page)
+        source_spans = (
+            page.verified_transcription_spans
+            if page is not None and procedure.evidence_plane == "verified-transcription"
+            else page.spans
+            if page is not None
+            else None
+        )
         step_issues = _source_excerpt_issues(
             step.evidence,
             step.citation,
             source_document_id=procedure.document_id,
-            source_spans=page.spans if page is not None else None,
+            source_spans=source_spans,
             source_printed_page=page.printed_page if page is not None else None,
             expected_text=step.text,
             expected_kind="step",
             expected_heading_path=procedure.heading_path,
+            expected_evidence_plane=procedure.evidence_plane,
         )
         for warning in step.warnings:
             step_issues.extend(
@@ -518,11 +851,12 @@ def resolve_procedure_evidence(
                     warning.evidence,
                     step.citation,
                     source_document_id=procedure.document_id,
-                    source_spans=page.spans if page is not None else None,
+                    source_spans=source_spans,
                     source_printed_page=page.printed_page if page is not None else None,
                     expected_text=warning.text,
                     expected_kind="warning",
                     expected_heading_path=procedure.heading_path,
+                    expected_evidence_plane=procedure.evidence_plane,
                 )
             )
         if step_issues:
@@ -600,6 +934,7 @@ def ingest_retrieval(
     ingestion_profiles_path: Path | None = None,
     *,
     ingestion_profiles: IngestionProfilesFile | None = None,
+    transcriptions_path: Path | None = None,
     requested_language: str | None = None,
 ) -> RetrievalIngestReport:
     manifest = load_source_manifest(manifest_path)
@@ -607,8 +942,24 @@ def ingest_retrieval(
         raise ValueError("preloaded ingestion profiles require their source manifest path")
     profile_path = ingestion_profiles_path or DEFAULT_INGESTION_PROFILES
     profiles = ingestion_profiles or load_ingestion_profiles(profile_path)
+    transcription_file = (
+        load_procedure_transcriptions(transcriptions_path)
+        if transcriptions_path is not None
+        else None
+    )
+    transcriptions = transcription_file.transcriptions if transcription_file is not None else []
+    known_document_ids = {source.id for source in manifest.sources}
+    unknown_document_ids = sorted(
+        {transcription.document_id for transcription in transcriptions} - known_document_ids
+    )
+    if unknown_document_ids:
+        raise ValueError(
+            "verified transcriptions reference unknown document(s): "
+            + ", ".join(unknown_document_ids)
+        )
     sources: list[RetrievalSource] = []
     procedures: list[StoredProcedure] = []
+    verified_transcription_count = 0
     validation_issues: list[str] = []
     selected_profiles: list[SelectedProfileProvenance] = []
 
@@ -655,15 +1006,26 @@ def ingest_retrieval(
             )
             parsed_pages.append(parsed_page)
             preceding_headings = parsed_page.heading_stack
-        sources.append(
-            RetrievalSource(
-                document_id=source.id,
-                title=source.title,
-                manufacturer=source.manufacturer,
-                ingestion_profile=profile_provenance,
-                pages=[parsed.page for parsed in parsed_pages],
-            )
+        retrieval_source = RetrievalSource(
+            document_id=source.id,
+            title=source.title,
+            manufacturer=source.manufacturer,
+            ingestion_profile=profile_provenance,
+            pages=[parsed.page for parsed in parsed_pages],
         )
+        sources.append(retrieval_source)
+        verified_transcriptions = _verified_transcription_procedures(
+            retrieval_source,
+            [
+                transcription
+                for transcription in transcriptions
+                if transcription.document_id == source.id
+            ],
+            retrieval_date=source.retrieval_date,
+            manifest_version=manifest.manifest_version,
+        )
+        verified_transcription_count += len(verified_transcriptions)
+        procedures.extend(verified_transcriptions)
         for procedure in _group_procedures(parsed_pages, selected_profile.end_boundaries):
             resolved_procedure = resolve_procedure_evidence(procedure, sources)
             procedures.append(resolved_procedure)
@@ -679,6 +1041,9 @@ def ingest_retrieval(
         profile_schema_version=profiles.profile_schema_version,
         profile_manifest_version=profiles.profile_manifest_version,
         profile_manifest_sha256=file_sha256(profile_path),
+        transcription_evidence_sha256=(
+            file_sha256(transcriptions_path) if transcriptions_path is not None else None
+        ),
         profiles=selected_profiles,
     )
     catalog = RetrievalCatalog(
@@ -716,6 +1081,19 @@ def ingest_retrieval(
         warning_count=sum(block.kind == "warning" for page in pages for block in page.blocks),
         procedure_count=len(procedures),
         eligible_procedure_count=complete_procedure_count,
+        verified_transcription_count=verified_transcription_count,
+        transcription_required_pages=[
+            TranscriptionRequiredPage(
+                document_id=source.document_id,
+                physical_page=page.physical_page,
+                printed_page=page.printed_page,
+                page_kind=page.page_kind,
+                reason=page.ingestion_outcome_reason or "transcription is required",
+            )
+            for source in sources
+            for page in source.pages
+            if page.ingestion_outcome == "transcription-required"
+        ],
         validation_issues=validation_issues,
     )
 
@@ -1300,6 +1678,7 @@ def _parse_page(
         )
         index += 1
 
+    ingestion_outcome, ingestion_outcome_reason = _page_ingestion_outcome(classification)
     page_model = RetrievalPage(
         physical_page=physical_page,
         printed_page=printed_page,
@@ -1313,6 +1692,8 @@ def _parse_page(
         reading_order=layout.reading_order,
         languages=layout.languages,
         page_kind=classification.page_kind,
+        ingestion_outcome=ingestion_outcome,
+        ingestion_outcome_reason=ingestion_outcome_reason,
         classification_confidence=classification.confidence,
         classification_uncertain=classification.uncertain,
         classification_uncertainty=classification.rejection_reason,
@@ -1371,6 +1752,35 @@ def _classified_evidence(
             "classification_uncertainty": classification.uncertainty,
         }
     )
+
+
+def _page_ingestion_outcome(
+    classification: PageBlockClassificationResult,
+) -> tuple[PageIngestionOutcome, str | None]:
+    if classification.page_kind == "figure":
+        return (
+            "transcription-required",
+            "figure and scanned content requires human-verified transcription",
+        )
+    content_blocks = [block for block in classification.blocks if block.kind != "heading"]
+    if content_blocks and all(block.kind == "figure" for block in content_blocks):
+        return (
+            "transcription-required",
+            "callout-only content requires human-verified transcription",
+        )
+    if classification.uncertain and classification.rejection_reason == (
+        "the page has no extractable text"
+    ):
+        return (
+            "transcription-required",
+            "scanned content has no extractable text and requires human-verified transcription",
+        )
+    if classification.uncertain:
+        return (
+            "uncertain",
+            classification.rejection_reason or "page classification is uncertain",
+        )
+    return "answer-eligible", None
 
 
 def _page_layout(

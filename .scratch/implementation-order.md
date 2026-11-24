@@ -8,8 +8,8 @@ files.
 
 - Completed in `bicycle-mechanics-assistant-v1`: tickets 02 through 11.
 - Pending in `bicycle-mechanics-assistant-v1`: tickets 01 and 12 through 19.
-- Completed in `general-pdf-ingestion`: tickets 01 through 07.
-- Pending in `general-pdf-ingestion`: tickets 08 through 12.
+- Completed in `general-pdf-ingestion`: tickets 01 through 09.
+- Pending in `general-pdf-ingestion`: tickets 10 through 12.
 - Ticket 13 is partially implemented in the current working tree and should be
   completed and verified before moving to the ingestion refactor.
 - Ticket 01 in `bicycle-mechanics-assistant-v1` still requires clean-machine
@@ -26,11 +26,11 @@ files.
 | 05 | [general-pdf-ingestion/04](general-pdf-ingestion/issues/04-layout-aware-spans-and-fonts.md) | Preserve fonts, spans, columns, languages, and reading order. | Blocked by orders 02-03 |
 | 06 | [general-pdf-ingestion/05](general-pdf-ingestion/issues/05-heading-and-section-hierarchy.md) | Reconstruct authoritative headings and section paths. | Blocked by orders 04-05 |
 | 07 | [general-pdf-ingestion/06](general-pdf-ingestion/issues/06-procedure-candidate-and-step-extraction.md) | Extract only contiguous, action-bearing procedure steps. | Blocked by orders 04, 06 |
-| 08 | [general-pdf-ingestion/08](general-pdf-ingestion/issues/08-source-span-evidence-and-citations.md) | Bind steps and warnings to exact source spans and citations. | Blocked by orders 05-06 |
+| 08 | [general-pdf-ingestion/08](general-pdf-ingestion/issues/08-source-span-evidence-and-citations.md) | Bind steps and warnings to exact source spans and citations. | Complete |
 | 09 | [general-pdf-ingestion/07](general-pdf-ingestion/issues/07-procedure-boundaries-and-completeness.md) | Approve and implement start/end boundary and completeness rules. | Complete |
 | 10 | [general-pdf-ingestion/11](general-pdf-ingestion/issues/11-procedure-action-vocabulary.md) | Add reviewed procedure action aliases without weakening identity filters. | Blocked by orders 06-07 |
 | 11 | [general-pdf-ingestion/10](general-pdf-ingestion/issues/10-duplicate-and-continuation-handling.md) | Resolve duplicate steps, repeated headings, and continuation pages. | Blocked by orders 07-09 |
-| 12 | [general-pdf-ingestion/09](general-pdf-ingestion/issues/09-figure-ocr-and-transcription-policy.md) | Keep figure-only and OCR-only content ineligible until human verification. | Blocked by orders 04-05, 08 |
+| 12 | [general-pdf-ingestion/09](general-pdf-ingestion/issues/09-figure-ocr-and-transcription-policy.md) | Keep figure-only and OCR-only content ineligible until human verification. | Complete |
 | 13 | [general-pdf-ingestion/12](general-pdf-ingestion/issues/12-ingestion-diagnostics-and-rebuild-policy.md) | Add diagnostics, parser provenance, and rebuild consequences. | Blocked by orders 02, 04, 07-09 |
 | 14 | [bicycle-mechanics-assistant-v1/19](bicycle-mechanics-assistant-v1/issues/19-language-neutral-intent-routing.md) | Replace English keyword routing with validated semantic routing. | Ready |
 | 15 | [bicycle-mechanics-assistant-v1/15](bicycle-mechanics-assistant-v1/issues/15-web-chat-adapter.md) | Add the local web adapter over the canonical application service. | Ready |

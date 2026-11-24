@@ -5,6 +5,7 @@ import json
 import re
 import unicodedata
 from collections.abc import Mapping
+from datetime import date
 from importlib.metadata import version as package_version
 from itertools import pairwise
 from pathlib import Path
@@ -12,7 +13,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-PARSER_VERSION = "pdf-ingestion-v7"
+PARSER_VERSION = "pdf-ingestion-v8"
 FONTTOOLS_VERSION = package_version("fonttools")
 PYPDF_VERSION = package_version("pypdf")
 PROFILE_SCHEMA_VERSION = "1"
@@ -37,6 +38,14 @@ PageKind = Literal[
     "procedure-step",
     "unknown",
 ]
+PageIngestionOutcome = Literal[
+    "answer-eligible",
+    "transcription-required",
+    "transcription-verified",
+    "excluded",
+    "uncertain",
+]
+EvidencePlane = Literal["pdf-text", "verified-transcription"]
 StepRejectionReason = Literal[
     "source-reference",
     "table-value",
@@ -135,6 +144,65 @@ class PageBox(_ContractModel):
             raise ValueError("page x_max must be greater than x_min")
         if self.y_max <= self.y_min:
             raise ValueError("page y_max must be greater than y_min")
+        return self
+
+
+class HumanTranscriptionVerification(_ContractModel):
+    status: str = ""
+    verified_by: str = ""
+    verified_at: date | None = None
+
+
+class TranscriptionSourceLocation(_ContractModel):
+    physical_page: int = Field(ge=1)
+    printed_page: int = Field(ge=1)
+    section: str = Field(min_length=1)
+    heading_path: list[str] = Field(min_length=1)
+    box: PageBox
+
+
+class TranscribedWarning(_ContractModel):
+    severity: Literal["warning", "notice"]
+    text: str = Field(min_length=1)
+
+
+class TranscribedStep(_ContractModel):
+    number: int = Field(ge=1)
+    text: str = Field(min_length=1)
+    source_box: PageBox
+    warnings: list[TranscribedWarning] = Field(default_factory=list[TranscribedWarning])
+
+
+class ProcedureTranscription(_ContractModel):
+    id: str = Field(min_length=1)
+    document_id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    location: TranscriptionSourceLocation
+    steps: list[TranscribedStep] = Field(min_length=1)
+    end_boundary: str = Field(min_length=1)
+    verification: HumanTranscriptionVerification
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", value) is None:
+            raise ValueError(
+                "transcription id must be lowercase alphanumeric words separated by hyphens"
+            )
+        return value
+
+
+class ProcedureTranscriptionFile(_ContractModel):
+    artifact_version: Literal["verified-transcriptions-v1"]
+    transcriptions: list[ProcedureTranscription] = Field(
+        default_factory=list[ProcedureTranscription]
+    )
+
+    @model_validator(mode="after")
+    def validate_transcriptions(self) -> ProcedureTranscriptionFile:
+        ids = [transcription.id for transcription in self.transcriptions]
+        if len(ids) != len(set(ids)):
+            raise ValueError("verified procedures require unique transcriptions")
         return self
 
 
@@ -327,6 +395,7 @@ class IngestionProvenance(_ContractModel):
     profile_schema_version: str
     profile_manifest_version: str
     profile_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    transcription_evidence_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     profiles: list[SelectedProfileProvenance]
 
 
@@ -354,6 +423,7 @@ class LayoutSpan(_ContractModel):
     bold: bool = False
     italic: bool = False
     language: str | None = None
+    evidence_plane: EvidencePlane = "pdf-text"
 
 
 class SourceEvidenceSpan(_ContractModel):
@@ -363,6 +433,7 @@ class SourceEvidenceSpan(_ContractModel):
     physical_page: int = Field(ge=1)
     column_id: str
     language: str | None = None
+    evidence_plane: EvidencePlane = "pdf-text"
     raw_text: str
     normalized_text: str
     box: NormalizedBox
@@ -375,6 +446,7 @@ class SourceExcerpt(_ContractModel):
     printed_page: int = Field(ge=1)
     section: str = Field(min_length=1)
     heading_path: list[str] = Field(min_length=1)
+    evidence_plane: EvidencePlane = "pdf-text"
     span_ids: list[str] = Field(min_length=1)
     spans: list[SourceEvidenceSpan] = Field(min_length=1)
     raw_text: str
@@ -517,6 +589,10 @@ def load_ingestion_profiles(path: Path) -> IngestionProfilesFile:
     for profile in profiles.profiles:
         _validate_supported_version(profile.id, profile.version)
     return profiles
+
+
+def load_procedure_transcriptions(path: Path) -> ProcedureTranscriptionFile:
+    return ProcedureTranscriptionFile.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 def resolve_document_profile(

@@ -23,9 +23,17 @@ _Avoid_: steps, instructions
 Source content that directly supports a claim and includes a document citation and a verifiable locator.
 _Avoid_: context, result, chunk
 
+**Evidence plane**:
+The provenance class that determines which source spans may support a claim. PDF text and human-verified transcriptions are separate planes.
+_Avoid_: evidence type, confidence tier
+
 **Citation**:
 A stable reference to the document and location containing the evidence.
 _Avoid_: source, link
+
+**Verified transcription**:
+Human-reviewed text for figure-only or scanned source content, bound to an exact page and source box with a named reviewer and verification date.
+_Avoid_: OCR output, inferred caption
 
 **Source pack**:
 The bounded, frozen set of manufacturer documents from which the assistant may answer.

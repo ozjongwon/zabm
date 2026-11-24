@@ -64,6 +64,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = REPO_ROOT / "data" / "manifests" / "source-pack-v1.json"
 DEFAULT_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-specifications.json"
 DEFAULT_COMPATIBILITY_EVIDENCE = REPO_ROOT / "data" / "evidence" / "verified-compatibility.json"
+DEFAULT_TRANSCRIPTIONS = REPO_ROOT / "data" / "evidence" / "verified-transcriptions.json"
 DEFAULT_SMOKE_SET = REPO_ROOT / "data" / "retrieval-smoke" / "smoke-set-v1.json"
 DEFAULT_RETRIEVAL_CONFIG = REPO_ROOT / "data" / "retrieval-smoke" / "retrieval-config-v1.json"
 DEFAULT_SMOKE_REPORT = REPO_ROOT / "data" / "retrieval-smoke" / "report-v1.json"
@@ -179,6 +180,7 @@ def _ingest_command(
     data_dir: Path,
     freeze_path: Path | None,
     ingestion_profiles_path: Path,
+    transcriptions_path: Path,
     language: str | None,
     as_json: bool,
 ) -> int:
@@ -217,6 +219,7 @@ def _ingest_command(
             data_dir,
             ingestion_profiles_path,
             ingestion_profiles=ingestion_profiles,
+            transcriptions_path=transcriptions_path,
             requested_language=language,
         )
     except (
@@ -249,6 +252,11 @@ def _ingest_command(
             "warning_count": retrieval_report.warning_count,
             "procedure_count": retrieval_report.procedure_count,
             "eligible_procedure_count": retrieval_report.eligible_procedure_count,
+            "verified_transcription_count": retrieval_report.verified_transcription_count,
+            "transcription_required_pages": [
+                page.model_dump(mode="json")
+                for page in retrieval_report.transcription_required_pages
+            ],
             "artifact_checksums": artifact_checksums,
             "validation_issues": [
                 *report.validation_issues,
@@ -914,6 +922,12 @@ def _parser() -> argparse.ArgumentParser:
         help="Path to the versioned PDF-ingestion profile manifest.",
     )
     ingest.add_argument(
+        "--transcriptions",
+        type=Path,
+        default=DEFAULT_TRANSCRIPTIONS,
+        help="Path to the human-verified procedure transcription artifact.",
+    )
+    ingest.add_argument(
         "--language",
         help="Preferred extracted language code; defaults to each profile's primary language.",
     )
@@ -1167,6 +1181,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.data_dir,
             args.freeze,
             args.ingestion_profiles,
+            args.transcriptions,
             args.language,
             args.json,
         )

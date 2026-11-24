@@ -27,14 +27,18 @@ def load_corpus() -> dict[str, Any]:
     return json.loads((FIXTURE_DIR / "corpus.json").read_text(encoding="utf-8"))
 
 
-def materialize_corpus(root: Path) -> CorpusWorkspace:
+def materialize_corpus(
+    root: Path,
+    *,
+    extra_documents: list[dict[str, Any]] | None = None,
+) -> CorpusWorkspace:
     root.mkdir(parents=True, exist_ok=True)
     corpus = load_corpus()
     pdf_dir = root / "pdf-doc"
     pdf_dir.mkdir(exist_ok=True)
 
     sources: list[dict[str, Any]] = []
-    for document in corpus["documents"]:
+    for document in [*corpus["documents"], *(extra_documents or [])]:
         source_path = pdf_dir / f"{document['id']}.pdf"
         write_positioned_pdf(source_path, document["pages"])
         source = {
@@ -79,6 +83,7 @@ def ingest_corpus(
     workspace: CorpusWorkspace,
     *,
     language: str | None = None,
+    transcriptions_path: Path | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     download = run_cli(
         "download",
@@ -108,6 +113,8 @@ def ingest_corpus(
     ]
     if language is not None:
         ingest_args.extend(["--language", language])
+    if transcriptions_path is not None:
+        ingest_args.extend(["--transcriptions", str(transcriptions_path)])
     ingest = run_cli(*ingest_args)
     assert ingest.returncode == 0, ingest.stderr
     report: dict[str, Any] = json.loads(ingest.stdout)
