@@ -118,10 +118,20 @@ class ProcedureStep(BaseModel):
     citation: StoredCitation
 
 
+class ProcedureMatchProvenance(BaseModel):
+    basis: Literal["literal-title", "action-alias"]
+    canonical_action: str | None = None
+    heading_action: str | None = None
+    question_action: str | None = None
+    profile_id: str
+    profile_version: str
+
+
 class ProcedureAnswer(BaseModel):
     title: str
     heading_path: list[str]
     steps: list[ProcedureStep]
+    match: ProcedureMatchProvenance | None = None
 
 
 class CanonicalResponse(BaseModel):

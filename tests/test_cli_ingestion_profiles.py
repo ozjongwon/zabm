@@ -237,7 +237,7 @@ def test_cli_selects_a_document_profile_and_records_retrieval_provenance(
     )
 
     profile_manifest_sha256 = hashlib.sha256(profile_path.read_bytes()).hexdigest()
-    assert report["ingestion_provenance"]["parser_version"] == "pdf-ingestion-v9"
+    assert report["ingestion_provenance"]["parser_version"] == "pdf-ingestion-v10"
     assert report["ingestion_provenance"]["profile_manifest_version"] == "profiles-v1"
     assert report["ingestion_provenance"]["profile_manifest_sha256"] == profile_manifest_sha256
     assert catalog["ingestion_provenance"] == report["ingestion_provenance"]
@@ -363,3 +363,63 @@ def test_cli_rejects_unreviewed_section_boundary_completeness(
     assert result.returncode == 1
     assert "section-boundary strategy requires a maintainer review reference" in result.stderr
     assert not (data_dir / "generated").exists()
+
+
+def test_cli_rejects_an_action_alias_term_assigned_to_multiple_actions(
+    tmp_path: Path,
+) -> None:
+    (
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        profile_path,
+        data_dir,
+    ) = prepare_profile_fixture(tmp_path)
+    payload = profile_manifest()
+    payload["profiles"][0]["action_aliases"] = {
+        "install": ["fit"],
+        "mount": ["fit"],
+    }
+    profile_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = run_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        profile_path,
+        data_dir,
+    )
+
+    assert result.returncode == 1
+    assert "action alias term 'fit' is assigned to multiple actions" in result.stderr
+    assert not (data_dir / "generated").exists()
+
+
+def test_cli_records_normalized_action_vocabulary_with_the_selected_profile(
+    tmp_path: Path,
+) -> None:
+    (
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        profile_path,
+        data_dir,
+    ) = prepare_profile_fixture(tmp_path)
+    payload = profile_manifest()
+    payload["profiles"][0]["action_aliases"] = {
+        "Install": ["FITTING", "mounting"],
+    }
+    profile_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    _, catalog = ingest_with_profiles(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        profile_path,
+        data_dir,
+    )
+
+    assert catalog["sources"][0]["procedure_language"] == "en"
+    assert catalog["sources"][0]["action_aliases"] == {
+        "install": ["fitting", "mounting"],
+    }

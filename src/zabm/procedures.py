@@ -59,6 +59,7 @@ from zabm.response import (
     Clarification,
     Failure,
     ProcedureAnswer,
+    ProcedureMatchProvenance,
     ProcedureStep,
     ProcedureWarning,
     StoredCitation,
@@ -254,7 +255,10 @@ class RetrievalSource(BaseModel):
     document_id: str
     title: str
     manufacturer: str
+    revision: str | None = None
     ingestion_profile: IngestionProfileProvenance
+    procedure_language: str = "en"
+    action_aliases: dict[str, list[str]] = Field(default_factory=dict[str, list[str]])
     pages: list[RetrievalPage]
 
 
@@ -1024,7 +1028,10 @@ def ingest_retrieval(
             document_id=source.id,
             title=source.title,
             manufacturer=source.manufacturer,
+            revision=source.revision,
             ingestion_profile=profile_provenance,
+            procedure_language=selected_profile.language.primary_language,
+            action_aliases=selected_profile.action_aliases,
             pages=[parsed.page for parsed in parsed_pages],
         )
         sources.append(retrieval_source)
@@ -1122,10 +1129,17 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
         )
 
     catalog = RetrievalCatalog.model_validate_json(catalog_path.read_text(encoding="utf-8"))
+    sources_by_document = {source.document_id: source for source in catalog.sources}
     matches = [
-        procedure
+        (procedure, match)
         for procedure in catalog.procedures
-        if _matches_question(procedure.title, question)
+        if (
+            match := _match_procedure(
+                procedure.title,
+                sources_by_document.get(procedure.document_id),
+                question,
+            )
+        )
     ]
     logger.debug(
         "procedure-query question=%s match_count=%d matches=%s",
@@ -1137,8 +1151,9 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
                 procedure.title,
                 procedure.page_numbers,
                 procedure.validation_issues,
+                match.basis,
             )
-            for procedure in matches
+            for procedure, match in matches
         ],
     )
     if not matches:
@@ -1157,7 +1172,8 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
             source_pack_id=catalog.source_pack_id,
         )
 
-    procedure = resolve_procedure_evidence(matches[0], catalog.sources)
+    procedure, match = matches[0]
+    procedure = resolve_procedure_evidence(procedure, catalog.sources)
     issues = procedure_completeness_issues(procedure)
     if issues:
         return _not_found(
@@ -1194,6 +1210,7 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
         procedure=ProcedureAnswer(
             title=procedure.title,
             heading_path=procedure.heading_path,
+            match=match,
             steps=[
                 ProcedureStep(
                     number=step.number,
@@ -1226,9 +1243,14 @@ def inspect_procedure_evidence(question: str, data_dir: Path) -> ProcedureEviden
         source.document_id: {page.physical_page: page for page in source.pages}
         for source in catalog.sources
     }
+    sources_by_document = {source.document_id: source for source in catalog.sources}
     matches: list[ProcedureEvidenceMatch] = []
     for procedure in catalog.procedures:
-        if not _matches_question(procedure.title, question):
+        if not _match_procedure(
+            procedure.title,
+            sources_by_document.get(procedure.document_id),
+            question,
+        ):
             continue
         resolved = resolve_procedure_evidence(procedure, catalog.sources)
         issues = procedure_completeness_issues(resolved)
@@ -2359,15 +2381,15 @@ def _is_procedure_section_heading(text: str, profile: DocumentProfile) -> bool:
 
 def _contains_procedure_action(text: str, profile: DocumentProfile) -> bool:
     normalized = text.casefold()
+    words = set(re.findall(r"[^\W_]+", normalized))
     aliases = {
         variant.casefold()
         for action, variants in profile.action_aliases.items()
         for variant in (action, *variants)
         if variant.strip()
     }
-    if any(alias in normalized for alias in aliases):
+    if aliases & words:
         return True
-    words = re.findall(r"[^\W_]+", normalized)
     return any(
         word
         in {
@@ -2801,14 +2823,90 @@ def procedure_completeness_issues(procedure: StoredProcedure) -> list[str]:
     return issues
 
 
-def _matches_question(title: str, question: str) -> bool:
-    title_tokens = [token for token in tokens(title) if token not in PROCEDURE_STOPWORDS]
-    if not title_tokens:
-        return False
-    return identity_matches(
+def _match_procedure(
+    title: str,
+    source: RetrievalSource | None,
+    question: str,
+) -> ProcedureMatchProvenance | None:
+    if source is None:
+        return None
+    title_tokens = tokens(title)
+    question_tokens = tokens(question)
+    action_groups = {
+        term: canonical
+        for canonical, variants in source.action_aliases.items()
+        for term in [canonical, *variants]
+    }
+    title_actions = [
+        (token, action_groups[token]) for token in title_tokens if token in action_groups
+    ]
+    title_identity = [
+        token
+        for token in title_tokens
+        if token not in action_groups and token not in PROCEDURE_STOPWORDS
+    ]
+    if not title_identity and not title_actions:
+        return None
+    if not set(title_identity) <= set(question_tokens):
+        return None
+
+    if not title_actions:
+        if not identity_matches(
+            question,
+            identifiers=[" ".join(title_identity)],
+            supporting=[
+                source.manufacturer,
+                source.revision or "",
+                source.procedure_language,
+                PROCEDURE_QUERY_VOCAB,
+            ],
+        ):
+            return None
+        return ProcedureMatchProvenance(
+            basis="literal-title",
+            profile_id=source.ingestion_profile.profile_id,
+            profile_version=source.ingestion_profile.profile_version,
+        )
+
+    matched_question_actions: list[tuple[str, str]] = []
+    for heading_action, canonical in title_actions:
+        question_action = next(
+            (token for token in question_tokens if action_groups.get(token) == canonical),
+            None,
+        )
+        if question_action is not None:
+            matched_question_actions.append((question_action, heading_action))
+    if not matched_question_actions:
+        return None
+
+    aliased_actions = [
+        (question_action, heading_action)
+        for question_action, heading_action in matched_question_actions
+        if question_action != heading_action
+    ]
+    basis = "action-alias" if aliased_actions else "literal-title"
+    question_action, heading_action = (
+        aliased_actions[0] if aliased_actions else matched_question_actions[0]
+    )
+    if unknown_tokens(
         question,
-        identifiers=[" ".join(title_tokens)],
-        supporting=[title, PROCEDURE_QUERY_VOCAB],
+        identifiers=[*title_identity, *(heading for _, heading in matched_question_actions)],
+        aliases=[question_action],
+        supporting=[
+            source.manufacturer,
+            source.revision or "",
+            source.procedure_language,
+            PROCEDURE_QUERY_VOCAB,
+        ],
+    ):
+        return None
+    return ProcedureMatchProvenance(
+        basis=basis,
+        canonical_action=action_groups[heading_action],
+        heading_action=heading_action,
+        question_action=question_action,
+        profile_id=source.ingestion_profile.profile_id,
+        profile_version=source.ingestion_profile.profile_version,
     )
 
 

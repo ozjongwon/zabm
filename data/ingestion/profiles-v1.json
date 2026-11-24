@@ -39,7 +39,50 @@
           "Procedure is complete"
         ]
       },
-      "action_aliases": {}
+      "action_aliases": {
+        "align": [
+          "aligned",
+          "aligning",
+          "alignment",
+          "alignments"
+        ],
+        "assemble": [
+          "assembly",
+          "assemblies"
+        ],
+        "bleed": [
+          "bled",
+          "bleeding"
+        ],
+        "install": [
+          "fit",
+          "fitted",
+          "fitting",
+          "installation",
+          "installations",
+          "mount",
+          "mounted",
+          "mounting"
+        ],
+        "remove": [
+          "removal",
+          "removals",
+          "removed",
+          "removing"
+        ],
+        "replace": [
+          "replacement",
+          "replacements",
+          "replaced",
+          "replacing"
+        ],
+        "shorten": [
+          "cut",
+          "cutting",
+          "shortened",
+          "shortening"
+        ]
+      }
     },
     {
       "id": "two-column-en",
@@ -91,7 +134,50 @@
           "Procedure is complete"
         ]
       },
-      "action_aliases": {}
+      "action_aliases": {
+        "align": [
+          "aligned",
+          "aligning",
+          "alignment",
+          "alignments"
+        ],
+        "assemble": [
+          "assembly",
+          "assemblies"
+        ],
+        "bleed": [
+          "bled",
+          "bleeding"
+        ],
+        "install": [
+          "fit",
+          "fitted",
+          "fitting",
+          "installation",
+          "installations",
+          "mount",
+          "mounted",
+          "mounting"
+        ],
+        "remove": [
+          "removal",
+          "removals",
+          "removed",
+          "removing"
+        ],
+        "replace": [
+          "replacement",
+          "replacements",
+          "replaced",
+          "replacing"
+        ],
+        "shorten": [
+          "cut",
+          "cutting",
+          "shortened",
+          "shortening"
+        ]
+      }
     }
   ]
 }

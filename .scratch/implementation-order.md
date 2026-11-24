@@ -8,8 +8,8 @@ files.
 
 - Completed in `bicycle-mechanics-assistant-v1`: tickets 02 through 11.
 - Pending in `bicycle-mechanics-assistant-v1`: tickets 01 and 12 through 19.
-- Completed in `general-pdf-ingestion`: tickets 01 through 10.
-- Pending in `general-pdf-ingestion`: tickets 11 through 12.
+- Completed in `general-pdf-ingestion`: tickets 01 through 11.
+- Pending in `general-pdf-ingestion`: ticket 12.
 - Ticket 13 is partially implemented in the current working tree and should be
   completed and verified before moving to the ingestion refactor.
 - Ticket 01 in `bicycle-mechanics-assistant-v1` still requires clean-machine
@@ -28,7 +28,7 @@ files.
 | 07 | [general-pdf-ingestion/06](general-pdf-ingestion/issues/06-procedure-candidate-and-step-extraction.md) | Extract only contiguous, action-bearing procedure steps. | Blocked by orders 04, 06 |
 | 08 | [general-pdf-ingestion/08](general-pdf-ingestion/issues/08-source-span-evidence-and-citations.md) | Bind steps and warnings to exact source spans and citations. | Complete |
 | 09 | [general-pdf-ingestion/07](general-pdf-ingestion/issues/07-procedure-boundaries-and-completeness.md) | Approve and implement start/end boundary and completeness rules. | Complete |
-| 10 | [general-pdf-ingestion/11](general-pdf-ingestion/issues/11-procedure-action-vocabulary.md) | Add reviewed procedure action aliases without weakening identity filters. | Blocked by orders 06-07 |
+| 10 | [general-pdf-ingestion/11](general-pdf-ingestion/issues/11-procedure-action-vocabulary.md) | Add reviewed procedure action aliases without weakening identity filters. | Complete |
 | 11 | [general-pdf-ingestion/10](general-pdf-ingestion/issues/10-duplicate-and-continuation-handling.md) | Resolve duplicate steps, repeated headings, and continuation pages. | Complete |
 | 12 | [general-pdf-ingestion/09](general-pdf-ingestion/issues/09-figure-ocr-and-transcription-policy.md) | Keep figure-only and OCR-only content ineligible until human verification. | Complete |
 | 13 | [general-pdf-ingestion/12](general-pdf-ingestion/issues/12-ingestion-diagnostics-and-rebuild-policy.md) | Add diagnostics, parser provenance, and rebuild consequences. | Blocked by orders 02, 04, 07-09 |

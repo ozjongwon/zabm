@@ -13,7 +13,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
-PARSER_VERSION = "pdf-ingestion-v9"
+PARSER_VERSION = "pdf-ingestion-v10"
 FONTTOOLS_VERSION = package_version("fonttools")
 PYPDF_VERSION = package_version("pypdf")
 PROFILE_SCHEMA_VERSION = "1"
@@ -59,6 +59,7 @@ StepRejectionReason = Literal[
 ]
 ReadingOrder = Literal["left-to-right", "right-to-left"]
 EndBoundaryStrategy = Literal["explicit-marker", "section-boundary"]
+ACTION_TERM = re.compile(r"^[a-z0-9]+(?:[.-][a-z0-9]+)?$")
 
 
 class IngestionProfileError(ValueError):
@@ -354,12 +355,37 @@ class DocumentProfile(_ContractModel):
     @field_validator("action_aliases")
     @classmethod
     def validate_aliases(cls, aliases: dict[str, list[str]]) -> dict[str, list[str]]:
+        normalized_aliases: dict[str, list[str]] = {}
+        action_by_term: dict[str, str] = {}
+
+        def normalize_term(term: str, *, kind: str) -> str:
+            normalized = normalize_pdf_text(term).casefold()
+            if not normalized or not ACTION_TERM.fullmatch(normalized):
+                raise ValueError(f"action alias {kind} must be one normalized word")
+            return normalized
+
         for action, variants in aliases.items():
-            if not action.strip():
-                raise ValueError("action alias keys must not be blank")
-            if not variants or any(not variant.strip() for variant in variants):
+            normalized_action = normalize_term(action, kind="key")
+            existing_action = action_by_term.get(normalized_action)
+            if existing_action is not None:
+                raise ValueError(
+                    f"action alias term {normalized_action!r} is assigned to multiple actions"
+                )
+            action_by_term[normalized_action] = normalized_action
+            if not variants:
                 raise ValueError(f"action alias {action!r} must contain non-blank aliases")
-        return aliases
+            normalized_variants: list[str] = []
+            for variant in variants:
+                normalized_variant = normalize_term(variant, kind="term")
+                owner = action_by_term.get(normalized_variant)
+                if owner is not None and owner != normalized_action:
+                    raise ValueError(
+                        f"action alias term {normalized_variant!r} is assigned to multiple actions"
+                    )
+                action_by_term[normalized_variant] = normalized_action
+                normalized_variants.append(normalized_variant)
+            normalized_aliases[normalized_action] = normalized_variants
+        return normalized_aliases
 
 
 class IngestionProfilesFile(_ContractModel):
