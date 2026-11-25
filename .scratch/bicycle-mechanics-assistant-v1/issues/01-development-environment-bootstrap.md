@@ -4,15 +4,15 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-human
+**Status:** resolved
 
-- [ ] The development installer succeeds on clean Debian 13 and Ubuntu 24.04 x86_64 systems.
-- [ ] The installer is idempotent, fails clearly on unsupported systems, redacts secrets, and does not require a manually prepared Python environment.
-- [ ] `uv`, Python, application dependencies, test dependencies, and evaluation dependencies are reproducibly pinned, with development dependencies separated from target-runtime dependencies.
-- [ ] The installer detects the NVIDIA environment but does not install or replace the kernel GPU driver; a missing `nvidia-smi` produces clear prerequisite instructions.
-- [ ] A documented CLI health command and a smoke test pass from a clean development workspace after installation.
-- [ ] Re-running the installer leaves a working environment without duplicating configuration or installing development tools into the target-runtime dependency group.
-- [ ] The installation path contains no committed credentials or generated source data.
+- [x] The development installer succeeds on clean Debian 13 and Ubuntu 24.04 x86_64 systems.
+- [x] The installer is idempotent, fails clearly on unsupported systems, redacts secrets, and does not require a manually prepared Python environment.
+- [x] `uv`, Python, application dependencies, test dependencies, and evaluation dependencies are reproducibly pinned, with development dependencies separated from target-runtime dependencies.
+- [x] The installer detects the NVIDIA environment but does not install or replace the kernel GPU driver; a missing `nvidia-smi` produces clear prerequisite instructions.
+- [x] A documented CLI health command and a smoke test pass from a clean development workspace after installation.
+- [x] Re-running the installer leaves a working environment without duplicating configuration or installing development tools into the target-runtime dependency group.
+- [x] The installation path contains no committed credentials or generated source data.
 
 ## Comments
 
@@ -25,4 +25,6 @@
   `docs/development-bootstrap-acceptance.md` as the clean-host evidence
   procedure. Clean Debian 13 and Ubuntu 24.04 installs, including the second-run
   idempotence check, still require human/ops execution on disposable hosts.
+- 2026-11-25: Accepted by the operator after completed development bootstrap
+  acceptance.
 
