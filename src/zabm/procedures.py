@@ -3327,7 +3327,7 @@ def _has_matching_partial_procedure(
     for source in catalog.sources:
         canonical_tokens = _procedure_token_canonicalizer(source.action_aliases)
         significant_tokens = _significant_procedure_tokens(question, canonical_tokens)
-        if len(significant_tokens) < 2:
+        if not significant_tokens:
             continue
         best_score = (0.0, 0)
         for page in source.pages:

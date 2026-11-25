@@ -382,6 +382,26 @@ def test_cli_matches_a_specification_identified_by_an_item_number(
     assert response["specification"]["component"] == "brake caliper mounting bolts"
 
 
+def test_cli_routes_a_hose_tightening_value_as_a_specification(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post hose barb tightening value?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["response_type"] == "specification"
+    assert response["routing"]["intent"] == "specification"
+
+
 def test_cli_uses_and_records_a_configured_openai_compatible_provider(
     tmp_path: Path,
 ) -> None:

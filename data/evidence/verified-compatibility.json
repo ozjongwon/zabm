@@ -162,6 +162,88 @@
         "verified_by": "project-maintainer",
         "verified_at": "2026-11-23"
       }
+    },
+    {
+      "id": "sram-reverb-axs-composite-7x9-saddle-rails",
+      "component_a": {
+        "manufacturer": "SRAM (RockShox)",
+        "name": "Reverb AXS seatpost",
+        "aliases": [
+          "RockShox Reverb AXS dropper post",
+          "Reverb AXS"
+        ]
+      },
+      "component_b": {
+        "manufacturer": "Unspecified",
+        "name": "saddle with composite 7x9 mm oval rails",
+        "aliases": [
+          "composite 7x9 mm oval saddle rails",
+          "composite 7x9 mm oval rails"
+        ]
+      },
+      "outcome": "compatible",
+      "conditions": [
+        "Seatpost: Reverb AXS",
+        "Saddle rail material: composite",
+        "Saddle rail profile: 7x9 mm oval"
+      ],
+      "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "citation": {
+        "printed_page": 13,
+        "physical_page": 13,
+        "section": "Compatibility Compatibilité Compatibilidade"
+      },
+      "evidence_excerpts": [
+        "Reverb AXS seatposts are compatible with saddles with metal 7 mm diameter rails and composite 7x9 mm oval rails, and composite 7x10 mm oval rails when used with optionally available clamps."
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-26"
+      }
+    },
+    {
+      "id": "sram-reverb-axs-mismatched-seat-tube-diameter",
+      "component_a": {
+        "manufacturer": "SRAM (RockShox)",
+        "name": "Reverb AXS seatpost",
+        "aliases": [
+          "RockShox Reverb AXS dropper post",
+          "30.9 mm Reverb AXS seatpost",
+          "31.6 mm Reverb AXS seatpost",
+          "34.9 mm Reverb AXS seatpost"
+        ]
+      },
+      "component_b": {
+        "manufacturer": "Unspecified",
+        "name": "seat tube with a different diameter",
+        "aliases": [
+          "seatpost and seat tube diameters are different",
+          "30.9 mm seat tube",
+          "31.6 mm seat tube",
+          "34.9 mm seat tube"
+        ]
+      },
+      "outcome": "not_compatible",
+      "conditions": [
+        "Seatpost diameter: 30.9 mm, 31.6 mm, or 34.9 mm",
+        "Seat tube diameter: must equal seatpost diameter"
+      ],
+      "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+      "citation": {
+        "printed_page": 13,
+        "physical_page": 13,
+        "section": "Compatibility Compatibilité Compatibilidade"
+      },
+      "evidence_excerpts": [
+        "Reverb AXS is available in 30.9 mm, 31.6 mm, and 34.9 mm diameters.",
+        "Seatpost and seat tube diameters must be the same."
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-26"
+      }
     }
   ]
 }

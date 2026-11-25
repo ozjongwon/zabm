@@ -84,6 +84,7 @@ def prepare_compatibility_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Pat
                 "third-party brake lever remains unresolved."
             ),
             "31.6 mm matches 31.6 mm.",
+            "Seatpost and seat tube diameters must be the same.",
         ],
     )
     source_hash = hashlib.sha256(source_path.read_bytes()).hexdigest()
@@ -220,6 +221,38 @@ def prepare_compatibility_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Pat
                             "verified_at": "2026-11-23",
                         },
                     },
+                    {
+                        "id": "test-trail-post-mismatched-seat-tube",
+                        "component_a": {
+                            "manufacturer": "Test Manufacturer",
+                            "name": "Trail Post A2 seatpost",
+                            "aliases": ["30.9 mm Trail Post A2 seatpost"],
+                        },
+                        "component_b": {
+                            "manufacturer": "Test Manufacturer",
+                            "name": "seat tube with a different diameter",
+                            "aliases": ["31.6 mm seat tube"],
+                        },
+                        "outcome": "not_compatible",
+                        "conditions": [
+                            "Seatpost diameter: 30.9 mm, 31.6 mm, or 34.9 mm",
+                            "Seat tube diameter: must equal seatpost diameter",
+                        ],
+                        "source_id": "test-manual",
+                        "citation": {
+                            "printed_page": 17,
+                            "physical_page": 1,
+                            "section": "Compatibility table",
+                        },
+                        "evidence_excerpts": [
+                            "Seatpost and seat tube diameters must be the same."
+                        ],
+                        "verification": {
+                            "status": "human_verified",
+                            "verified_by": "repository-maintainer",
+                            "verified_at": "2026-11-23",
+                        },
+                    },
                 ]
             }
         ),
@@ -341,6 +374,38 @@ def test_cli_returns_compatible_for_an_explicit_manufacturer_rule(tmp_path: Path
             "source_manifest_version": "test-1",
         }
     ]
+
+
+def test_cli_returns_not_compatible_for_an_explicit_equal_diameter_requirement(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Is a 30.9 mm Trail Post A2 seatpost compatible with a 31.6 mm seat tube?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["compatibility"]["outcome"] == "not_compatible"
+    assert response["compatibility"]["conditions"] == [
+        "Seatpost diameter: 30.9 mm, 31.6 mm, or 34.9 mm",
+        "Seat tube diameter: must equal seatpost diameter",
+    ]
+    assert response["claims"][0]["claim_id"] == "test-trail-post-mismatched-seat-tube"
 
 
 def test_cli_uses_the_local_provider_for_compatibility_phrasing(tmp_path: Path) -> None:

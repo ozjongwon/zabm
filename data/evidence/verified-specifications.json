@@ -191,6 +191,156 @@
         "verified_by": "project-maintainer",
         "verified_at": "2026-11-23"
       }
+    },
+    {
+      "id": "sram-rockshox-reba-top-cap-torque",
+      "manufacturer": "SRAM (RockShox)",
+      "model": "Reba",
+      "component": "top cap",
+      "attribute": "torque",
+      "aliases": [
+        "2011 RockShox Reba top cap torque",
+        "RockShox Reba top cap tightening value",
+        "Reba top cap torque"
+      ],
+      "value": {
+        "minimum": 7.3,
+        "maximum": 7.3,
+        "unit": "N·m",
+        "display": "7.3 N·m (65 in-lb)"
+      },
+      "conditions": [
+        "Fork: 2011 RockShox Reba",
+        "Variant: top cap other than Air U-Turn"
+      ],
+      "source_id": "sram-rockshox-reba-2011-technical-manual",
+      "citation": {
+        "printed_page": 7,
+        "physical_page": 7,
+        "section": "TORQUE TIGHTENING VALUES"
+      },
+      "evidence_excerpts": [
+        "TORQUE TIGHTENING VALUES",
+        "Top Cap 7.3 N·m (65 in-lb)"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-26"
+      }
+    },
+    {
+      "id": "sram-rockshox-reba-top-cap-air-uturn-torque",
+      "manufacturer": "SRAM (RockShox)",
+      "model": "Reba",
+      "component": "top cap",
+      "attribute": "torque",
+      "aliases": [
+        "2011 RockShox Reba Air U-Turn top cap torque",
+        "RockShox Reba top cap tightening value",
+        "Reba top cap torque"
+      ],
+      "value": {
+        "minimum": 14.6,
+        "maximum": 14.6,
+        "unit": "N·m",
+        "display": "14.6 N·m (130 in-lb)"
+      },
+      "conditions": [
+        "Fork: 2011 RockShox Reba",
+        "Variant: Air U-Turn only"
+      ],
+      "source_id": "sram-rockshox-reba-2011-technical-manual",
+      "citation": {
+        "printed_page": 7,
+        "physical_page": 7,
+        "section": "TORQUE TIGHTENING VALUES"
+      },
+      "evidence_excerpts": [
+        "TORQUE TIGHTENING VALUES",
+        "Top Cap (Air U-Turn Only) 14.6 N·m (130 in-lb)"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-26"
+      }
+    },
+    {
+      "id": "sram-reverb-stealth-hose-barb-and-barb-sleeve-torque",
+      "manufacturer": "SRAM (RockShox)",
+      "model": "Reverb Stealth",
+      "component": "hose barb and barb sleeve assembly",
+      "attribute": "torque",
+      "aliases": [
+        "Reverb Stealth hose barb torque",
+        "Reverb Stealth hose barb connection"
+      ],
+      "value": {
+        "minimum": 1.1,
+        "maximum": 2.2,
+        "unit": "N·m",
+        "display": "1.1-2.2 N·m (10-20 in-lb)"
+      },
+      "conditions": [
+        "Bicycle model: Reverb Stealth",
+        "Joint: hose barb and barb sleeve",
+        "Tool: 7 mm"
+      ],
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "citation": {
+        "printed_page": 12,
+        "physical_page": 12,
+        "section": "Hose Barb and Barb Sleeve Preparation"
+      },
+      "evidence_excerpts": [
+        "Hose Barb and Barb Sleeve Preparation",
+        "Tighten the hose barb and barb sleeve.",
+        "7 mm 1.1-2.2 N•m (10-20 in-lb)"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-26"
+      }
+    },
+    {
+      "id": "sram-reverb-stealth-hose-barb-to-seatpost-torque",
+      "manufacturer": "SRAM (RockShox)",
+      "model": "Reverb Stealth",
+      "component": "hose barb into seatpost",
+      "attribute": "torque",
+      "aliases": [
+        "RockShox Reverb Stealth hose barb torque",
+        "Reverb Stealth hose barb connection"
+      ],
+      "value": {
+        "minimum": 3.4,
+        "maximum": 4.5,
+        "unit": "N·m",
+        "display": "3.4-4.5 N·m (30-40 in-lb)"
+      },
+      "conditions": [
+        "Bicycle model: Reverb Stealth",
+        "Joint: hose barb into seatpost",
+        "Tool: 10 mm"
+      ],
+      "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+      "citation": {
+        "printed_page": 16,
+        "physical_page": 16,
+        "section": "Reverb™ Stealth Hose Removal and Installation"
+      },
+      "evidence_excerpts": [
+        "Reverb™ Stealth Hose Removal and Installation",
+        "Hose Barb with Barb Sleeve: Install the new hose barb into the seatpost and tighten.",
+        "10 mm 3.4-4.5 N•m (30-40 in-lb)"
+      ],
+      "verification": {
+        "status": "human_verified",
+        "verified_by": "project-maintainer",
+        "verified_at": "2026-11-26"
+      }
     }
   ]
 }

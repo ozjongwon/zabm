@@ -57,7 +57,6 @@ def conflicting_evidence_response(
             message=message,
         ),
         conflicts=report,
-        citations=[citation for candidate in report.candidates for citation in candidate.citations],
         source_pack_id=source_pack_id,
     )
 

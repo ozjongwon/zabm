@@ -362,6 +362,7 @@ def _explicit_rule_evidence(rule: VerifiedCompatibilityRule) -> bool:
                 "is not compatible with",
                 "must not be used with",
                 "never use",
+                "seatpost and seat tube diameters must be the same",
             )
         )
     return any(

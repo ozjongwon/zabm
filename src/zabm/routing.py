@@ -25,6 +25,7 @@ ROUTING_PROTOTYPES: dict[EvidenceIntent, tuple[str, ...]] = {
     "specification": (
         "what torque should be used for this component",
         "what is the specified value for this fastener",
+        "what is the tightening value for this component",
         "which specification applies to this model and component",
         "give me the exact measurement and unit",
         "what pressure does this suspension component require",

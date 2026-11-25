@@ -854,6 +854,43 @@ def test_cli_reports_partial_evidence_for_an_incomplete_matching_section(
     assert "only partial procedure evidence was available" in response["failure"]["message"]
 
 
+def test_cli_reports_partial_evidence_for_a_single_distinctive_task_word(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Trail Post reach adjustment",
+        "Turn the adjuster to change reach.",
+        "Check lever clearance after adjustment.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="Trail Post Brake Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps for reach adjustment?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert response["procedure"] is None
+    assert "only partial procedure evidence was available" in response["failure"]["message"]
+
+
 def test_cli_matches_a_request_for_steps_and_attached_notices(
     tmp_path: Path,
 ) -> None:

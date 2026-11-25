@@ -240,6 +240,7 @@ def test_cli_reports_unresolved_specification_conflict_with_every_source(
     assert response["response_type"] == "specification"
     assert response["failure"]["code"] == "conflicting_evidence"
     assert response["claims"] == []
+    assert response["citations"] == []
     assert response["specification"] is None
     assert response["conflicts"]["precedence_established"] is False
     assert response["conflicts"]["selected_claim_id"] is None
