@@ -20,10 +20,12 @@ Start the web chat in a second terminal:
 ./.venv/bin/python -m zabm web --data-dir .zabm
 ```
 
-Open <http://127.0.0.1:8765>. Keep the CLI and web configured with the same
-evidence directory and provider options. For a remote provider acceptance run,
-pass the same `--provider`, `--provider-url`, `--model`, `--embedding-model`, and
-`--provider-configuration` values to both commands.
+Open the loopback URL printed by the server, or use its reported local-network
+URL from another machine. The server binds all interfaces by default; pass
+`--host 127.0.0.1` to restrict it to loopback. Keep the CLI and web configured
+with the same evidence directory and provider options. For a remote provider
+acceptance run, pass the same `--provider`, `--provider-url`, `--model`,
+`--embedding-model`, and `--provider-configuration` values to both commands.
 
 ## Compare canonical outcomes
 

@@ -106,10 +106,13 @@ Start the minimal local web chat against the generated evidence directory:
 ./.venv/bin/python -m zabm web --data-dir .zabm
 ```
 
-Open <http://127.0.0.1:8765>. The server binds to the loopback interface by
-default. Use `--host` and `--port` to change the binding, including `--port 0`
-to select an available port. Provider options match `zabm ask`, so the web chat
-uses the same deterministic default or selected remote provider.
+The server binds to all network interfaces by default, prints both loopback and
+local-network URLs, and is therefore reachable from other machines on the LAN.
+Use `--host 127.0.0.1` to restrict access to the local machine, or change the
+port with `--port`. Provider options match `zabm ask`, so the web chat uses the
+same deterministic default or selected remote provider.
+
+The web chat has no authentication. Use loopback binding on untrusted networks.
 
 The browser posts to `/api/ask`, which returns the complete canonical response
 envelope. The web page only presents that envelope: it does not retrieve

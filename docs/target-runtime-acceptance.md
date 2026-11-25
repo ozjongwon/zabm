@@ -66,9 +66,9 @@ zabm-runtime ask \
 zabm-runtime web --data-dir .zabm
 ```
 
-Open the reported loopback URL and ask the same question. Both responses must
-be `supported`, with claims and citations, and must identify the selected
-provider and models.
+Open the reported loopback or local-network URL and ask the same question. Both
+responses must be `supported`, with claims and citations, and must identify the
+selected provider and models.
 
 Run the automated installed-target checks independently:
 

@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import platform
+import socket
 import sys
 import time
 from collections.abc import Sequence
@@ -632,11 +633,13 @@ def _web_command(
     raw_host = address[0]
     server_host = raw_host.decode() if isinstance(raw_host, bytes | bytearray) else raw_host
     server_port = address[1]
-    display_host = f"[{server_host}]" if ":" in server_host else server_host
+    urls = _web_urls(server_host, server_port)
     print(
-        f"zabm web: http://{display_host}:{server_port} (data: {data_dir}; press Ctrl+C to stop)",
+        f"zabm web: {urls[0]} (data: {data_dir}; press Ctrl+C to stop)",
         flush=True,
     )
+    for url in urls[1:]:
+        print(f"zabm web: {url} (local network)", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -644,6 +647,46 @@ def _web_command(
     finally:
         server.server_close()
     return 0
+
+
+def _web_urls(server_host: str, server_port: int) -> tuple[str, ...]:
+    if server_host not in {"0.0.0.0", "::"}:
+        display_host = f"[{server_host}]" if ":" in server_host else server_host
+        return (f"http://{display_host}:{server_port}",)
+
+    urls = [f"http://127.0.0.1:{server_port}"]
+    urls.extend(f"http://{host}:{server_port}" for host in _local_ipv4_addresses())
+    return tuple(urls)
+
+
+def _local_ipv4_addresses() -> tuple[str, ...]:
+    addresses: set[str] = set()
+    try:
+        for result in socket.getaddrinfo(
+            socket.gethostname(),
+            None,
+            family=socket.AF_INET,
+            type=socket.SOCK_STREAM,
+        ):
+            host = result[4][0]
+            if not isinstance(host, str):
+                continue
+            if not host.startswith("127."):
+                addresses.add(host)
+    except OSError:
+        pass
+    if addresses:
+        return tuple(sorted(addresses))
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+            probe.connect(("192.0.2.1", 9))
+            host = probe.getsockname()[0]
+            if not host.startswith("127."):
+                return (host,)
+    except OSError:
+        pass
+    return ()
 
 
 def _evidence_command(question: str, data_dir: Path, as_json: bool) -> int:
@@ -1184,8 +1227,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     web.add_argument(
         "--host",
-        default="127.0.0.1",
-        help="Interface to bind; defaults to the loopback address.",
+        default="0.0.0.0",
+        help="Interface to bind; defaults to all network interfaces.",
     )
     web.add_argument(
         "--port",

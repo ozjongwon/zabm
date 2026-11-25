@@ -26,4 +26,8 @@
   sole automated test seam. Full Pyright, Ruff lint, targeted Ruff formatting,
   and 211 tests pass. Repository-wide Ruff formatting still flags pre-existing
   drift in untouched files.
+- 2026-11-25: The web server now binds all IPv4 interfaces by default so other
+  machines on the LAN can access it, and startup reports both loopback and
+  detected network URLs. `--host 127.0.0.1` restores loopback-only binding;
+  documentation notes that the web interface has no authentication.
 
