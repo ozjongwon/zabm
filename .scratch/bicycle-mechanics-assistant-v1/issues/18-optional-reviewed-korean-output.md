@@ -39,3 +39,8 @@
   runtime installer now records absolute sample-set and review paths in
   `runtime.env`, and blank path overrides fall back to those defaults instead of
   resolving to the current directory.
+- 2026-11-25: The five-case Korean sample review was approved by `jc` with full
+  correctness and fluency scores and all preservation checks passing. An
+  end-to-end DeepSeek run now returns Korean prose with
+  `localization.status=translated`, preserving the canonical torque value,
+  conditions, status, and citation.

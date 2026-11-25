@@ -1,22 +1,22 @@
 {
   "artifact_version": "korean-review-v1",
-  "review_id": "korean-review-pending-v1",
+  "review_id": "korean-review-approved-v1",
   "language": "ko",
   "sample_set_id": "korean-sample-set-v1",
   "sample_set_sha256": "389b6b86f8c6d8c3d1e70a462503f109e59b21cf790bd89a80b1c6638128fab8",
-  "status": "pending",
-  "reviewer": null,
-  "reviewed_at": null,
+  "status": "approved",
+  "reviewer": "jc",
+  "reviewed_at": "2026-11-25",
   "scores": {
-    "correctness": null,
-    "fluency": null
+    "correctness": 1.0,
+    "fluency": 1.0
   },
   "checks": {
-    "values_preserved": false,
-    "units_preserved": false,
-    "conditions_preserved": false,
-    "statuses_preserved": false,
-    "warnings_preserved": false,
-    "citations_preserved": false
+    "values_preserved": true,
+    "units_preserved": true,
+    "conditions_preserved": true,
+    "statuses_preserved": true,
+    "warnings_preserved": true,
+    "citations_preserved": true
   }
 }

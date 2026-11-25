@@ -279,6 +279,7 @@ def test_cli_keeps_korean_output_disabled_until_the_review_is_approved(
 ) -> None:
     manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
     download_and_ingest(manifest_path, evidence_path, data_dir)
+    _, environment = _korean_review(tmp_path, status="pending")
 
     result = run_cli(
         "ask",
@@ -288,7 +289,7 @@ def test_cli_keeps_korean_output_disabled_until_the_review_is_approved(
         "--language",
         "ko",
         "--json",
-        env={"ZABM_KOREAN_OUTPUT": "1"},
+        env=environment,
     )
 
     assert result.returncode == 0, result.stderr
