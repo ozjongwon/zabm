@@ -302,6 +302,38 @@ def test_provider_smoke_can_skip_embeddings_for_chat_only_profiles() -> None:
     assert [request["path"] for request in requests] == ["/v1/chat/completions"]
 
 
+def test_provider_smoke_supports_remote_chat_with_local_embeddings() -> None:
+    with (
+        provider_server(generated_specification()) as (chat_url, chat_requests),
+        provider_server(generated_specification()) as (embedding_url, embedding_requests),
+    ):
+        result = run_cli_with_env(
+            {
+                "DEEPSEEK_API_KEY": "deepseek-test-key",
+                "ZABM_EMBEDDING_PROVIDER_URL": embedding_url,
+            },
+            "provider-smoke",
+            "--provider",
+            "deepseek",
+            "--provider-url",
+            chat_url,
+            "--model",
+            "deepseek-test-model",
+            "--embedding-model",
+            "mxbai-embed-large:latest",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["provider"]["model"] == "deepseek-test-model"
+    assert report["provider"]["embedding_model"] == "mxbai-embed-large:latest"
+    assert [request["path"] for request in chat_requests] == ["/v1/chat/completions"]
+    assert chat_requests[0]["authorization"] == "Bearer deepseek-test-key"
+    assert [request["path"] for request in embedding_requests] == ["/v1/embeddings"]
+    assert embedding_requests[0]["authorization"] is None
+
+
 def test_cpu_quantized_provider_smoke_writes_acceptance_evidence(tmp_path: Path) -> None:
     output_path = tmp_path / "cpu-smoke.json"
 

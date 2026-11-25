@@ -64,4 +64,9 @@
   persisted in mode-600 `runtime.env` and used by the installed launcher and
   smoke checks. Chat-only provider smoke skips embeddings when that capability
   is not configured.
+- 2026-11-25: The default installer profile now uses remote DeepSeek
+  (`deepseek-flash`) for chat and an existing local Ollama embedding model.
+  Runtime configuration stores a separate embedding-provider URL, and the
+  provider layer routes chat and embedding requests independently so the
+  DeepSeek API key is never sent to local Ollama.
 

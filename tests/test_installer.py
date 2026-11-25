@@ -136,6 +136,8 @@ def test_runtime_installer_dry_run_reports_the_complete_target_plan(
 
     result = run_runtime_installer(
         "--dry-run",
+        "--provider",
+        "local",
         os_release=str(os_release),
         extra_env={
             "HOME": str(tmp_path / "home"),
@@ -160,7 +162,7 @@ def test_runtime_installer_dry_run_reports_the_complete_target_plan(
     assert "sk-test-do-not-print" not in result.stdout + result.stderr
 
 
-def test_runtime_installer_dry_run_can_plan_a_remote_provider_without_leaking_its_key(
+def test_runtime_installer_defaults_to_deepseek_chat_with_local_embeddings(
     tmp_path: Path,
 ) -> None:
     os_release = tmp_path / "debian-release"
@@ -171,18 +173,18 @@ def test_runtime_installer_dry_run_can_plan_a_remote_provider_without_leaking_it
 
     result = run_runtime_installer(
         "--dry-run",
-        "--provider",
-        "deepseek",
         os_release=str(os_release),
         extra_env={
             "DEEPSEEK_API_KEY": "deepseek-secret-do-not-print",
+            "ZABM_EMBEDDING_MODEL": "mxbai-embed-large:latest",
         },
     )
 
     assert result.returncode == 0, result.stderr
     assert "provider: deepseek at https://api.deepseek.com" in result.stdout
+    assert "embedding provider: local Ollama at http://127.0.0.1:11434/v1" in result.stdout
     assert "chat model: deepseek-flash" in result.stdout
-    assert "embedding model: not-configured" in result.stdout
+    assert "embedding model: mxbai-embed-large:latest" in result.stdout
     assert "deepseek-secret-do-not-print" not in result.stdout + result.stderr
 
 
@@ -205,6 +207,8 @@ def test_runtime_configuration_and_launcher_are_secret_free_and_idempotent(
         "PROVIDER_KIND=local; "
         "RUNTIME_PROVIDER_NAME=openai-compatible; "
         "RUNTIME_PROVIDER_URL=http://127.0.0.1:11434/v1; "
+        "RUNTIME_EMBEDDING_PROVIDER_KIND=local; "
+        "RUNTIME_EMBEDDING_PROVIDER_URL=http://127.0.0.1:11434/v1; "
         "RUNTIME_CHAT_MODEL_NAME=test-chat; "
         "RUNTIME_EMBEDDING_MODEL_NAME=test-embedding; "
         "write_runtime_config; write_runtime_launcher"
@@ -230,6 +234,8 @@ def test_runtime_configuration_and_launcher_are_secret_free_and_idempotent(
     assert config.stat().st_mode & 0o777 == 0o600
     assert launcher.stat().st_mode & 0o777 == 0o755
     assert "ZABM_RUNTIME_PROVIDER_KIND=local\n" in config_contents
+    assert "ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND=local\n" in config_contents
+    assert "ZABM_EMBEDDING_PROVIDER_URL=http://127.0.0.1:11434/v1\n" in config_contents
     assert "ZABM_PROVIDER=openai-compatible\n" in config_contents
     assert "ZABM_PROVIDER_API_KEY=\n" in config_contents
     assert "ZABM_MODEL=test-chat\n" in config_contents
@@ -273,7 +279,7 @@ verify_ollama_service() {{ :; }}
 select_models() {{ :; }}
 prepare_evidence() {{ :; }}
 run_installed_smoke() {{ :; }}
-main --runtime-home {shlex.quote(str(runtime_home))}
+main --provider local --runtime-home {shlex.quote(str(runtime_home))}
 """
     env = os.environ.copy()
     env.update(
@@ -479,14 +485,28 @@ printf 'embedding=%s\\n' "$RUNTIME_EMBEDDING_MODEL_NAME"
     assert "embedding=nomic-embed-text:latest" in result.stdout
 
 
-def test_runtime_installer_configures_deepseek_without_an_embedding_model(
+def test_runtime_installer_configures_deepseek_with_local_ollama_embeddings(
     tmp_path: Path,
 ) -> None:
     home = tmp_path / "home"
     config_home = tmp_path / "config"
+    ollama = tmp_path / "ollama"
+    ollama.write_text(
+        """#!/bin/sh
+if [ "$1" = "list" ]; then
+  printf 'NAME ID SIZE MODIFIED\\n'
+  printf 'mxbai-embed-large:latest embed-id 670MB now\\n'
+fi
+""",
+        encoding="utf-8",
+    )
+    ollama.chmod(0o755)
     command = f"""
 source {shlex.quote(str(RUNTIME_INSTALLER))}
 PROVIDER_KIND=deepseek
+OLLAMA_BIN={shlex.quote(str(ollama))}
+check_ollama_prerequisites() {{ :; }}
+verify_ollama_service() {{ :; }}
 configure_remote_provider
 write_runtime_config
 """
@@ -515,8 +535,10 @@ write_runtime_config
     assert "ZABM_RUNTIME_PROVIDER_KIND=deepseek\n" in contents
     assert "ZABM_PROVIDER=deepseek\n" in contents
     assert "ZABM_PROVIDER_URL=https://api.deepseek.com\n" in contents
+    assert "ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND=local\n" in contents
+    assert "ZABM_EMBEDDING_PROVIDER_URL=http://127.0.0.1:11434/v1\n" in contents
     assert "ZABM_MODEL=deepseek-flash\n" in contents
-    assert "ZABM_EMBEDDING_MODEL=not-configured\n" in contents
+    assert "ZABM_EMBEDDING_MODEL=mxbai-embed-large:latest\n" in contents
     assert "DEEPSEEK_API_KEY=deepseek-secret-do-not-print\n" in contents
     assert "deepseek-secret-do-not-print" not in result.stdout + result.stderr
 

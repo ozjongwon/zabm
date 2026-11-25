@@ -2,7 +2,7 @@
 
 Run this procedure on disposable Debian 13 and Ubuntu 24.04 x86_64 hosts. Start
 from a fresh clone with no existing `.venv`, managed Python, uv, or generated
-evidence. Choose either local Ollama or a remote OpenAI-compatible provider.
+evidence. The default uses DeepSeek chat with local Ollama embeddings.
 
 ## Prerequisites
 
@@ -18,6 +18,8 @@ evidence. Choose either local Ollama or a remote OpenAI-compatible provider.
   The installer validates `nvidia-smi -L` and does not replace the driver.
 - For remote access: credentials for DeepSeek, OpenAI, or another
   OpenAI-compatible endpoint. The installer prompts without echoing the key.
+- The default DeepSeek profile also requires local Ollama v0.40.18, an active
+  `ollama.service`, and an installed embedding model.
 
 Inspect the plan first:
 

@@ -25,6 +25,8 @@ PROVIDER_KIND="${ZABM_RUNTIME_PROVIDER:-}"
 PROVIDER_URL_ARG=""
 RUNTIME_PROVIDER_NAME=""
 RUNTIME_PROVIDER_URL=""
+RUNTIME_EMBEDDING_PROVIDER_KIND=""
+RUNTIME_EMBEDDING_PROVIDER_URL=""
 RUNTIME_API_KEY=""
 AVAILABLE_MODELS=()
 readonly VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
@@ -235,25 +237,38 @@ choose_provider_kind() {
     return
   fi
   if [[ ! -t 0 ]]; then
-    PROVIDER_KIND=local
-    log "no provider option supplied in a non-interactive session; using local Ollama"
+    PROVIDER_KIND=deepseek
+    log "no provider option supplied in a non-interactive session; using DeepSeek chat with local Ollama embeddings"
     return
   fi
   printf '%s\n' \
     'Select the model provider:' \
     '  1) Local Ollama models' \
-    '  2) DeepSeek' \
+    '  2) DeepSeek chat with local Ollama embeddings (default)' \
     '  3) OpenAI' \
     '  4) Another OpenAI-compatible service'
-  read -r -p 'Provider [1]: ' choice ||
+  read -r -p 'Provider [2]: ' choice ||
     die "input ended while choosing a provider"
-  case "${choice:-1}" in
+  case "${choice:-2}" in
     1) PROVIDER_KIND=local ;;
     2) PROVIDER_KIND=deepseek ;;
     3) PROVIDER_KIND=openai ;;
     4) PROVIDER_KIND=openai-compatible ;;
     *) die "provider must be 1, 2, 3, or 4" ;;
   esac
+}
+
+configure_local_embedding() {
+  RUNTIME_EMBEDDING_PROVIDER_KIND=local
+  RUNTIME_EMBEDDING_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
+  check_ollama_prerequisites
+  verify_ollama_service
+  load_installed_models
+  print_available_models
+  RUNTIME_EMBEDDING_MODEL_NAME="$(select_embedding_model)"
+  [[ "${RUNTIME_EMBEDDING_MODEL_NAME}" != "not-configured" ]] ||
+    die "DeepSeek chat requires a local Ollama embedding model; install or select one with ZABM_EMBEDDING_MODEL"
+  log "selected local Ollama embedding model: ${RUNTIME_EMBEDDING_MODEL_NAME}"
 }
 
 configure_remote_provider() {
@@ -267,7 +282,6 @@ configure_remote_provider() {
       RUNTIME_PROVIDER_NAME=deepseek
       default_url="${DEEPSEEK_BASE_URL:-https://api.deepseek.com}"
       default_model="${RUNTIME_CHAT_MODEL_NAME:-${DEEPSEEK_MODEL:-deepseek-flash}}"
-      default_embedding="${RUNTIME_EMBEDDING_MODEL_NAME:-${DEEPSEEK_EMBEDDING_MODEL:-not-configured}}"
       key_environment=DEEPSEEK_API_KEY
       ;;
     openai)
@@ -297,14 +311,20 @@ configure_remote_provider() {
   else
     prompt_required_value "${RUNTIME_PROVIDER_NAME} chat model" RUNTIME_CHAT_MODEL_NAME
   fi
-  prompt_value \
-    "${RUNTIME_PROVIDER_NAME} embedding model (blank to skip)" \
-    "${default_embedding}" \
-    RUNTIME_EMBEDDING_MODEL_NAME
-  case "${RUNTIME_EMBEDDING_MODEL_NAME}" in
-    0|none) RUNTIME_EMBEDDING_MODEL_NAME=not-configured ;;
-  esac
-  RUNTIME_EMBEDDING_MODEL_NAME="${RUNTIME_EMBEDDING_MODEL_NAME:-not-configured}"
+  if [[ "${PROVIDER_KIND}" == "deepseek" ]]; then
+    configure_local_embedding
+  else
+    prompt_value \
+      "${RUNTIME_PROVIDER_NAME} embedding model (blank to skip)" \
+      "${default_embedding}" \
+      RUNTIME_EMBEDDING_MODEL_NAME
+    case "${RUNTIME_EMBEDDING_MODEL_NAME}" in
+      0|none) RUNTIME_EMBEDDING_MODEL_NAME=not-configured ;;
+    esac
+    RUNTIME_EMBEDDING_MODEL_NAME="${RUNTIME_EMBEDDING_MODEL_NAME:-not-configured}"
+    RUNTIME_EMBEDDING_PROVIDER_KIND=remote
+    RUNTIME_EMBEDDING_PROVIDER_URL="${RUNTIME_PROVIDER_URL}"
+  fi
   if [[ "${key_environment}" == "ZABM_PROVIDER_API_KEY" ]]; then
     prompt_secret RUNTIME_API_KEY "${key_environment}"
   else
@@ -315,6 +335,8 @@ configure_remote_provider() {
 configure_local_provider() {
   RUNTIME_PROVIDER_NAME=openai-compatible
   RUNTIME_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
+  RUNTIME_EMBEDDING_PROVIDER_KIND=local
+  RUNTIME_EMBEDDING_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
   check_ollama_prerequisites
   verify_ollama_service
   select_models
@@ -330,27 +352,34 @@ configure_provider() {
 }
 
 prepare_dry_run_plan() {
-  PROVIDER_KIND="${PROVIDER_KIND:-local}"
+  PROVIDER_KIND="${PROVIDER_KIND:-deepseek}"
   case "${PROVIDER_KIND}" in
     local)
       RUNTIME_PROVIDER_NAME=openai-compatible
       RUNTIME_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
+      RUNTIME_EMBEDDING_PROVIDER_KIND=local
+      RUNTIME_EMBEDDING_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
       ;;
     deepseek)
       RUNTIME_PROVIDER_NAME=deepseek
       RUNTIME_PROVIDER_URL="${PROVIDER_URL_ARG:-${DEEPSEEK_BASE_URL:-https://api.deepseek.com}}"
       RUNTIME_CHAT_MODEL_NAME="${RUNTIME_CHAT_MODEL_NAME:-${DEEPSEEK_MODEL:-deepseek-flash}}"
-      RUNTIME_EMBEDDING_MODEL_NAME="${RUNTIME_EMBEDDING_MODEL_NAME:-${DEEPSEEK_EMBEDDING_MODEL:-not-configured}}"
+      RUNTIME_EMBEDDING_PROVIDER_KIND=local
+      RUNTIME_EMBEDDING_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
       ;;
     openai)
       RUNTIME_PROVIDER_NAME=openai
       RUNTIME_PROVIDER_URL="${PROVIDER_URL_ARG:-${OPENAI_BASE_URL:-https://api.openai.com/v1}}"
       RUNTIME_CHAT_MODEL_NAME="${RUNTIME_CHAT_MODEL_NAME:-${OPENAI_MODEL:-}}"
       RUNTIME_EMBEDDING_MODEL_NAME="${RUNTIME_EMBEDDING_MODEL_NAME:-${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}}"
+      RUNTIME_EMBEDDING_PROVIDER_KIND=remote
+      RUNTIME_EMBEDDING_PROVIDER_URL="${RUNTIME_PROVIDER_URL}"
       ;;
     openai-compatible)
       RUNTIME_PROVIDER_NAME=openai-compatible
       RUNTIME_PROVIDER_URL="${PROVIDER_URL_ARG:-${ZABM_PROVIDER_URL:-}}"
+      RUNTIME_EMBEDDING_PROVIDER_KIND=remote
+      RUNTIME_EMBEDDING_PROVIDER_URL="${RUNTIME_PROVIDER_URL}"
       ;;
     *)
       die "unsupported runtime provider: ${PROVIDER_KIND}"
@@ -424,7 +453,16 @@ require_installed_runtime() {
   PROVIDER_KIND="${ZABM_RUNTIME_PROVIDER_KIND:-local}"
   RUNTIME_PROVIDER_NAME="${ZABM_PROVIDER:-${RUNTIME_PROVIDER_NAME}}"
   RUNTIME_PROVIDER_URL="${ZABM_PROVIDER_URL:-${RUNTIME_PROVIDER_URL}}"
-  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+  RUNTIME_EMBEDDING_PROVIDER_KIND="${ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND:-}"
+  RUNTIME_EMBEDDING_PROVIDER_URL="${ZABM_EMBEDDING_PROVIDER_URL:-${RUNTIME_EMBEDDING_PROVIDER_URL}}"
+  if [[ -z "${RUNTIME_EMBEDDING_PROVIDER_KIND}" ]]; then
+    if [[ "${PROVIDER_KIND}" == "local" ]]; then
+      RUNTIME_EMBEDDING_PROVIDER_KIND=local
+    else
+      RUNTIME_EMBEDDING_PROVIDER_KIND=remote
+    fi
+  fi
+  if [[ "${PROVIDER_KIND}" == "local" || "${RUNTIME_EMBEDDING_PROVIDER_KIND}" == "local" ]]; then
     resolve_ollama_bin ||
       fail_ollama_prerequisite "Ollama v${RUNTIME_SERVER_VERSION} was not found"
   fi
@@ -528,7 +566,7 @@ write_runtime_config() {
       provider_configuration="ollama-v${RUNTIME_SERVER_VERSION},${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0,seed=0"
       ;;
     deepseek)
-      provider_configuration="deepseek-v1,${RUNTIME_CHAT_MODEL_NAME},temperature=0"
+      provider_configuration="deepseek-v1,${RUNTIME_CHAT_MODEL_NAME},ollama,${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0"
       ;;
     *)
       provider_configuration="${RUNTIME_PROVIDER_NAME}-v1,${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0,seed=0"
@@ -542,6 +580,8 @@ write_runtime_config() {
     printf 'ZABM_RUNTIME_PROVIDER_KIND=%q\n' "${PROVIDER_KIND}"
     printf 'ZABM_PROVIDER=%q\n' "${RUNTIME_PROVIDER_NAME}"
     printf 'ZABM_PROVIDER_URL=%q\n' "${RUNTIME_PROVIDER_URL}"
+    printf 'ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND=%q\n' "${RUNTIME_EMBEDDING_PROVIDER_KIND}"
+    printf 'ZABM_EMBEDDING_PROVIDER_URL=%q\n' "${RUNTIME_EMBEDDING_PROVIDER_URL}"
     printf 'ZABM_MODEL=%q\n' "${RUNTIME_CHAT_MODEL_NAME}"
     printf 'ZABM_EMBEDDING_MODEL=%q\n' "${RUNTIME_EMBEDDING_MODEL_NAME}"
     printf 'ZABM_PROVIDER_CONFIGURATION=%q\n' "${provider_configuration}"
@@ -920,13 +960,21 @@ print_plan() {
   log "platform: ${OS_PRETTY_NAME} (${OS_ID} ${OS_VERSION_ID}, x86_64)"
   log "runtime dependencies only; development, test, and evaluation dependencies are excluded"
   log "application: CLI and web chat in ${REPO_ROOT}/.venv"
-  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+  if [[ "${PROVIDER_KIND}" == "local" || "${RUNTIME_EMBEDDING_PROVIDER_KIND}" == "local" ]]; then
     log "runtime home: ${RUNTIME_HOME}"
     log "Ollama prerequisite: preinstalled ${RUNTIME_SERVER_NAME} v${RUNTIME_SERVER_VERSION} and active ${OLLAMA_SERVICE_NAME}"
     log "model selection: existing models reported by '${OLLAMA_BIN:-ollama} list'"
+  fi
+  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+    log "chat provider: local Ollama"
   else
     log "provider: ${RUNTIME_PROVIDER_NAME} at ${RUNTIME_PROVIDER_URL}"
     log "remote credentials: saved with runtime configuration, not printed"
+  fi
+  if [[ "${RUNTIME_EMBEDDING_PROVIDER_KIND}" == "local" ]]; then
+    log "embedding provider: local Ollama at ${RUNTIME_EMBEDDING_PROVIDER_URL}"
+  else
+    log "embedding provider: ${RUNTIME_EMBEDDING_PROVIDER_URL:-${RUNTIME_PROVIDER_URL}}"
   fi
   log "chat model: ${RUNTIME_CHAT_MODEL_NAME:-selected during installation}"
   log "embedding model: ${RUNTIME_EMBEDDING_MODEL_NAME:-selected during installation}"
@@ -979,12 +1027,12 @@ main() {
   fi
 
   configure_provider
-  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+  if [[ "${PROVIDER_KIND}" == "local" || "${RUNTIME_EMBEDDING_PROVIDER_KIND}" == "local" ]]; then
     check_nvidia_prerequisites
   fi
 
   print_plan
-  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+  if [[ "${PROVIDER_KIND}" == "local" || "${RUNTIME_EMBEDDING_PROVIDER_KIND}" == "local" ]]; then
     prepare_runtime_directories
   fi
   log "starting installation; use --dry-run to inspect the plan without changes"
@@ -997,7 +1045,7 @@ main() {
   log "target runtime is ready"
   log "CLI: ${BIN_DIR}/zabm-runtime ask \"...\""
   log "web: ${BIN_DIR}/zabm-runtime web --data-dir ${DATA_DIR}"
-  if [[ "${PROVIDER_KIND}" == "local" ]]; then
+  if [[ "${PROVIDER_KIND}" == "local" || "${RUNTIME_EMBEDDING_PROVIDER_KIND}" == "local" ]]; then
     log "server: sudo systemctl status ${OLLAMA_SERVICE_NAME}"
   else
     log "provider: ${RUNTIME_PROVIDER_NAME}"

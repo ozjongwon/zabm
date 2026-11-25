@@ -28,22 +28,22 @@ x86_64 machine with:
 ./scripts/install-runtime.sh
 ```
 
-The target installer prompts for a local Ollama or remote OpenAI-compatible
-provider, rebuilds the frozen evidence stores, and verifies the CLI, web chat,
-selected provider, and one supported answer. It does not install or start
-Ollama, download models, or import new models. Use `--dry-run` to inspect the
-complete plan without changing the machine.
+The target installer defaults to DeepSeek for chat and an existing local Ollama
+model for embeddings. It rebuilds the frozen evidence stores and verifies the
+CLI, web chat, selected providers, and one supported answer. It does not
+install or start Ollama, download models, or import new models. Use `--dry-run`
+to inspect the complete plan without changing the machine.
 
 For local Ollama, the installer lists models reported by `ollama list` and
 prompts for the chat model and optional embedding model. Ollama must already
 be installed under `/home/ollama` or exposed through `ZABM_OLLAMA_BIN`, with
 `ollama.service` enabled and active.
 
-For DeepSeek or OpenAI, the installer prompts for the endpoint, model, optional
-embedding model, and API key. Keys can also come from `DEEPSEEK_API_KEY`,
-`OPENAI_API_KEY`, or `ZABM_PROVIDER_API_KEY`. DeepSeek defaults to
-`deepseek-flash` and skips embeddings when no embedding model is configured.
-For a custom remote service, choose `openai-compatible`.
+For DeepSeek, the installer prompts for the endpoint, `deepseek-flash` chat
+model, API key, and local Ollama embedding model. Keys can also come from
+`DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, or `ZABM_PROVIDER_API_KEY`. For OpenAI or
+a custom service, choose the corresponding provider and supply its embedding
+model.
 
 The selected provider, models, endpoint, and API key are written to the
 mode-`600` runtime configuration and used by the smoke check and installed
@@ -61,6 +61,7 @@ ZABM_EMBEDDING_MODEL='<embedding-model>' \
 ./scripts/install-runtime.sh --provider local
 
 DEEPSEEK_API_KEY='...' \
+ZABM_EMBEDDING_MODEL='mxbai-embed-large:latest' \
 ./scripts/install-runtime.sh --provider deepseek
 ```
 
@@ -300,9 +301,10 @@ both the chat and embedding model identifiers:
 ```
 
 The same values can be supplied with `ZABM_PROVIDER`,
-`ZABM_PROVIDER_URL`, `ZABM_MODEL`, `ZABM_EMBEDDING_MODEL`, and
-`ZABM_PROVIDER_CONFIGURATION`. `ZABM_PROVIDER_API_KEY` is read only from the
-environment and is never written to a response.
+`ZABM_PROVIDER_URL`, `ZABM_MODEL`, `ZABM_EMBEDDING_MODEL`,
+`ZABM_EMBEDDING_PROVIDER_URL`, and `ZABM_PROVIDER_CONFIGURATION`.
+`ZABM_PROVIDER_API_KEY` is read only from the environment and is never written
+to a response.
 
 When a model provider is configured, its first call is a validated
 request-routing call. The route returns an intent, a normalized English
@@ -424,10 +426,10 @@ configuration, source-pack version, and latency spread together:
 ```
 
 The DeepSeek preset follows the same `ask` and evaluation procedure with
-`--provider deepseek` and `DEEPSEEK_API_KEY`. It records
-`embedding_model: "not-configured"` by default. Add `--skip-embeddings` to
-`provider-smoke` for chat-only profiles, or configure
-`DEEPSEEK_EMBEDDING_MODEL` when the endpoint supports embeddings.
+`--provider deepseek` and `DEEPSEEK_API_KEY`. Set
+`ZABM_EMBEDDING_PROVIDER_URL=http://127.0.0.1:11434/v1` and
+`ZABM_EMBEDDING_MODEL` to use local Ollama embeddings. Add
+`--skip-embeddings` to `provider-smoke` for intentionally chat-only profiles.
 
 The provider may phrase validated claims only. It must return one sentence for
 each supplied claim identifier; missing, extra, or malformed sentences and

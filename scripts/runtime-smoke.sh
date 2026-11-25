@@ -7,7 +7,7 @@ source "${SCRIPT_DIR}/install-runtime.sh"
 
 validate_platform
 require_installed_runtime
-if [[ "${PROVIDER_KIND}" == "local" ]]; then
+if [[ "${PROVIDER_KIND}" == "local" || "${RUNTIME_EMBEDDING_PROVIDER_KIND}" == "local" ]]; then
   verify_ollama_service
 fi
 run_installed_smoke
