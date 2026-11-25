@@ -8,7 +8,7 @@ files.
 
 - Completed in `bicycle-mechanics-assistant-v1`: tickets 01 through 11, 13
   through 16, and 18 through 21.
-- Pending in `bicycle-mechanics-assistant-v1`: tickets 12, 17, 20, and 22.
+- Pending in `bicycle-mechanics-assistant-v1`: tickets 12, 17, and 20.
 - Completed in `general-pdf-ingestion`: tickets 01 through 12.
 - Pending in `general-pdf-ingestion`: none.
 - Pending in `multilingual-reviewed-output`: tickets 01 through 06.
@@ -35,7 +35,7 @@ files.
 | 16 | [bicycle-mechanics-assistant-v1/14](bicycle-mechanics-assistant-v1/issues/14-langsmith-result-mirror.md) | Mirror evaluation results without making LangSmith canonical. | Ready |
 | 17 | [bicycle-mechanics-assistant-v1/18](bicycle-mechanics-assistant-v1/issues/18-optional-reviewed-korean-output.md) | Add reviewed Korean output behind a disabled-by-default flag. | Blocked by ingestion completion |
 | 18 | [bicycle-mechanics-assistant-v1/01](bicycle-mechanics-assistant-v1/issues/01-development-environment-bootstrap.md) | Complete clean Debian and Ubuntu development acceptance. | Human/ops validation |
-| 19 | [bicycle-mechanics-assistant-v1/12](bicycle-mechanics-assistant-v1/issues/12-acceptance-gates-and-performance-report.md) | Run and report the full v1 acceptance gates. | Blocked by tickets 20 and 22 |
+| 19 | [bicycle-mechanics-assistant-v1/12](bicycle-mechanics-assistant-v1/issues/12-acceptance-gates-and-performance-report.md) | Run and report the full v1 acceptance gates. | Blocked by ticket 20 |
 | 20 | [bicycle-mechanics-assistant-v1/16](bicycle-mechanics-assistant-v1/issues/16-target-runtime-installer.md) | Install and smoke-test the runtime target, including web chat. | Implementation complete; host validation pending |
 | 21 | [bicycle-mechanics-assistant-v1/17](bicycle-mechanics-assistant-v1/issues/17-operational-acceptance-and-documentation.md) | Complete final operational handoff and documentation. | Last |
 | 22 | [multilingual-reviewed-output/01](multilingual-reviewed-output/issues/01-language-profile-contract-and-korean-migration.md) | Introduce the language-profile contract and migrate Korean artifacts. | Ready |

@@ -2,7 +2,7 @@
 
 **What to build:** A scored acceptance report proving whether the full agent meets the v1 accuracy, improvement, abstention, citation, fabrication, and local performance gates. The report preserves per-baseline, per-run, hardware, and runtime evidence and uses the approved paired-bootstrap methodology.
 
-**Blocked by:** 20, 21, 22.
+**Blocked by:** 20.
 
 **Status:** ready-for-human
 

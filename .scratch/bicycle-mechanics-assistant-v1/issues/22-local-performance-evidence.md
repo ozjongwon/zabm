@@ -4,7 +4,7 @@
 
 **Blocked by:** 16.
 
-**Status:** ready-for-human
+**Status:** wontfix
 
 - [ ] Run the full frozen evaluation on a supported local NVIDIA GPU, including the explicit warm-up, and record median and p95 per-item latency.
 - [ ] Verify the GPU gate against the unchanged 20-second median and 30-second p95 thresholds.
@@ -29,3 +29,6 @@
   stopped. No canonical evaluation artifact was produced; the existing
   acceptance report therefore retains a failed GPU latency gate. The temporary
   model-store ACL and Ollama process were removed afterward.
+- 2026-11-26: Closed as `wontfix` by maintainer direction. No local GPU
+  performance claim is being made from the incomplete attempts. Reopen with
+  faster local hardware if this evidence is needed for v1 acceptance.
