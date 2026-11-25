@@ -20,6 +20,7 @@ QuestionIntent = Literal[
     "ambiguous",
 ]
 WORD_PATTERN = re.compile(r"[^\W_]+", re.UNICODE)
+PROCEDURE_REQUEST = re.compile(r"\b(?:procedure|steps?|walk\s+me\s+through)\b", re.IGNORECASE)
 ROUTING_PROTOTYPES: dict[EvidenceIntent, tuple[str, ...]] = {
     "specification": (
         "what torque should be used for this component",
@@ -195,6 +196,11 @@ class PrototypeIntentRouter:
         )
         best_intent, best_score = ranked[0]
         second_score = ranked[1][1]
+        if PROCEDURE_REQUEST.search(question) and scores["procedure"] >= 0.12:
+            return RequestRoute(
+                intent="procedure",
+                normalized_question=question.strip(),
+            )
         if best_score < 0.12 or best_score - second_score < 0.012:
             candidates: list[EvidenceIntent] = [
                 intent for intent, score in ranked if score >= max(0.12, best_score - 0.035)

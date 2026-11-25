@@ -81,6 +81,15 @@
           "cutting",
           "shortened",
           "shortening"
+        ],
+        "test": [
+          "checked",
+          "checking",
+          "confirm",
+          "confirmed",
+          "confirming",
+          "verified",
+          "verifying"
         ]
       }
     },
@@ -176,6 +185,15 @@
           "cutting",
           "shortened",
           "shortening"
+        ],
+        "test": [
+          "checked",
+          "checking",
+          "confirm",
+          "confirmed",
+          "confirming",
+          "verified",
+          "verifying"
         ]
       }
     }

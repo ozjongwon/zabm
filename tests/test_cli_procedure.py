@@ -31,6 +31,132 @@ def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
 def write_fixture_pdf(path: Path, lines: list[str]) -> None:
     commands = [f"({_pdf_escape(line)}) Tj 0 -18 Td" for line in lines]
     stream = f"BT /F1 10 Tf 72 720 Td {' '.join(commands)} ET".encode()
+    write_pdf_stream(path, stream)
+
+
+def write_split_step_fixture_pdf(path: Path, lines: list[str]) -> None:
+    del lines
+    positioned_lines = [
+        (72, 720, "Trail Post spring replacement"),
+        (48, 690, "1"),
+        (66, 690, "Remove the spring cap."),
+        (48, 660, "2"),
+        (66, 660, "Replace the spring."),
+        (
+            72,
+            625,
+            "This concludes the Trail Post spring replacement procedure.",
+        ),
+        (72, 600, "The system must be bled after installation."),
+        (72, 580, "Proceed to Remote System Bleed."),
+        (72, 560, "Proceed to Remote System Bleed."),
+    ]
+    commands = [
+        f"1 0 0 1 {x} {y} Tm ({_pdf_escape(text)}) Tj"
+        for x, y, text in positioned_lines
+    ]
+    stream = f"BT /F1 10 Tf {' '.join(commands)} ET".encode()
+    write_pdf_stream(path, stream)
+
+
+def write_continued_split_step_fixture_pdf(path: Path, lines: list[str]) -> None:
+    del lines
+    first_page = _positioned_text_stream(
+        [
+            (72, 720, 10, "Trail Post spring replacement"),
+            (48, 690, 10, "1"),
+            (66, 696, 10, "Remove the spring cap."),
+        ]
+    )
+    second_page = _positioned_text_stream(
+        [
+            (48, 720, 10, "2"),
+            (66, 726, 10, "Replace the spring."),
+            (
+                72,
+                690,
+                12,
+                "This concludes the Trail Post spring replacement procedure for the",
+            ),
+            (72, 675, 12, "Test Bicycle Manual"),
+            (
+                72,
+                650,
+                12,
+                "The hydraulic system must be bled after installation",
+            ),
+            (72, 630, 12, "Proceed to Final Adjustment"),
+        ]
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Count 2 /Kids [3 0 R 7 0 R] >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R "
+            b"/Resources << /Font << /F1 4 0 R /F2 6 0 R >> >> "
+            b"/MediaBox [0 0 612 792] /Contents 5 0 R >>"
+        ),
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        first_page,
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R "
+            b"/Resources << /Font << /F1 4 0 R /F2 6 0 R >> >> "
+            b"/MediaBox [0 0 612 792] /Contents 8 0 R >>"
+        ),
+        second_page,
+    ]
+    write_pdf_objects(path, objects)
+
+
+def write_wrapped_step_fixture_pdf(path: Path, lines: list[str]) -> None:
+    del lines
+    content = _positioned_text_stream(
+        [
+            (72, 720, 10, "Hose Sizing and Remote Installation"),
+            (66, 690, 10, "With the seatpost fully extended and at the desired ride"),
+            (48, 687, 10, "1"),
+            (66, 684, 10, "height in the frame, route the hose."),
+            (343, 680, 10, "Reverb Stealth"),
+            (170, 655, 10, "NOTICE"),
+            (66, 645, 10, "Do not kink the hydraulic hose."),
+            (66, 635, 10, "A kink can prevent fluid flow."),
+            (
+                72,
+                600,
+                10,
+                "This concludes the Hose Sizing and Remote Installation procedure.",
+            ),
+        ]
+    )
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Count 1 /Kids [3 0 R] >>",
+        (
+            b"<< /Type /Page /Parent 2 0 R "
+            b"/Resources << /Font << /F1 4 0 R >> >> "
+            b"/MediaBox [0 0 612 792] /Contents 5 0 R >>"
+        ),
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        content,
+    ]
+    write_pdf_objects(path, objects)
+
+
+def _positioned_text_stream(
+    positioned_lines: list[tuple[int, int, int, str]],
+) -> bytes:
+    commands: list[str] = []
+    for x, y, font_size, text in positioned_lines:
+        font_name = "F2" if font_size >= 12 else "F1"
+        commands.append(
+            f"1 0 0 1 {x} {y} Tm /{font_name} {font_size} Tf ({_pdf_escape(text)}) Tj"
+        )
+    stream = f"BT {' '.join(commands)} ET".encode()
+    return f"<< /Length {len(stream)} >>\nstream\n".encode() + stream + b"\nendstream"
+
+
+def write_pdf_stream(path: Path, stream: bytes) -> None:
     objects = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"<< /Type /Pages /Count 1 /Kids [3 0 R] >>",
@@ -42,6 +168,10 @@ def write_fixture_pdf(path: Path, lines: list[str]) -> None:
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
         f"<< /Length {len(stream)} >>\nstream\n".encode() + stream + b"\nendstream",
     ]
+    write_pdf_objects(path, objects)
+
+
+def write_pdf_objects(path: Path, objects: list[bytes]) -> None:
 
     document = bytearray(b"%PDF-1.3\n%\xe2\xe3\xcf\xd3\n")
     offsets = [0]
@@ -74,6 +204,7 @@ def prepare_procedure_fixture(
     lines: list[str],
     *,
     pdf_writer: Callable[[Path, list[str]], None] = write_fixture_pdf,
+    source_title: str = "Test Bicycle Manual",
 ) -> tuple[Path, Path, Path, Path]:
     source_path = tmp_path / "manual.pdf"
     pdf_writer(source_path, lines)
@@ -87,7 +218,7 @@ def prepare_procedure_fixture(
                 "sources": [
                     {
                         "id": "test-manual",
-                        "title": "Test Bicycle Manual",
+                        "title": source_title,
                         "manufacturer": "Test Manufacturer",
                         "url": source_path.as_uri(),
                         "sha256": source_hash,
@@ -315,6 +446,491 @@ def test_cli_refuses_a_truncated_procedure_without_returning_steps(tmp_path: Pat
     assert response["procedure"] is None
     assert response["claims"] == []
     assert response["citations"] == []
+
+
+def test_cli_extracts_steps_with_separate_number_markers_and_navigation_notes(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            [],
+            pdf_writer=write_split_step_fixture_pdf,
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps to replace the Trail Post spring?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["response_type"] == "procedure"
+    assert [step["number"] for step in response["procedure"]["steps"]] == [1, 2]
+    assert [step["text"] for step in response["procedure"]["steps"]] == [
+        "Remove the spring cap.",
+        "Replace the spring.",
+    ]
+
+
+def test_cli_uses_the_preceding_heading_when_a_continuation_page_has_styled_notes(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            [],
+            pdf_writer=write_continued_split_step_fixture_pdf,
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps to replace the Trail Post spring?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Trail Post spring replacement"
+    assert [step["number"] for step in response["procedure"]["steps"]] == [1, 2]
+    assert [step["citation"]["physical_page"] for step in response["procedure"]["steps"]] == [
+        1,
+        2,
+    ]
+
+
+def test_cli_accepts_a_numbered_test_function_section_as_a_procedure(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Test Function",
+        "1 Press the remote lever.",
+        "2 Confirm that the mechanism extends.",
+        "This concludes the Test Function procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(tmp_path, lines)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps for the Test Function?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Test Function"
+    assert [step["number"] for step in response["procedure"]["steps"]] == [1, 2]
+
+
+def test_cli_matches_a_procedure_using_model_context_from_the_source_title(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Test Function",
+        "1 Press the remote lever.",
+        "2 Confirm that the mechanism extends.",
+        "This concludes the Test Function procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="Trail Post Remote Hydraulic Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps to test the Trail Post remote hydraulic function?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Test Function"
+
+
+def test_cli_routes_explicit_steps_for_hose_installation_to_a_procedure(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Hose Sizing and Remote Installation",
+        "1 Route the hose to the handlebar remote.",
+        "2 Cut the hydraulic hose.",
+        "This concludes the Hose Sizing and Remote Installation procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="RockShox Reverb Stealth Hydraulic Hose Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps for hose sizing and remote installation on a RockShox Reverb?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Hose Sizing and Remote Installation"
+
+
+def test_cli_matches_a_size_and_install_request_to_hose_sizing(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Hose Sizing and Remote Installation",
+        "1 Route the hose to the handlebar remote.",
+        "2 Cut the hydraulic hose.",
+        "This concludes the Hose Sizing and Remote Installation procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="RockShox Reverb Stealth Hydraulic Hose Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "How do I size and install the hydraulic hose and remote for a Reverb Stealth?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Hose Sizing and Remote Installation"
+
+
+def test_cli_matches_an_ordered_test_function_request(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Test Function",
+        "1 Press the remote lever.",
+        "2 Confirm that the mechanism extends.",
+        "This concludes the Test Function procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="RockShox Reverb Remote Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Give the ordered Test Function procedure for a RockShox Reverb remote.",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Test Function"
+
+
+def test_cli_matches_a_function_confirmation_request(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Test Function",
+        "1 Press the remote lever.",
+        "2 Confirm that the mechanism extends.",
+        "This concludes the Test Function procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="RockShox Reverb Remote Hydraulic Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Which steps confirm that the RockShox Reverb remote hydraulic system "
+        "functions correctly?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Test Function"
+
+
+def test_cli_matches_step_wording_to_the_containing_procedure(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Hose Sizing and Remote Installation",
+        "1 Route the hose to the handlebar remote.",
+        "2 Cut the hydraulic hose.",
+        "This concludes the Hose Sizing and Remote Installation procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="RockShox Reverb Stealth Hydraulic Hose Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Walk me through routing and cutting the Reverb hydraulic hose "
+        "to the handlebar remote.",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Hose Sizing and Remote Installation"
+    assert response["procedure"]["match"] is None
+
+
+def test_cli_matches_a_step_behavior_question_to_its_procedure(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Test Function",
+        "1 Press the remote actuator and push the seatpost down by hand.",
+        "2 Adjust the speed adjuster and repeat step 1.",
+        "This concludes the Test Function procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="RockShox Reverb Remote Hydraulic Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What should happen when I press the remote actuator and push the "
+        "Reverb seatpost by hand?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Test Function"
+
+
+def test_cli_reports_partial_evidence_for_an_incomplete_matching_section(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Trail Post reach adjustment",
+        "Turn the adjuster to change reach.",
+        "Check lever clearance after adjustment.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="Trail Post Brake Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps for Trail Post reach adjustment?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert response["procedure"] is None
+    assert "only partial procedure evidence was available" in response["failure"]["message"]
+
+
+def test_cli_matches_a_request_for_steps_and_attached_notices(
+    tmp_path: Path,
+) -> None:
+    lines = [
+        "Hose Sizing and Remote Installation",
+        "1 Route the hose to the handlebar remote.",
+        "NOTICE",
+        "Cut the hose squarely.",
+        "This concludes the Hose Sizing and Remote Installation procedure.",
+    ]
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            lines,
+            source_title="RockShox Reverb Stealth Hydraulic Hose Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Can you list the Reverb remote hose sizing steps and attached notices?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["title"] == "Hose Sizing and Remote Installation"
+
+
+def test_cli_preserves_wrapped_step_text_around_a_split_number_marker(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(
+            tmp_path,
+            [],
+            pdf_writer=write_wrapped_step_fixture_pdf,
+            source_title="RockShox Reverb Stealth Hydraulic Hose Manual",
+        )
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "What are the steps for hose sizing and remote installation on a RockShox Reverb?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["procedure"]["steps"][0]["text"] == (
+        "With the seatpost fully extended and at the desired ride height in the frame, "
+        "route the hose."
+    )
+    assert response["procedure"]["steps"][0]["warnings"] == [
+        {
+            "severity": "notice",
+            "text": "Do not kink the hydraulic hose. A kink can prevent fluid flow.",
+        }
+    ]
 
 
 def test_cli_does_not_substitute_structured_evidence_for_a_procedure(
@@ -771,4 +1387,29 @@ def test_cli_asks_for_a_task_when_the_procedure_request_has_no_subject(
         "message": "Please identify the exact task.",
         "missing_information": ["task"],
     }
+    assert response["procedure"] is None
+
+
+def test_cli_asks_for_a_task_for_a_generic_repair_request(tmp_path: Path) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_procedure_fixture(tmp_path, complete_procedure_lines())
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Walk me through the repair.",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
     assert response["procedure"] is None

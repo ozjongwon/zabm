@@ -1118,7 +1118,14 @@ def _grade_answer(
         )
     if expected.status != "supported":
         if expected.failure_contains is not None:
-            failure_text = response.failure.message if response.failure is not None else ""
+            failure_text = " ".join(
+                message
+                for message in [
+                    response.failure.message if response.failure is not None else "",
+                    response.clarification.message if response.clarification is not None else "",
+                ]
+                if message
+            )
             if normalize_text(expected.failure_contains) not in normalize_text(failure_text):
                 issues.append(f"failure message does not contain {expected.failure_contains!r}")
         if expected.clarification_missing_information:

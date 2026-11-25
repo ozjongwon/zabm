@@ -242,6 +242,26 @@ def write_evaluation_fixture(
                         "failure_contains": "only answers bicycle maintenance questions",
                     },
                 },
+                {
+                    "id": "clarification-fixture-001",
+                    "category": "procedure",
+                    "question": "What are the steps for service?",
+                    "edge_cases": [],
+                    "evidence": [
+                        {
+                            "document_id": "test-manual",
+                            "physical_page": 1,
+                            "printed_page": 17,
+                            "section": "Trail Post spring replacement",
+                        }
+                    ],
+                    "expected": {
+                        "response_type": "procedure",
+                        "status": "clarification_required",
+                        "failure_contains": "Please identify the exact task",
+                        "clarification_missing_information": ["task"],
+                    },
+                },
             ],
         },
     )
@@ -551,6 +571,7 @@ def test_evaluation_runs_four_baselines_three_times_and_writes_canonical_results
                 "spec-fixture-001",
                 "procedure-fixture-001",
                 "out-of-scope-fixture-001",
+                "clarification-fixture-001",
             ]
             for run in configuration["runs"]
         )
@@ -568,10 +589,12 @@ def test_evaluation_runs_four_baselines_three_times_and_writes_canonical_results
     first_run = full_agent["runs"][0]
     specification_result = first_run["items"][0]
     procedure_result = first_run["items"][1]
+    clarification_result = first_run["items"][3]
     assert specification_result["answer_passed"] is True
     assert specification_result["citation_valid"] is True
     assert specification_result["unsupported_numbers"] == []
     assert procedure_result["answer_passed"] is True
+    assert clarification_result["answer_passed"] is True
     assert [
         (check["kind"], check["result"]) for check in procedure_result["procedure_checklist"]
     ] == [
@@ -634,7 +657,7 @@ def test_evaluation_mirrors_results_and_traces_to_langsmith(
     ]
     item_runs = [run for run in runs if run["name"].startswith("zabm-evaluation-item:")]
     assert len(configuration_runs) == 12
-    assert len(item_runs) == 36
+    assert len(item_runs) == 48
     assert all(run["parent_run_id"] == root["id"] for run in configuration_runs)
     assert all(run["trace_id"] == root["id"] for run in [*configuration_runs, *item_runs])
     assert all(
@@ -896,13 +919,13 @@ def test_evaluation_uses_one_provider_budget_and_run_seed_for_every_baseline(
         for request in chat_requests
         if "Phrase every supplied validated claim" in request["body"]["messages"][0]["content"]
     ]
-    assert len(baseline_requests) == 27
+    assert len(baseline_requests) == 36
     assert len(full_agent_requests) == 6
     assert all(request["body"]["temperature"] == 0 for request in chat_requests)
 
-    llm_only_requests = baseline_requests[:9]
-    plain_requests = baseline_requests[9:18]
-    hybrid_requests = baseline_requests[18:27]
+    llm_only_requests = baseline_requests[:12]
+    plain_requests = baseline_requests[12:24]
+    hybrid_requests = baseline_requests[24:36]
     assert all(
         json.loads(request["body"]["messages"][1]["content"])["evidence"] == ""
         for request in llm_only_requests
@@ -921,10 +944,10 @@ def test_evaluation_uses_one_provider_budget_and_run_seed_for_every_baseline(
         <= 12000
         for request in baseline_requests
     )
-    assert [request["body"]["seed"] for request in baseline_requests[:9]] == [
-        *([0] * 3),
-        *([1] * 3),
-        *([2] * 3),
+    assert [request["body"]["seed"] for request in baseline_requests[:12]] == [
+        *([0] * 4),
+        *([1] * 4),
+        *([2] * 4),
     ]
     assert [request["body"]["seed"] for request in full_agent_requests] == [
         0,
@@ -967,7 +990,7 @@ def test_evaluation_records_per_item_latency_after_an_explicit_warmup(
     full_agent = report["configurations"][-1]
     for run in full_agent["runs"]:
         latencies = [item["latency_ms"] for item in run["items"]]
-        assert len(latencies) == 3
+        assert len(latencies) == 4
         assert all(latency >= 0 for latency in latencies)
         assert run["metrics"]["latency_median_ms"] == statistics.median(latencies)
 

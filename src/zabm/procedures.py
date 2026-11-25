@@ -54,7 +54,7 @@ from zabm.ingestion import (
     profile_sha256,
     resolve_document_profile,
 )
-from zabm.matching import identity_matches, tokens, unknown_tokens
+from zabm.matching import QUESTION_TOKENS, identity_matches, tokens, unknown_tokens
 from zabm.response import (
     CanonicalResponse,
     Claim,
@@ -140,6 +140,7 @@ PROCEDURE_HEADING_ACTIONS = (
     "spin",
     "stop",
     "support",
+    "test",
     "tighten",
     "thread",
     "turn",
@@ -198,8 +199,12 @@ PROCEDURE_STOPWORDS = {
 }
 PROCEDURE_QUERY_VOCAB = (
     "adjust assemble bleed disassemble how install installation perform prepare procedure "
-    "remove removal replace replacement service step steps task walk through"
+    "remove removal repair replace replacement service step steps task walk through"
 )
+PROCEDURE_BODY_X_MARGIN_POINTS = 24.0
+PROCEDURE_BODY_X_MARGIN_FRACTION = 0.05
+PROCEDURE_CONTENT_MATCH_COVERAGE = 0.8
+PROCEDURE_PARTIAL_MATCH_COVERAGE = 0.7
 
 
 class EvidenceBlock(BaseModel):
@@ -1425,7 +1430,7 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
 
     catalog = RetrievalCatalog.model_validate_json(catalog_path.read_text(encoding="utf-8"))
     sources_by_document = {source.document_id: source for source in catalog.sources}
-    matches = [
+    matches: list[tuple[StoredProcedure, ProcedureMatchProvenance | None]] = [
         (procedure, match)
         for procedure in catalog.procedures
         if (
@@ -1436,6 +1441,8 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
             )
         )
     ]
+    if not matches:
+        matches = _content_procedure_matches(question, catalog, sources_by_document)
     logger.debug(
         "procedure-query question=%s match_count=%d matches=%s",
         question,
@@ -1446,12 +1453,19 @@ def answer_procedure(question: str, data_dir: Path) -> CanonicalResponse:
                 procedure.title,
                 procedure.page_numbers,
                 procedure.validation_issues,
-                match.basis,
+                match.basis if match is not None else "content-overlap",
             )
             for procedure, match in matches
         ],
     )
     if not matches:
+        if _has_matching_partial_procedure(question, catalog):
+            return _not_found(
+                "only partial procedure evidence was available: the matching source "
+                "section does not define a complete numbered procedure with a "
+                "source-defined end boundary.",
+                source_pack_id=catalog.source_pack_id,
+            )
         if not unknown_tokens(
             question,
             identifiers=[],
@@ -1629,6 +1643,29 @@ def _parse_page(
     )
     footer_lines = [line for line in lines if line.y < 35]
     content_lines = [line for line in lines if line.y >= 35]
+    first_step_line = next(
+        (
+            index
+            for index, line in enumerate(content_lines)
+            if INLINE_STEP.match(line.text) is not None or STEP_NUMBER.fullmatch(line.text)
+        ),
+        None,
+    )
+    leading_heading = (
+        next(
+            (
+                headings_by_span[span.span_id]
+                for line in content_lines[:first_step_line]
+                for span in line.spans
+                if span.span_id in headings_by_span
+            ),
+            None,
+        )
+        if first_step_line is not None
+        else heading_hierarchy.headings[0]
+        if heading_hierarchy.headings
+        else None
+    )
     content_classifications = [
         blocks_by_span[line.spans[0].span_id] for line in lines if line.y >= 35
     ]
@@ -1648,16 +1685,16 @@ def _parse_page(
     top_number, top_title = _printed_page_and_title(top_text, physical_page)
     preceding_heading = preceding_headings[-1] if preceding_headings else None
     section_title = (
-        heading_hierarchy.headings[0].title
-        if heading_hierarchy.headings
+        leading_heading.title
+        if leading_heading is not None
         else preceding_heading.title
         if preceding_heading is not None
         else top_title
     )
     printed_page = footer_number if footer_lines else top_number
     heading_path = (
-        list(heading_hierarchy.headings[0].heading_path)
-        if heading_hierarchy.headings
+        list(leading_heading.heading_path)
+        if leading_heading is not None
         else list(preceding_heading.heading_path)
         if preceding_heading is not None
         else [section_title]
@@ -1672,9 +1709,7 @@ def _parse_page(
     completeness_note_events: list[_TextEvent] = []
     current_title: str = section_title
     current_path: list[str] = heading_path
-    initial_heading = (
-        heading_hierarchy.headings[0] if heading_hierarchy.headings else preceding_heading
-    )
+    initial_heading = leading_heading if leading_heading is not None else preceding_heading
     current_level = initial_heading.level if initial_heading is not None else 1
     section_sequence = 0
     section_paths = {section_sequence: list(current_path)}
@@ -1704,7 +1739,11 @@ def _parse_page(
             ),
             None,
         )
-        if heading is not None:
+        is_end_marker = _matches_procedure_end(
+            line.text,
+            profile.end_boundaries.markers,
+        )
+        if heading is not None and not is_end_marker:
             section_context = heading.title
             section_id += 1
         section_contexts.append(section_context)
@@ -1730,7 +1769,11 @@ def _parse_page(
             ),
             None,
         )
-        if heading is not None:
+        is_end_marker = _matches_procedure_end(
+            line.text,
+            profile.end_boundaries.markers,
+        )
+        if heading is not None and not is_end_marker:
             next_path = list(heading.heading_path)
             if heading_count > 0 or next_path != current_path:
                 section_sequence += 1
@@ -1772,7 +1815,7 @@ def _parse_page(
                     text=line_text,
                 )
             )
-        if _matches_procedure_end(line_text, profile.end_boundaries.markers):
+        if is_end_marker:
             end_marker_events.append(
                 _TextEvent(
                     physical_page=physical_page,
@@ -1859,6 +1902,7 @@ def _parse_page(
         step = start_by_index.get(index)
         if step is not None:
             step_column_id = content_lines[step.line_index].column_id
+            body_x = content_lines[step.line_index].x
             body_lines: list[str] = [step.text]
             body_spans: list[LayoutSpan] = list(content_lines[step.line_index].spans)
             index += 1
@@ -1866,6 +1910,9 @@ def _parse_page(
                 candidate = content_lines[index]
                 if candidate.column_id != step_column_id:
                     break
+                if index == step.number_line_index:
+                    index += 1
+                    continue
                 candidate_classification = content_classifications[index]
                 if (
                     _warning_severity(candidate.text) is not None
@@ -1877,6 +1924,12 @@ def _parse_page(
                 ):
                     break
                 candidate_text = candidate.text
+                if abs(candidate.x - body_x) > max(
+                    PROCEDURE_BODY_X_MARGIN_POINTS,
+                    layout.page_width * PROCEDURE_BODY_X_MARGIN_FRACTION,
+                ):
+                    index += 1
+                    continue
                 if NAVIGATION_CUE.match(candidate_text) or TRUNCATION_CUE.search(candidate_text):
                     completeness_notes.setdefault(section_sequence, []).append(candidate_text)
                     completeness_note_events.append(
@@ -2675,29 +2728,17 @@ def _is_procedure_section_heading(text: str, profile: DocumentProfile) -> bool:
 
 
 def _contains_procedure_action(text: str, profile: DocumentProfile) -> bool:
+    return _contains_procedure_action_with_aliases(text, profile.action_aliases)
+
+
+def _contains_procedure_action_with_aliases(
+    text: str,
+    action_aliases: dict[str, list[str]],
+) -> bool:
     normalized = text.casefold()
     words = set(re.findall(r"[^\W_]+", normalized))
-    aliases = {
-        variant.casefold()
-        for action, variants in profile.action_aliases.items()
-        for variant in (action, *variants)
-        if variant.strip()
-    }
-    if aliases & words:
-        return True
-    return any(
-        word
-        in {
-            action,
-            f"{action}s",
-            f"{action}ed",
-            f"{action}ing",
-            *PROCEDURE_HEADING_ACTION_FORMS.get(action, set()),
-        }
-        or (action.endswith("e") and word in {f"{action}d", f"{action[:-1]}ing"})
-        for word in words
-        for action in PROCEDURE_HEADING_ACTIONS
-    )
+    canonical = _procedure_token_canonicalizer(action_aliases)
+    return any(word in canonical for word in words)
 
 
 def _collect_warning(
@@ -3150,6 +3191,7 @@ def _match_procedure(
             question,
             identifiers=[" ".join(title_identity)],
             supporting=[
+                source.title,
                 source.manufacturer,
                 source.revision or "",
                 source.procedure_language,
@@ -3188,6 +3230,7 @@ def _match_procedure(
         identifiers=[*title_identity, *(heading for _, heading in matched_question_actions)],
         aliases=[question_action],
         supporting=[
+            source.title,
             source.manufacturer,
             source.revision or "",
             source.procedure_language,
@@ -3203,6 +3246,140 @@ def _match_procedure(
         profile_id=source.ingestion_profile.profile_id,
         profile_version=source.ingestion_profile.profile_version,
     )
+
+
+def _content_procedure_matches(
+    question: str,
+    catalog: RetrievalCatalog,
+    sources_by_document: dict[str, RetrievalSource],
+) -> list[tuple[StoredProcedure, ProcedureMatchProvenance | None]]:
+    ranked: list[tuple[float, int, StoredProcedure, RetrievalSource]] = []
+    for procedure in catalog.procedures:
+        source = sources_by_document.get(procedure.document_id)
+        if source is None:
+            continue
+        canonical_tokens = _procedure_token_canonicalizer(source.action_aliases)
+        significant_tokens = _significant_procedure_tokens(question, canonical_tokens)
+        if len(significant_tokens) < 3:
+            continue
+        evidence_text = " ".join(
+            [
+                procedure.title,
+                *procedure.heading_path,
+                *(step.text for step in procedure.steps),
+                *(warning.text for step in procedure.steps for warning in step.warnings),
+                source.title,
+                source.manufacturer,
+            ]
+        )
+        evidence_tokens = {
+            canonical_tokens.get(token, token) for token in tokens(evidence_text)
+        }
+        matched = significant_tokens & evidence_tokens
+        coverage = len(matched) / len(significant_tokens)
+        if coverage >= PROCEDURE_CONTENT_MATCH_COVERAGE:
+            ranked.append((coverage, len(matched), procedure, source))
+
+    if not ranked:
+        return []
+    ranked.sort(key=lambda candidate: (candidate[0], candidate[1]), reverse=True)
+    best_score = ranked[0][:2]
+    best = [candidate for candidate in ranked if candidate[:2] == best_score]
+    if len(best) != 1:
+        return []
+    _, _, procedure, _ = best[0]
+    return [(procedure, None)]
+
+
+def _procedure_token_canonicalizer(
+    action_aliases: dict[str, list[str]],
+) -> dict[str, str]:
+    canonical: dict[str, str] = {}
+    for action, variants in action_aliases.items():
+        canonical[action] = action
+        canonical.update({variant: action for variant in variants})
+    for action in PROCEDURE_HEADING_ACTIONS:
+        canonical[action] = action
+        canonical[f"{action}s"] = action
+        canonical[f"{action}ed"] = action
+        canonical[f"{action}ing"] = action
+        if action.endswith("e"):
+            canonical[f"{action}d"] = action
+            canonical[f"{action[:-1]}ing"] = action
+        for variant in PROCEDURE_HEADING_ACTION_FORMS.get(action, set()):
+            canonical[variant] = action
+    return canonical
+
+
+def _significant_procedure_tokens(
+    question: str,
+    canonical_tokens: dict[str, str],
+) -> set[str]:
+    question_tokens = {canonical_tokens.get(token, token) for token in tokens(question)}
+    return question_tokens - QUESTION_TOKENS - set(tokens(PROCEDURE_QUERY_VOCAB))
+
+
+def _has_matching_partial_procedure(
+    question: str,
+    catalog: RetrievalCatalog,
+) -> bool:
+    document_scores: list[tuple[float, int, str]] = []
+    for source in catalog.sources:
+        canonical_tokens = _procedure_token_canonicalizer(source.action_aliases)
+        significant_tokens = _significant_procedure_tokens(question, canonical_tokens)
+        if len(significant_tokens) < 2:
+            continue
+        best_score = (0.0, 0)
+        for page in source.pages:
+            procedure_like = (
+                page.page_kind == "procedure-step"
+                or re.search(r"\bstep\s+\d", page.text, flags=re.IGNORECASE) is not None
+                or _contains_procedure_action_with_aliases(
+                    page.section,
+                    source.action_aliases,
+                )
+            )
+            if not procedure_like:
+                continue
+            section_text = " ".join(
+                [
+                    page.section,
+                    *page.heading_path,
+                    *[line for line in page.text.splitlines()[:5] if line.strip()],
+                    source.title,
+                    source.manufacturer,
+                ]
+            )
+            section_tokens = {
+                canonical_tokens.get(token, token) for token in tokens(section_text)
+            }
+            if not significant_tokens & section_tokens:
+                continue
+            page_text = " ".join(
+                [
+                    page.section,
+                    *page.heading_path,
+                    page.text,
+                    source.title,
+                    source.manufacturer,
+                ]
+            )
+            page_tokens = {
+                canonical_tokens.get(token, token) for token in tokens(page_text)
+            }
+            matched = significant_tokens & page_tokens
+            score = (len(matched) / len(significant_tokens), len(matched))
+            best_score = max(best_score, score)
+        if best_score[0] >= PROCEDURE_PARTIAL_MATCH_COVERAGE:
+            document_scores.append(
+                (float(best_score[0]), int(best_score[1]), source.document_id)
+            )
+
+    if not document_scores:
+        return False
+    document_scores.sort(reverse=True)
+    best_score = document_scores[0][:2]
+    return sum(score[:2] == best_score for score in document_scores) == 1
 
 
 def _unique_citations(citations: Iterable[StoredCitation]) -> list[StoredCitation]:

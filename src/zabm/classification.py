@@ -19,6 +19,7 @@ INDEX_HEADING = re.compile(r"^\s*(?:alphabetical\s+)?index\b", re.IGNORECASE)
 DOTTED_LEADER = re.compile(r"\.{3,}\s*\d{1,3}\s*$")
 PAGE_REFERENCE = re.compile(r"(?:\.{2,}|\s{2,})\s*\d{1,3}\s*$")
 PAGE_NUMBER = re.compile(r"^\d{1,3}$")
+PROCEDURE_STEP_NUMBER = re.compile(r"^\d{1,2}$")
 SECTION_ENTRY = re.compile(r"^\d{1,2}(?:\.\d{1,2})?\s+[A-Za-z]")
 ALPHABETICAL_ENTRY = re.compile(r"^[A-Z]\s+\S.*\d{1,3}$")
 NUMBERED_LINE = re.compile(r"^\d{1,2}\s+\S")
@@ -161,9 +162,15 @@ class DeterministicPageBlockClassifier:
                 confidence=0.96,
                 profile=profile,
             )
+        has_numbered_step = any(NUMBERED_LINE.match(text) for text in texts) or bool(
+            _standalone_step_marker_indexes(layout)
+        )
         if (
             NAVIGATION_HEADING.search(title_text)
-            or sum(bool(NAVIGATION_TEXT.search(text)) for text in texts) >= 2
+            or (
+                sum(bool(NAVIGATION_TEXT.search(text)) for text in texts) >= 2
+                and not has_numbered_step
+            )
         ):
             return self._result(
                 observation,
@@ -177,13 +184,11 @@ class DeterministicPageBlockClassifier:
         if COVER_HEADING.search(title_text) or (
             observation.physical_page == 1
             and len(texts) <= 4
-            and not any(NUMBERED_LINE.match(text) for text in texts)
+            and not has_numbered_step
         ):
             return self._result(observation, layout, "cover", confidence=0.9, profile=profile)
 
-        page_kind: PageKind = (
-            "procedure-step" if any(NUMBERED_LINE.match(text) for text in texts) else "paragraph"
-        )
+        page_kind: PageKind = "procedure-step" if has_numbered_step else "paragraph"
         return self._result(observation, layout, page_kind, confidence=0.75, profile=profile)
 
     def _result(
@@ -197,6 +202,7 @@ class DeterministicPageBlockClassifier:
         profile: DocumentProfile,
     ) -> PageBlockClassificationResult:
         page_has_figure = any(FIGURE_TEXT.search(_normalize(span.text)) for span in layout.spans)
+        step_indexes = _procedure_step_indexes(layout)
         blocks = [
             BlockClassification(
                 block_id=f"{span.span_id}:block",
@@ -206,6 +212,7 @@ class DeterministicPageBlockClassifier:
                     page_kind=page_kind,
                     profile=profile,
                     page_has_figure=page_has_figure,
+                    procedure_step_member=index in step_indexes,
                 ),
                 text=span.text,
                 span_ids=[span.span_id],
@@ -237,6 +244,7 @@ def _block_kind(
     page_kind: PageKind,
     profile: DocumentProfile,
     page_has_figure: bool,
+    procedure_step_member: bool,
 ) -> PageKind:
     normalized = _normalize(span.text)
     if WARNING_TEXT.match(normalized):
@@ -245,6 +253,8 @@ def _block_kind(
         return "figure"
     if _in_regions(span, profile.tables.excluded_regions):
         return "table"
+    if procedure_step_member:
+        return "procedure-step"
     if index == 0 or SERVICE_HEADING.search(normalized):
         return "heading"
     if page_kind in {"contents", "index", "contact", "legal", "advertisement", "navigation"}:
@@ -260,6 +270,30 @@ def _block_kind(
     if NUMBERED_LINE.match(normalized):
         return "procedure-step"
     return "paragraph"
+
+
+def _procedure_step_indexes(layout: LayoutStageResult) -> set[int]:
+    markers = _standalone_step_marker_indexes(layout)
+    body_indexes = {
+        index
+        for index, span in enumerate(layout.spans)
+        if 60 < span.page_box.x_min < 75
+        and any(
+            0 <= span.page_box.y_min - layout.spans[marker].page_box.y_min <= 10
+            for marker in markers
+        )
+    }
+    return markers | body_indexes
+
+
+def _standalone_step_marker_indexes(layout: LayoutStageResult) -> set[int]:
+    return {
+        index
+        for index, span in enumerate(layout.spans)
+        if PROCEDURE_STEP_NUMBER.fullmatch(_normalize(span.text))
+        and span.page_box.x_min < 60
+        and span.page_box.y_min >= 35
+    }
 
 
 def _in_regions(span: LayoutSpan, regions: Sequence[PageRegion]) -> bool:
