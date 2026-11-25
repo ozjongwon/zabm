@@ -13,6 +13,8 @@ source "${RUNTIME_CONFIG}"
 readonly DEFAULT_RUNTIME_HOME="/home/ollama"
 RUNTIME_HOME="${ZABM_RUNTIME_HOME:-${DEFAULT_RUNTIME_HOME}}"
 readonly RUNTIME_CONFIG_DIR="${ZABM_RUNTIME_CONFIG_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/zabm}"
+readonly KOREAN_SAMPLE_SET="${REPO_ROOT}/data/korean/sample-set-v1.json"
+readonly KOREAN_REVIEW="${REPO_ROOT}/data/korean/review-v1.json"
 MODEL_DIR="${RUNTIME_HOME}/models"
 STATE_DIR="${RUNTIME_HOME}/state"
 readonly CONFIG_FILE="${RUNTIME_CONFIG_DIR}/runtime.env"
@@ -585,6 +587,8 @@ write_runtime_config() {
     printf 'ZABM_MODEL=%q\n' "${RUNTIME_CHAT_MODEL_NAME}"
     printf 'ZABM_EMBEDDING_MODEL=%q\n' "${RUNTIME_EMBEDDING_MODEL_NAME}"
     printf 'ZABM_PROVIDER_CONFIGURATION=%q\n' "${provider_configuration}"
+    printf 'ZABM_KOREAN_SAMPLE_SET=%q\n' "${KOREAN_SAMPLE_SET}"
+    printf 'ZABM_KOREAN_REVIEW=%q\n' "${KOREAN_REVIEW}"
     printf 'ZABM_DEBUG=0\n'
     case "${PROVIDER_KIND}" in
       local)

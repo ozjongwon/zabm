@@ -241,6 +241,14 @@ def test_runtime_configuration_and_launcher_are_secret_free_and_idempotent(
     assert "ZABM_PROVIDER_API_KEY=\n" in config_contents
     assert "ZABM_MODEL=test-chat\n" in config_contents
     assert "ZABM_EMBEDDING_MODEL=test-embedding\n" in config_contents
+    assert (
+        f"ZABM_KOREAN_SAMPLE_SET={REPO_ROOT / 'data' / 'korean' / 'sample-set-v1.json'}\n"
+        in config_contents
+    )
+    assert (
+        f"ZABM_KOREAN_REVIEW={REPO_ROOT / 'data' / 'korean' / 'review-v1.json'}\n"
+        in config_contents
+    )
     assert "set -a\n" in launcher_contents
     assert "sk-test-do-not-print" not in config_contents + launcher_contents
 

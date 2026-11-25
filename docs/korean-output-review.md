@@ -4,6 +4,10 @@ Korean output is an optional reviewed capability. It is disabled unless both
 `ZABM_KOREAN_OUTPUT=1` is set and the configured review record approves the
 exact bytes of the separately authored sample set.
 
+The runtime installer records absolute default paths for
+`ZABM_KOREAN_SAMPLE_SET` and `ZABM_KOREAN_REVIEW` in `runtime.env`, so the
+installed `zabm-runtime` launcher can find the reviewed artifacts.
+
 ## Runtime boundary
 
 Output language defaults to `auto`. For a Korean request, the original question

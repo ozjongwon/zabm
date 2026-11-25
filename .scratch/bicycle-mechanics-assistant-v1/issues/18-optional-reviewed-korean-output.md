@@ -35,3 +35,7 @@
   flag; English and unsupported-language questions continue to receive the
   canonical English answer. Explicit `--language en` or `--language ko`
   overrides detection.
+- 2026-11-25: Hardened installed-runtime discovery of the Korean review. The
+  runtime installer now records absolute sample-set and review paths in
+  `runtime.env`, and blank path overrides fall back to those defaults instead of
+  resolving to the current directory.

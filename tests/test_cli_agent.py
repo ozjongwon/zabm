@@ -156,6 +156,7 @@ def test_cli_returns_reviewed_korean_prose_with_preserved_canonical_facts(
     manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
     download_and_ingest(manifest_path, evidence_path, data_dir)
     _, environment = _korean_review(tmp_path)
+    environment["ZABM_KOREAN_SAMPLE_SET"] = ""
     route: dict[str, Any] = {
         "intent": "specification",
         "normalized_question": "What is the Trail Post Standard Remote clamp bolt torque?",

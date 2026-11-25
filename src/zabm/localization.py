@@ -240,8 +240,8 @@ def load_korean_output_policy(
             reason="Korean output is disabled until its separate review passes.",
         )
 
-    sample_path = Path(environment.get(KOREAN_SAMPLE_SET_ENV, DEFAULT_KOREAN_SAMPLE_SET))
-    review_path = Path(environment.get(KOREAN_REVIEW_ENV, DEFAULT_KOREAN_REVIEW))
+    sample_path = Path(environment.get(KOREAN_SAMPLE_SET_ENV) or DEFAULT_KOREAN_SAMPLE_SET)
+    review_path = Path(environment.get(KOREAN_REVIEW_ENV) or DEFAULT_KOREAN_REVIEW)
     try:
         sample_bytes = sample_path.read_bytes()
         sample_set = KoreanSampleSet.model_validate_json(sample_bytes)
