@@ -22,3 +22,11 @@
   expect composite-rail and seatpost-diameter outcomes with no corresponding
   rule in `data/evidence/verified-compatibility.json`. ADR-0002 prohibits
   inferring compatibility from dimensions alone.
+- 2026-11-26: Audited the cited PDF pages and recorded proposed dispositions in
+  `data/audits/evaluation-evidence-reconciliation-v1.md`. Reba top-cap items
+  001-004 are supported as conflicting variants. Reverb hose-barb items 005-008
+  concern different joints and should become clarification requests.
+  Compatibility items 012-013 are explicitly supported by the Reverb AXS
+  composite 7x9 rail statement. Items 014-015 are supported by the explicit
+  requirement that seatpost and seat-tube diameters match. Human verification
+  of the proposed records and evaluation-label replacement is still required.
