@@ -4,7 +4,7 @@
 
 **Blocked by:** 08.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Every specification and compatibility rule intended to support an answer is checked by a human against its original manufacturer document.
 - [x] Every verified specification includes its unit and all source-defined applicability conditions.

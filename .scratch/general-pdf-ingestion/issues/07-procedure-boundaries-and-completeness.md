@@ -6,7 +6,7 @@ unambiguous section boundary, but must fail closed when ambiguity remains.
 
 **Blocked by:** 05, 06.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Define the accepted evidence for explicit end markers and section-boundary end markers.
 - [x] Require maintainer approval for profile rules that infer completeness from a following heading.

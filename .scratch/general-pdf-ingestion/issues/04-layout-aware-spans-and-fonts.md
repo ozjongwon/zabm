@@ -6,7 +6,7 @@ text must be read in source order without merging unrelated columns.
 
 **Blocked by:** 01, 02.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Preserve font name, size, weight/style hints, page coordinates, and line/span IDs during extraction.
 - [x] Detect column bands and assemble text column-by-column in source reading order.

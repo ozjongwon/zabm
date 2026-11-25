@@ -6,7 +6,7 @@ section heading rather than body text, footers, or concatenated headings.
 
 **Blocked by:** 03, 04.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Recognize numbered headings such as `4.2`, unnumbered section headings, and manufacturer-specific heading styles.
 - [x] Infer hierarchy from numbering, font style, position, and document profile hints.

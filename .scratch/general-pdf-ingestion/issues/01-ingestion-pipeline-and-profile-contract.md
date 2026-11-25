@@ -7,7 +7,7 @@ of manufacturer-specific branches.
 
 **Blocked by:** None.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Define typed stage contracts for page/block classification, layout spans, heading hierarchy, procedure candidates, completeness, and evidence verification.
 - [x] Define a versioned profile schema for layout, language, heading, table, figure, end-boundary, and action-alias overrides.

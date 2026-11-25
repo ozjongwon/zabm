@@ -6,7 +6,7 @@ must reject contents entries, table cells, figure callouts, and page numbers.
 
 **Blocked by:** 03, 05.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Require a procedure heading or approved section context before extracting steps.
 - [x] Accept only contiguous numbered steps in source order unless an approved profile defines a different numbering style.

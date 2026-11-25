@@ -4,7 +4,7 @@
 
 **Blocked by:** 05.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The remote model and embeddings adapter satisfies the same provider interface as the local reference provider.
 - [x] Provider selection uses configuration rather than a separate answer workflow.

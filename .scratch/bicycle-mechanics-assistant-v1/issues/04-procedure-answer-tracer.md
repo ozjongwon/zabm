@@ -4,7 +4,7 @@
 
 **Blocked by:** 02.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Ingestion preserves page boundaries, heading hierarchy, tables, warnings, and procedure order for at least one accepted source.
 - [x] A retrieval-evidence section is considered eligible only when it establishes a complete source-defined service procedure.

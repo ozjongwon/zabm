@@ -4,7 +4,7 @@
 
 **Blocked by:** 02, 03, 04.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] A local OpenAI-compatible model and embedding provider can run through one provider interface used by the application service and CLI.
 - [x] Responses record the provider, model, configuration, and source-pack identifiers and remain correct without remote-provider access.

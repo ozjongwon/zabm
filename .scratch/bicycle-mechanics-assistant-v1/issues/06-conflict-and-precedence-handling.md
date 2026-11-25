@@ -4,7 +4,7 @@
 
 **Blocked by:** 03, 05.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Two or more applicable evidence items that disagree produce `conflicting_evidence` rather than an averaged, interpolated, or silently selected value.
 - [x] A conflict response shows every applicable source with its document, page, section, excerpt, and retrieval date.

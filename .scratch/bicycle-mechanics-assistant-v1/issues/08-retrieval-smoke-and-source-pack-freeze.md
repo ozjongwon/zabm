@@ -4,7 +4,7 @@
 
 **Blocked by:** 07.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Every candidate records its authority, public-availability, extraction, page-alignment, heading, table, warning, and procedure-order checks.
 - [x] A fixed retrieval-only smoke set covers specification, compatibility, and procedure evidence without running answer-accuracy baselines.

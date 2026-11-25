@@ -7,7 +7,7 @@ must be distinguishable.
 
 **Blocked by:** 01, 02.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Classify contents/index pages using heading text, dotted leaders, section-number density, and page-reference patterns.
 - [x] Classify table blocks before step extraction and prevent table rows from becoming procedure steps.

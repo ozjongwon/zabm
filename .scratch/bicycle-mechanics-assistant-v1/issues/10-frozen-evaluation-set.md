@@ -4,7 +4,7 @@
 
 **Blocked by:** 09.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The set contains exactly 36 specification, 27 compatibility, 27 procedure, 15 not-found, 8 conflicting-evidence, and 7 out-of-scope items.
 - [x] Every expected outcome is derived from the frozen source pack rather than invented evaluator preference.

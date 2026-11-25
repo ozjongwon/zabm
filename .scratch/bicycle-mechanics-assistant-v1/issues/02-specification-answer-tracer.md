@@ -4,7 +4,7 @@
 
 **Blocked by:** 01.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] One first-party, publicly downloadable accepted source is recorded with its source URL, SHA-256 hash, retrieval date, revision metadata where available, and manifest version.
 - [x] The source can be acquired and ingested without relying on a manually retained PDF, database, index, or earlier generated-data state.

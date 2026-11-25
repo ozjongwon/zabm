@@ -6,7 +6,7 @@ MAGURA or RockShox. Tests run through the CLI ingestion and evidence seams.
 
 **Blocked by:** 01.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Cover single-column procedures, two-column procedures, and multilingual multi-column pages.
 - [x] Cover table-of-contents, torque-table, contact-information, legal, cover, and figure-only pages.

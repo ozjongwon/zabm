@@ -4,7 +4,7 @@
 
 **Blocked by:** 05, 06, 09, 10.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] All four configurations use the same frozen questions, provider, prompt budget, decoding settings, and hardware where applicable.
 - [x] Retrieval parameters, prompts, and configuration versions are frozen before scored runs.

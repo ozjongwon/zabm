@@ -4,7 +4,7 @@
 
 **Blocked by:** 02.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] At least one explicit manufacturer compatibility rule, compatibility table, or statement is human-verified and stored as structured evidence.
 - [x] A pair supported by an explicit manufacturer rule returns `compatible` with evidence and citations.

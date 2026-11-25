@@ -7,7 +7,7 @@ source.
 
 **Blocked by:** 04, 05.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Store stable span identifiers and bounding boxes for accepted step and warning text.
 - [x] Build excerpts from the stored source spans instead of concatenating arbitrary nearby fragments.

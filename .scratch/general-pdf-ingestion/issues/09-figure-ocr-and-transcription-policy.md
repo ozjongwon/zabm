@@ -6,7 +6,7 @@ to answers by OCR or model inference without a human-verified transcription.
 
 **Blocked by:** 03, 04, 08.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] Classify text-free pages, diagram-heavy instruction sheets, and callout-only procedures.
 - [x] Exclude figure callouts from numbered procedure steps.

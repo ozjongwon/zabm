@@ -4,7 +4,7 @@
 
 **Blocked by:** 02, 03, 04.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The candidate pack contains 4-8 first-party, public, directly downloadable documents from at least two manufacturers.
 - [x] The candidate pack has enough source depth for specification, compatibility, complete procedure, not-found, conflict, and realistic refusal cases.
