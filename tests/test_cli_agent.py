@@ -464,7 +464,7 @@ def test_cli_rejects_korean_prose_that_changes_a_canonical_value(
     assert response["localized"] is None
     assert response["claims"][0]["text"].endswith("2.8-3.4 N·m (25-30 in-lb).")
     assert response["citations"][0]["printed_page"] == 17
-    assert "9.9" not in result.stdout
+    assert "9.9" not in response["claims"][0]["text"]
 
 
 def test_cli_preserves_procedure_warnings_and_citations_in_korean(

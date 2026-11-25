@@ -587,17 +587,17 @@ WEB_PAGE = """<!doctype html>
       return card;
     }
 
-    function addSources(container, citations) {
+    function addSources(container, citations, label) {
       if (!citations || citations.length === 0) return;
-      container.append(element("h3", "", "Sources"));
+      container.append(element("h3", "", label || "Sources"));
       const sources = element("div", "sources");
       citations.forEach((citation) => sources.append(citationCard(citation)));
       container.append(sources);
     }
 
-    function addClaims(container, claims) {
+    function addClaims(container, claims, label) {
       if (!claims || claims.length === 0) return;
-      container.append(element("h3", "", "Supported claims"));
+      container.append(element("h3", "", label || "Supported claims"));
       const claimList = element("div", "claims");
       claims.forEach((claim) => {
         const card = element("article", "card");
@@ -618,8 +618,21 @@ WEB_PAGE = """<!doctype html>
       container.append(conditionList);
     }
 
-    function addConditions(container, conditions) {
-      addListSection(container, "Conditions", conditions);
+    function addConditions(container, conditions, label) {
+      addListSection(container, label || "Conditions", conditions);
+    }
+
+    function displayClaims(response) {
+      if (response.language !== "ko" || !response.localized) {
+        return response.claims;
+      }
+      const evidenceByClaim = new Map(
+        response.claims.map((claim) => [claim.claim_id, claim.evidence_ids])
+      );
+      return response.localized.claims.map((claim) => ({
+        ...claim,
+        evidence_ids: evidenceByClaim.get(claim.claim_id) || [],
+      }));
     }
 
     function addConflicts(container, conflicts) {
@@ -662,21 +675,46 @@ WEB_PAGE = """<!doctype html>
     }
 
     function renderSupportedResponse(response, container) {
+      const korean = response.language === "ko" ? response.localized : null;
       if (response.response_type === "compatibility") {
         const result = response.compatibility;
         const componentA = result.component_a ? result.component_a.name : "Component A";
         const componentB = result.component_b ? result.component_b.name : "Component B";
-        container.append(element("h2", "", componentA + " with " + componentB));
-        container.append(element("p", "value", result.outcome));
-        addConditions(container, result.conditions);
+        const outcomes = {
+          compatible: "호환됨",
+          not_compatible: "호환되지 않음",
+          unknown: "알 수 없음",
+          not_found: "찾을 수 없음",
+        };
+        container.append(
+          element(
+            "h2",
+            "",
+            korean && korean.claims.length > 0
+              ? korean.claims[0].text
+              : componentA + " with " + componentB
+          )
+        );
+        container.append(
+          element("p", "value", korean ? outcomes[result.outcome] : result.outcome)
+        );
+        addConditions(
+          container,
+          korean ? korean.conditions : result.conditions,
+          korean ? "조건" : "Conditions"
+        );
       } else if (response.response_type === "procedure") {
         const procedure = response.procedure;
-        container.append(element("h2", "", procedure.title));
+        const steps = korean ? korean.procedure.steps : procedure.steps;
+        container.append(
+          element("h2", "", korean ? korean.procedure.title : procedure.title)
+        );
         if (procedure.heading_path.length > 0) {
           appendParagraphs(container, [procedure.heading_path.join(" / ")]);
         }
-        const steps = element("ol", "steps");
-        procedure.steps.forEach((step) => {
+        const stepList = element("ol", "steps");
+        procedure.steps.forEach((canonicalStep, index) => {
+          const step = steps[index];
           const item = document.createElement("li");
           const heading = element("div", "step-heading");
           heading.append(element("span", "step-number", String(step.number)));
@@ -687,34 +725,46 @@ WEB_PAGE = """<!doctype html>
               element(
                 "p",
                 "warning",
-                warning.severity.toUpperCase() + ": " + warning.text
+                (korean && warning.severity === "notice"
+                  ? "알림"
+                  : korean && warning.severity === "warning"
+                    ? "경고"
+                    : warning.severity.toUpperCase()) + ": " + warning.text
               )
             );
           });
-          item.append(citationCard(step.citation, "Step source"));
-          steps.append(item);
+          item.append(
+            citationCard(canonicalStep.citation, korean ? "단계 출처" : "Step source")
+          );
+          stepList.append(item);
         });
-        container.append(steps);
+        container.append(stepList);
       } else {
         const result = response.specification;
         container.append(
           element(
             "h2",
             "",
-            [
-              result.manufacturer,
-              result.model,
-              result.component,
-              result.attribute,
-            ].join(" ")
+            korean && korean.claims.length > 0
+              ? korean.claims[0].text
+              : [
+                  result.manufacturer,
+                  result.model,
+                  result.component,
+                  result.attribute,
+                ].join(" ")
           )
         );
         container.append(element("p", "value", result.value.display));
-        addConditions(container, result.conditions);
+        addConditions(
+          container,
+          korean ? korean.conditions : result.conditions,
+          korean ? "조건" : "Conditions"
+        );
       }
 
-      addClaims(container, response.claims);
-      addSources(container, response.citations);
+      addClaims(container, displayClaims(response), korean ? "검증된 주장" : "Supported claims");
+      addSources(container, response.citations, korean ? "출처" : "Sources");
       addConflicts(container, response.conflicts);
     }
 
@@ -725,32 +775,55 @@ WEB_PAGE = """<!doctype html>
         : "";
       rawResponse.textContent = JSON.stringify(response, null, 2);
       rawDetails.open = false;
+      const korean = response.language === "ko" ? response.localized : null;
 
       if (response.status === "supported") {
-        status.textContent = "Supported answer";
+        status.textContent = korean ? "지원되는 답변" : "Supported answer";
         status.className = "status status-supported";
         renderSupportedResponse(response, answer);
       } else if (response.status === "conflicting_evidence") {
-        status.textContent = "Conflicting evidence";
+        status.textContent = korean ? "상충하는 근거" : "Conflicting evidence";
         status.className = "status status-refused";
-        answer.append(element("h2", "", "No answer selected"));
-        answer.append(element("p", "message", response.failure.message));
+        answer.append(element("h2", "", korean ? "선택된 답변 없음" : "No answer selected"));
+        answer.append(
+          element(
+            "p",
+            "message",
+            korean ? korean.failure_message : response.failure.message
+          )
+        );
         addConflicts(answer, response.conflicts);
       } else if (response.status === "clarification_required") {
-        status.textContent = "Clarification required";
+        status.textContent = korean ? "추가 정보 필요" : "Clarification required";
         status.className = "status status-clarification";
-        answer.append(element("h2", "", "More detail needed"));
-        answer.append(element("p", "message clarification", response.clarification.message));
+        answer.append(element("h2", "", korean ? "추가 정보가 필요합니다" : "More detail needed"));
+        answer.append(
+          element(
+            "p",
+            "message clarification",
+            korean ? korean.clarification_message : response.clarification.message
+          )
+        );
         addListSection(
           answer,
-          "Missing information",
+          korean ? "누락된 정보" : "Missing information",
           response.clarification.missing_information
         );
       } else {
-        status.textContent = response.status === "out_of_scope" ? "Out of scope" : "Not found";
+        status.textContent = korean
+          ? response.status === "out_of_scope"
+            ? "범위 밖"
+            : "찾을 수 없음"
+          : response.status === "out_of_scope"
+            ? "Out of scope"
+            : "Not found";
         status.className = "status status-refused";
-        answer.append(element("h2", "", "No supported answer"));
-        answer.append(element("p", "message", response.failure.message));
+        answer.append(
+          element("h2", "", korean ? "지원되는 답변 없음" : "No supported answer")
+        );
+        answer.append(
+          element("p", "message", korean ? korean.failure_message : response.failure.message)
+        );
       }
       responsePanel.hidden = false;
     }

@@ -47,6 +47,39 @@ response envelope**. Compare:
 `request_id` and `timestamp` are intentionally request-specific and do not need
 to match.
 
+For Korean output, first enable the reviewed capability in the same shell that
+starts the web server:
+
+```bash
+export ZABM_KOREAN_OUTPUT=1
+export ZABM_KOREAN_SAMPLE_SET="$PWD/data/korean/sample-set-v1.json"
+export ZABM_KOREAN_REVIEW=/path/to/approved-korean-review.json
+
+zabm-runtime web --host 127.0.0.1 --port 8765 --data-dir .zabm
+```
+
+Open `http://127.0.0.1:8765` and ask:
+
+```text
+RockShox reverb 스탠다드 리모트 클램프 볼트 토크는?
+```
+
+The browser should display Korean answer prose, conditions, claims, and source
+labels. The canonical envelope must have `"language": "ko"` and
+`"localization": {"status": "translated"}`. Values, statuses, warnings, and
+citations remain the same canonical objects shown in the envelope.
+
+The endpoint can be checked without the browser:
+
+```bash
+curl -sS http://127.0.0.1:8765/api/ask \
+  -H 'Content-Type: application/json' \
+  --data '{"question":"RockShox reverb 스탠다드 리모트 클램프 볼트 토크는?"}'
+```
+
+If the review is pending, disabled, or invalid, the browser displays the
+canonical English answer and the envelope records the fallback reason.
+
 Use this representative set:
 
 | Outcome | Question |
