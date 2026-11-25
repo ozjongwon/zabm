@@ -135,6 +135,15 @@ def _debug_enabled_by_default() -> bool:
     return os.getenv("ZABM_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _output_language_default() -> Literal["auto", "en", "ko"]:
+    value = os.getenv("ZABM_OUTPUT_LANGUAGE", "auto").strip().lower()
+    if value == "ko":
+        return "ko"
+    if value == "en":
+        return "en"
+    return "auto"
+
+
 def _configure_debug_logging(debug: bool) -> None:
     logging.basicConfig(
         level=logging.WARNING,
@@ -683,7 +692,7 @@ def _ask_command(
     data_dir: Path,
     as_json: bool,
     *,
-    output_language: Literal["en", "ko"],
+    output_language: Literal["auto", "en", "ko"],
     provider: str | None,
     provider_url: str | None,
     model: str | None,
@@ -1357,9 +1366,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     ask.add_argument(
         "--language",
-        choices=["en", "ko"],
-        default=os.getenv("ZABM_OUTPUT_LANGUAGE", "en"),
-        help="Answer language; Korean is available only after review.",
+        choices=["auto", "en", "ko"],
+        default=_output_language_default(),
+        help="Answer language; auto mirrors Korean questions after review.",
     )
     _add_provider_arguments(ask)
     ask.add_argument("--json", action="store_true", help="Emit the canonical response.")

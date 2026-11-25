@@ -267,6 +267,15 @@ def load_korean_output_policy(
     )
 
 
+def resolve_output_language(
+    question: str,
+    requested_language: Literal["auto", "en", "ko"],
+) -> Literal["en", "ko"]:
+    if requested_language != "auto":
+        return requested_language
+    return "ko" if HANGUL_PATTERN.search(question) is not None else "en"
+
+
 def build_korean_review_results(
     sample_set_path: Path,
     review_path: Path,

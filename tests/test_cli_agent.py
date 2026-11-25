@@ -156,7 +156,7 @@ def test_cli_returns_reviewed_korean_prose_with_preserved_canonical_facts(
     manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
     download_and_ingest(manifest_path, evidence_path, data_dir)
     _, environment = _korean_review(tmp_path)
-    route = {
+    route: dict[str, Any] = {
         "intent": "specification",
         "normalized_question": "What is the Trail Post Standard Remote clamp bolt torque?",
         "entities": [
@@ -217,8 +217,6 @@ def test_cli_returns_reviewed_korean_prose_with_preserved_canonical_facts(
             "local-embedding-model",
             "--provider-configuration",
             "local-test-v1",
-            "--language",
-            "ko",
             "--json",
             env=environment,
         )
@@ -236,8 +234,6 @@ def test_cli_returns_reviewed_korean_prose_with_preserved_canonical_facts(
             "local-embedding-model",
             "--provider-configuration",
             "local-test-v1",
-            "--language",
-            "ko",
             env=environment,
         )
 
@@ -306,6 +302,60 @@ def test_cli_keeps_korean_output_disabled_until_the_review_is_approved(
     }
     assert response["localized"] is None
     assert response["claims"][0]["text"].startswith("Test Manufacturer Trail Post")
+
+
+def test_cli_explicit_english_language_overrides_korean_question_detection(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    download_and_ingest(manifest_path, evidence_path, data_dir)
+    _, environment = _korean_review(tmp_path)
+    route: dict[str, Any] = {
+        "intent": "specification",
+        "normalized_question": "What is the Trail Post Standard Remote clamp bolt torque?",
+        "entities": [],
+        "missing_fields": [],
+        "ambiguous_fields": [],
+        "candidate_intents": [],
+    }
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-clamp-torque",
+                "text": (
+                    "Test Manufacturer Trail Post remote clamp bolt torque is "
+                    "2.8-3.4 N·m (25-30 in-lb)."
+                ),
+            }
+        ]
+    }
+
+    with provider_server(generated, route_response=route) as (provider_url, requests):
+        result = run_cli(
+            "ask",
+            "트레일 포스트 스탠다드 리모트 클램프 볼트의 토크는 얼마입니까?",
+            "--data-dir",
+            str(data_dir),
+            "--provider-url",
+            provider_url,
+            "--model",
+            "local-open-weight-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--language",
+            "en",
+            "--json",
+            env=environment,
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["language"] == "en"
+    assert response["localization"] is None
+    assert response["localized"] is None
+    assert len(requests) == 2
 
 
 def test_cli_reports_korean_review_coverage_outside_the_v1_acceptance_gate(

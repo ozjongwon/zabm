@@ -30,3 +30,8 @@
   invalid-value, clarification, and procedure-warning paths. The committed
   review remains pending, so Korean output cannot be enabled until a human
   reviewer approves the sample set and records correctness and fluency results.
+- 2026-11-25: Changed the default output-language policy to `auto`. Korean
+  questions now request the reviewed Korean response without an explicit CLI
+  flag; English and unsupported-language questions continue to receive the
+  canonical English answer. Explicit `--language en` or `--language ko`
+  overrides detection.

@@ -345,13 +345,15 @@ vectors and does not request DeepSeek embeddings.
 
 ## Reviewed Korean output
 
-Korean output is disabled by default. A request with `--language ko` still
-returns the canonical English answer until the separate Korean review is
-approved. After approval, the model normalizes the question to English, the
-application builds and validates the canonical English response, and only the
-answer prose is translated back into Korean. Claim IDs, values, units,
-conditions, statuses, warnings, and citations remain application-owned and are
-validated against that canonical response.
+Output language defaults to `auto`: Korean questions receive Korean answers
+when reviewed Korean output is enabled, while English and unsupported-language
+questions receive the canonical English answer. Explicit `--language en` or
+`--language ko` overrides detection. Korean output remains disabled until the
+separate review is approved. After approval, the model normalizes the question
+to English, the application builds and validates the canonical English
+response, and only the answer prose is translated back into Korean. Claim IDs,
+values, units, conditions, statuses, warnings, and citations remain
+application-owned and are validated against that canonical response.
 
 Enable Korean output only with an approved review record:
 
@@ -365,8 +367,7 @@ export ZABM_KOREAN_REVIEW=/path/to/approved-korean-review.json
   --provider openai-compatible \
   --provider-url http://127.0.0.1:8000/v1 \
   --model local-open-weight-model \
-  --embedding-model local-embedding-model \
-  --language ko
+  --embedding-model local-embedding-model
 ```
 
 The committed sample set covers specification, compatibility, procedure,

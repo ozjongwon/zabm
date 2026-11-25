@@ -6,11 +6,13 @@ exact bytes of the separately authored sample set.
 
 ## Runtime boundary
 
-The model performs only translation. For a Korean request, the original
-question is routed to a normalized English evidence query, and application code
-builds the canonical English response. The translation call receives only the
-validated prose and structure. It cannot set status, compatibility outcome,
-citation, evidence IDs, or final acceptance.
+Output language defaults to `auto`. For a Korean request, the original question
+is routed to a normalized English evidence query, and application code builds
+the canonical English response. When reviewed Korean output is enabled, the
+answer prose is translated back into Korean. The translation call receives only
+the validated prose and structure. It cannot set status, compatibility outcome,
+citation, evidence IDs, or final acceptance. Explicit `--language en` or
+`--language ko` overrides automatic language matching.
 
 The application rejects a translation when any of these invariants changes:
 
@@ -73,8 +75,7 @@ export ZABM_KOREAN_REVIEW=/path/to/approved-korean-review.json
   --provider openai-compatible \
   --provider-url http://127.0.0.1:8000/v1 \
   --model local-open-weight-model \
-  --embedding-model local-embedding-model \
-  --language ko
+  --embedding-model local-embedding-model
 ```
 
 Use `--json` to inspect both canonical English fields and the accepted

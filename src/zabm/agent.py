@@ -14,6 +14,7 @@ from zabm.compatibility import answer_compatibility
 from zabm.localization import (
     KoreanTranslationError,
     load_korean_output_policy,
+    resolve_output_language,
     translate_response,
 )
 from zabm.matching import QUESTION_TOKENS, tokens
@@ -82,7 +83,7 @@ def answer_question(
     data_dir: Path,
     provider: ModelProvider | None = None,
     *,
-    output_language: Literal["en", "ko"] = "en",
+    output_language: Literal["auto", "en", "ko"] = "auto",
     seed: int = 0,
     prompt_budget: int | None = None,
     router: IntentRouter | None = None,
@@ -95,7 +96,8 @@ def answer_question(
         prompt_budget=prompt_budget,
         router=router,
     )
-    if output_language == "en":
+    effective_output_language = resolve_output_language(question, output_language)
+    if effective_output_language == "en":
         return response
     policy = load_korean_output_policy()
     if not policy.allowed:
