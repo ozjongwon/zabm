@@ -2,7 +2,7 @@
 
 **What to build:** A scored acceptance report proving whether the full agent meets the v1 accuracy, improvement, abstention, citation, fabrication, and local performance gates. The report preserves per-baseline, per-run, hardware, and runtime evidence and uses the approved paired-bootstrap methodology.
 
-**Blocked by:** 11, general-pdf-ingestion/12.
+**Blocked by:** 20, 21, 22.
 
 **Status:** ready-for-human
 
@@ -54,3 +54,7 @@
   expected procedure answers cannot be sourced. Accuracy, abstention, GPU
   latency, and CPU-quantized smoke gates therefore remain open; no threshold
   or failed result was changed.
+- 2026-11-25: Split the remaining blockers into ticket 20 for evidence and
+  evaluation reconciliation, ticket 21 for complete procedure coverage, and
+  ticket 22 for CPU-quantized and GPU performance evidence. Ticket 12 remains
+  the final acceptance gate and is blocked until those tickets resolve.
