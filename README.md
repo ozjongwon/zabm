@@ -590,7 +590,16 @@ export DEEPSEEK_API_KEY="..."
 ```
 
 LangSmith is not imported or required. The canonical local JSON artifact is
-written before any optional remote mirroring.
+written before any optional remote mirroring. Set `LANGSMITH_TRACING=true` and
+`LANGSMITH_API_KEY` in the environment to mirror the evaluation root, baseline
+runs, and item traces; `LANGSMITH_PROJECT`, `LANGSMITH_ENDPOINT`, and
+`LANGSMITH_TIMEOUT_SECONDS` control the destination and bounded deadline.
+Credentials are never accepted as command-line arguments or written to the
+artifact.
+
+See [LangSmith evaluation acceptance](docs/langsmith-evaluation-acceptance.md)
+for the command-level proof of successful logging, secret handling, and
+failure isolation.
 
 ## Acceptance report
 

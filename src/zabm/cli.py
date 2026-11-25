@@ -45,6 +45,11 @@ from zabm.ingestion import (
     load_ingestion_profiles,
     resolve_document_profile,
 )
+from zabm.observability import (
+    ObservabilityError,
+    langsmith_configuration,
+    mirror_evaluation_to_langsmith,
+)
 from zabm.procedures import (
     ProcedureEvidenceInspection,
     RetrievalIngestReport,
@@ -985,6 +990,26 @@ def _evaluation_command(
             provider=model_provider,
         )
         write_evaluation_artifact(report, output_path)
+        langsmith, configuration_warning = langsmith_configuration(os.environ)
+        if configuration_warning is not None:
+            print(
+                f"zabm evaluation: observability warning: {configuration_warning}",
+                file=sys.stderr,
+            )
+        if langsmith is not None:
+            try:
+                mirror = mirror_evaluation_to_langsmith(report, langsmith)
+            except ObservabilityError as exc:
+                print(
+                    f"zabm evaluation: observability warning: {exc}",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    "zabm evaluation: LangSmith mirror completed: "
+                    f"{mirror.run_count} run(s) in project {mirror.project}.",
+                    file=sys.stderr,
+                )
     except (OSError, ProviderError, ValueError) as exc:
         print(f"zabm evaluation: {exc}", file=sys.stderr)
         return 1

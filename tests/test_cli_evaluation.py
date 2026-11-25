@@ -4,6 +4,7 @@ import hashlib
 import json
 import statistics
 import subprocess
+import time
 from collections.abc import Generator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -449,6 +450,53 @@ def evaluation_provider_server(
         thread.join(timeout=5)
 
 
+@contextmanager
+def langsmith_sink(
+    *,
+    status: int = 202,
+    delay_seconds: float = 0.0,
+) -> Generator[tuple[str, list[dict[str, Any]]]]:
+    requests: list[dict[str, Any]] = []
+
+    class LangSmithHandler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:
+            if delay_seconds:
+                time.sleep(delay_seconds)
+            length = int(self.headers.get("Content-Length", "0"))
+            body = cast(dict[str, Any], json.loads(self.rfile.read(length)))
+            requests.append(
+                {
+                    "path": self.path,
+                    "api_key": self.headers.get("x-api-key"),
+                    "body": body,
+                }
+            )
+            self.send_response(status)
+            self.end_headers()
+
+        def log_message(self, format: str, *args: object) -> None:
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), LangSmithHandler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = cast(tuple[str, int], server.server_address)
+    try:
+        yield f"http://{host}:{port}", requests
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def all_langsmith_runs(requests: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        run
+        for request in requests
+        for run in cast(dict[str, list[dict[str, Any]]], request["body"])["post"]
+    ]
+
+
 def test_evaluation_runs_four_baselines_three_times_and_writes_canonical_results(
     tmp_path: Path,
 ) -> None:
@@ -540,6 +588,178 @@ def test_evaluation_runs_four_baselines_three_times_and_writes_canonical_results
     assert plain_specification["actual_status"] == "supported"
     assert plain_specification["response"]["specification"] is None
     assert any("has no specification" in issue for issue in plain_specification["grading_issues"])
+
+
+def test_evaluation_mirrors_results_and_traces_to_langsmith(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+    api_key = "langsmith-environment-only-secret"
+
+    with langsmith_sink() as (endpoint, requests):
+        monkeypatch.setenv("LANGSMITH_API_KEY", api_key)
+        monkeypatch.setenv("LANGSMITH_ENDPOINT", endpoint)
+        monkeypatch.setenv("LANGSMITH_PROJECT", "zabm-evaluation-test")
+        monkeypatch.setenv("LANGSMITH_TRACING", "true")
+        result, report, output_path = run_evaluation(
+            tmp_path=tmp_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            evaluation_set_path=evaluation_set_path,
+        )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(output_path.read_text(encoding="utf-8")) == report
+    assert len(requests) == 1
+    assert requests[0]["path"] == "/api/v1/runs/batch"
+    assert requests[0]["api_key"] == api_key
+
+    runs = all_langsmith_runs(requests)
+    root = next(run for run in runs if run["name"] == "zabm-evaluation")
+    assert root["run_type"] == "chain"
+    assert root["session_name"] == "zabm-evaluation-test"
+    assert root["inputs"]["evaluation_set_id"] == "baseline-fixture-test-v1"
+    assert root["inputs"]["source_pack_id"] == "test-evaluation-1"
+    assert root["outputs"]["evaluation_set_id"] == "baseline-fixture-test-v1"
+    assert root["extra"]["metadata"]["provider"] == "local-deterministic"
+    assert root["extra"]["metadata"]["model"] == "evidence-renderer-v1"
+    assert root["extra"]["metadata"]["configuration_id"] == "baseline-ladder-test-v1"
+    assert root["extra"]["metadata"]["source_pack_id"] == "test-evaluation-1"
+
+    configuration_runs = [
+        run for run in runs if run["name"].startswith("zabm-evaluation:") and ":run-" in run["name"]
+    ]
+    item_runs = [run for run in runs if run["name"].startswith("zabm-evaluation-item:")]
+    assert len(configuration_runs) == 12
+    assert len(item_runs) == 36
+    assert all(run["parent_run_id"] == root["id"] for run in configuration_runs)
+    assert all(run["trace_id"] == root["id"] for run in [*configuration_runs, *item_runs])
+    assert all(
+        run["extra"]["metadata"]["provider"] == "local-deterministic"
+        and run["extra"]["metadata"]["model"] == "evidence-renderer-v1"
+        and run["extra"]["metadata"]["configuration_id"] == "baseline-ladder-test-v1"
+        and run["extra"]["metadata"]["source_pack_id"] == "test-evaluation-1"
+        and run["extra"]["metadata"]["evaluation_run_id"]
+        for run in [*configuration_runs, *item_runs]
+    )
+    assert all(
+        run["outputs"]["answer_passed"] in {True, False}
+        and run["outputs"]["response"]["request_id"]
+        for run in item_runs
+    )
+
+    serialized_outputs = json.dumps([result.stdout, result.stderr, report])
+    assert api_key not in serialized_outputs
+    assert "observability warning" not in result.stderr
+
+
+def test_evaluation_can_explicitly_disable_langsmith_mirroring(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+
+    with langsmith_sink() as (endpoint, requests):
+        monkeypatch.setenv("LANGSMITH_API_KEY", "configured-but-disabled")
+        monkeypatch.setenv("LANGSMITH_ENDPOINT", endpoint)
+        monkeypatch.setenv("LANGSMITH_TRACING", "false")
+        result, report, output_path = run_evaluation(
+            tmp_path=tmp_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            evaluation_set_path=evaluation_set_path,
+        )
+
+    assert result.returncode == 0, result.stderr
+    assert requests == []
+    assert json.loads(output_path.read_text(encoding="utf-8")) == report
+    assert report["langsmith_required"] is False
+    assert "observability warning" not in result.stderr
+
+
+def test_evaluation_survives_langsmith_rejection_and_retries_with_a_bound(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+
+    with langsmith_sink(status=503) as (endpoint, requests):
+        monkeypatch.setenv("LANGSMITH_API_KEY", "environment-secret-not-for-output")
+        monkeypatch.setenv("LANGSMITH_ENDPOINT", endpoint)
+        monkeypatch.setenv("LANGSMITH_TRACING", "true")
+        result, report, output_path = run_evaluation(
+            tmp_path=tmp_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            evaluation_set_path=evaluation_set_path,
+        )
+
+    assert result.returncode == 0, result.stderr
+    assert len(requests) == 2
+    assert "observability warning" in result.stderr
+    assert "LangSmith mirror request failed" in result.stderr
+    assert "environment-secret-not-for-output" not in result.stdout
+    assert "environment-secret-not-for-output" not in result.stderr
+    local_report = json.loads(output_path.read_text(encoding="utf-8"))
+    assert local_report == report
+    assert len(local_report["configurations"]) == 4
+
+
+def test_evaluation_survives_langsmith_timeout(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+
+    with langsmith_sink(delay_seconds=0.5) as (endpoint, _):
+        monkeypatch.setenv("LANGSMITH_API_KEY", "timeout-secret-not-for-output")
+        monkeypatch.setenv("LANGSMITH_ENDPOINT", endpoint)
+        monkeypatch.setenv("LANGSMITH_TIMEOUT_SECONDS", "0.1")
+        monkeypatch.setenv("LANGSMITH_TRACING", "true")
+        result, report, output_path = run_evaluation(
+            tmp_path=tmp_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            evaluation_set_path=evaluation_set_path,
+        )
+
+    assert result.returncode == 0, result.stderr
+    assert "observability warning" in result.stderr
+    assert "LangSmith mirror exceeded its 0.1s deadline" in result.stderr
+    assert "timeout-secret-not-for-output" not in result.stderr
+    assert json.loads(output_path.read_text(encoding="utf-8")) == report
+
+
+def test_evaluation_reports_missing_langsmith_credentials_as_a_warning(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+    monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)
+    monkeypatch.delenv("LANGCHAIN_API_KEY", raising=False)
+    monkeypatch.setenv("LANGSMITH_TRACING", "true")
+
+    result, report, output_path = run_evaluation(
+        tmp_path=tmp_path,
+        manifest_path=manifest_path,
+        pdf_dir=pdf_dir,
+        data_dir=data_dir,
+        evaluation_set_path=evaluation_set_path,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "LANGSMITH_API_KEY is not set" in result.stderr
+    assert json.loads(output_path.read_text(encoding="utf-8")) == report
 
 
 def test_evaluation_grades_specification_value_qualifiers_and_procedure_checklist(
