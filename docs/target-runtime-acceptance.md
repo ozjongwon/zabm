@@ -51,7 +51,7 @@ in `git status`:
 - `/home/ollama/state`
 - `~/.local/bin/zabm-runtime`
 
-Existing Ollama models can be selected again without fetching new weights:
+The provider and models can be changed again without reinstalling the runtime:
 
 ```bash
 ./scripts/select-runtime-models.sh

@@ -8,6 +8,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = REPO_ROOT / "scripts" / "install-dev.sh"
 RUNTIME_INSTALLER = REPO_ROOT / "scripts" / "install-runtime.sh"
+SELECT_RUNTIME_MODELS = REPO_ROOT / "scripts" / "select-runtime-models.sh"
 
 
 def run_installer(
@@ -569,6 +570,82 @@ printf 'kind=%s provider=%s\\n' "$PROVIDER_KIND" "$RUNTIME_PROVIDER_NAME"
 
     assert result.returncode == 0, result.stderr
     assert "kind=deepseek provider=deepseek" in result.stdout
+
+
+def test_select_runtime_models_uses_remote_provider_selection(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config" / "zabm"
+    config_dir.mkdir(parents=True)
+    (config_dir / "runtime.env").write_text(
+        "ZABM_RUNTIME_PROVIDER_KIND=openai\n"
+        "ZABM_PROVIDER=openai\n"
+        "ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND=remote\n",
+        encoding="utf-8",
+    )
+    os_release = tmp_path / "debian-release"
+    os_release.write_text(
+        'ID=debian\nVERSION_ID="13"\nPRETTY_NAME="Debian GNU/Linux 13"\n',
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "HOME": str(tmp_path / "home"),
+            "XDG_CONFIG_HOME": str(tmp_path / "config"),
+            "ZABM_OS_RELEASE_FILE": str(os_release),
+            "OPENAI_API_KEY": "openai-secret-do-not-print",
+            "OPENAI_MODEL": "test-openai-model",
+        }
+    )
+
+    result = subprocess.run(
+        [str(SELECT_RUNTIME_MODELS), "--provider", "openai"],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    contents = (config_dir / "runtime.env").read_text(encoding="utf-8")
+    assert result.returncode == 0, result.stderr
+    assert "ZABM_PROVIDER=openai\n" in contents
+    assert "ZABM_MODEL=test-openai-model\n" in contents
+    assert "ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND=remote\n" in contents
+    assert "OPENAI_API_KEY=openai-secret-do-not-print\n" in contents
+    assert "openai-secret-do-not-print" not in result.stdout + result.stderr
+
+
+def test_select_runtime_models_dry_run_does_not_require_an_installed_config(
+    tmp_path: Path,
+) -> None:
+    os_release = tmp_path / "debian-release"
+    os_release.write_text(
+        'ID=debian\nVERSION_ID="13"\nPRETTY_NAME="Debian GNU/Linux 13"\n',
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "HOME": str(tmp_path / "home"),
+            "XDG_CONFIG_HOME": str(tmp_path / "config"),
+            "ZABM_OS_RELEASE_FILE": str(os_release),
+            "ZABM_EMBEDDING_MODEL": "mxbai-embed-large:latest",
+        }
+    )
+
+    result = subprocess.run(
+        [str(SELECT_RUNTIME_MODELS), "--dry-run"],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "provider: deepseek at https://api.deepseek.com" in result.stdout
+    assert "embedding provider: local Ollama" in result.stdout
+    assert "dry run complete; no changes made" in result.stdout
 
 
 def test_runtime_smoke_reports_route_and_failure_when_no_answer_is_found(

@@ -47,7 +47,7 @@ model.
 
 The selected provider, models, endpoint, and API key are written to the
 mode-`600` runtime configuration and used by the smoke check and installed
-launcher. To select local models again without reinstalling the runtime:
+launcher. To change the provider or models without reinstalling the runtime:
 
 ```bash
 ./scripts/select-runtime-models.sh

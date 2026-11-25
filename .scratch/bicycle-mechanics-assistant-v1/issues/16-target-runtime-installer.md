@@ -69,4 +69,7 @@
   Runtime configuration stores a separate embedding-provider URL, and the
   provider layer routes chat and embedding requests independently so the
   DeepSeek API key is never sent to local Ollama.
+- 2026-11-25: `select-runtime-models.sh` now uses the same provider-selection,
+  remote credential, hybrid embedding, dry-run, and configuration persistence
+  flow as `install-runtime.sh` instead of forcing local Ollama.
 
