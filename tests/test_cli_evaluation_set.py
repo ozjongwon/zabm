@@ -241,3 +241,26 @@ def test_cli_rejects_an_unreviewed_change_to_frozen_expected_outcomes(
     assert verify.returncode == 1
     assert "evaluation set differs from the frozen evaluation set" in verify.stderr
     assert evaluation_set_path.read_bytes() != frozen_bytes
+
+
+def test_cli_accepts_a_conflicting_evidence_item_that_requires_clarification(
+    tmp_path: Path,
+) -> None:
+    evaluation_set = load_evaluation_set()
+    item = next(item for item in evaluation_set["items"] if item["id"] == "conflict-005")
+    item["expected"] = {
+        "response_type": "specification",
+        "status": "clarification_required",
+        "clarification_missing_information": ["component"],
+    }
+    evaluation_set_path = tmp_path / "evaluation-set.json"
+    write_evaluation_set(evaluation_set_path, evaluation_set)
+
+    result = run_cli(
+        "evaluation-set",
+        "--evaluation-set",
+        str(evaluation_set_path),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr

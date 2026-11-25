@@ -1,6 +1,7 @@
 # Evaluation evidence reconciliation v1
 
-Status: proposed, pending maintainer verification.
+Status: reviewed and implemented under
+`ticket-20-evaluation-evidence-reconciliation-2026-11-26`.
 
 Source pack: `2026-11-23.3-frozen-1`.
 
@@ -118,3 +119,52 @@ For every new verified specification and compatibility rule, confirm:
 After approval, regenerate the source-derived evidence, update the
 evaluation labels, create a replacement evaluation freeze, and run
 source validation, retrieval smoke, and the complete evaluation.
+
+## Reviewed dispositions
+
+The project maintainer review accepted the source findings and added
+human-verified structured evidence on 2026-11-26:
+
+- `sram-rockshox-reba-top-cap-torque`
+- `sram-rockshox-reba-top-cap-air-uturn-torque`
+- `sram-reverb-stealth-hose-barb-and-barb-sleeve-torque`
+- `sram-reverb-stealth-hose-barb-to-seatpost-torque`
+- `sram-reverb-axs-composite-7x9-saddle-rails`
+- `sram-reverb-axs-mismatched-seat-tube-diameter`
+
+`conflict-001` through `conflict-004` retain `conflicting_evidence` and
+their expected claims now match the two variant-scoped Reba records.
+`conflict-005` through `conflict-008` now require clarification of the
+joint because the page-12 and page-16 values apply to different joints.
+`compat-012` through `compat-015` remain supported by the two explicit
+Reverb AXS rules. No audited item remains unsupported.
+
+The source-evidence artifacts and evaluation-label artifacts were
+reviewed separately:
+
+| Artifact | SHA-256 after review |
+| --- | --- |
+| `data/evidence/verified-specifications.json` | `e3b25ce0916e79ec5525d3dd3ea875066713925966ab565b7897a8e179431d68` |
+| `data/evidence/verified-compatibility.json` | `bb3fa80d44fab67e7fb49d3ef0b17497b6f2f3f3a6c64268aa3687fe686ea6df` |
+| `data/evaluation/evaluation-set-v1.json` | `f19e206d1ab5217b4dc33b8a3ddb314ad4cb1cc1e4e9575e7787e9c94a9bd819` |
+| `data/evaluation/evaluation-freeze-v1.json` | `9aa5c22eb9b0ea8a2c097824f9bbb7b35b4e8bd60b8ec5f2a9bdce21aca143d3` |
+| `data/evaluation/baseline-results-v1.json` | `70c5d16be9e1a05b3ad06b6b1ffa632f59e95086c11a303fef067725c2be8fc9` |
+
+The replacement evaluation freeze records
+`ticket-20-evaluation-evidence-reconciliation-2026-11-26`. The frozen
+source pack is unchanged.
+
+## Validation
+
+- Fresh ingestion: 9/9 specifications and 6/6 compatibility rules eligible;
+  page alignment 149/149.
+- Source coverage audit: passed across all six frozen sources.
+- Retrieval smoke: the accepted `page-bm25-title-section` path reached
+  100% Recall@5; the threshold decision passed.
+- Complete evaluation: all three full-agent runs reached 98.33% accuracy,
+  100% citation validity, 100% correct abstention, and zero fabricated
+  numeric values. All twelve audited items passed in every run.
+
+The only remaining full-agent failures are `compat-006` and
+`compat-007`, which concern DOT-contaminated syringe evidence outside
+this ticket's audited item set. They were not reclassified or inferred.

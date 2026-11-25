@@ -3288,13 +3288,13 @@
         "conflicts": {
           "candidates": [
             {
-              "claim": "2011 RockShox Reba Top Cap: 7.3 N·m (65 in-lb).",
+              "claim": "SRAM (RockShox) Reba top cap torque: 7.3 N·m (65 in-lb).",
               "evidence_indexes": [
                 0
               ]
             },
             {
-              "claim": "2011 RockShox Reba Top Cap (Air U-Turn Only): 14.6 N·m (130 in-lb).",
+              "claim": "SRAM (RockShox) Reba top cap torque: 14.6 N·m (130 in-lb).",
               "evidence_indexes": [
                 0
               ]
@@ -3325,13 +3325,13 @@
         "conflicts": {
           "candidates": [
             {
-              "claim": "2011 RockShox Reba Top Cap: 7.3 N·m (65 in-lb).",
+              "claim": "SRAM (RockShox) Reba top cap torque: 7.3 N·m (65 in-lb).",
               "evidence_indexes": [
                 0
               ]
             },
             {
-              "claim": "2011 RockShox Reba Top Cap (Air U-Turn Only): 14.6 N·m (130 in-lb).",
+              "claim": "SRAM (RockShox) Reba top cap torque: 14.6 N·m (130 in-lb).",
               "evidence_indexes": [
                 0
               ]
@@ -3362,13 +3362,13 @@
         "conflicts": {
           "candidates": [
             {
-              "claim": "2011 RockShox Reba Top Cap: 7.3 N·m (65 in-lb).",
+              "claim": "SRAM (RockShox) Reba top cap torque: 7.3 N·m (65 in-lb).",
               "evidence_indexes": [
                 0
               ]
             },
             {
-              "claim": "2011 RockShox Reba Top Cap (Air U-Turn Only): 14.6 N·m (130 in-lb).",
+              "claim": "SRAM (RockShox) Reba top cap torque: 14.6 N·m (130 in-lb).",
               "evidence_indexes": [
                 0
               ]
@@ -3399,13 +3399,13 @@
         "conflicts": {
           "candidates": [
             {
-              "claim": "2011 RockShox Reba Top Cap: 7.3 N·m (65 in-lb).",
+              "claim": "SRAM (RockShox) Reba top cap torque: 7.3 N·m (65 in-lb).",
               "evidence_indexes": [
                 0
               ]
             },
             {
-              "claim": "2011 RockShox Reba Top Cap (Air U-Turn Only): 14.6 N·m (130 in-lb).",
+              "claim": "SRAM (RockShox) Reba top cap torque: 14.6 N·m (130 in-lb).",
               "evidence_indexes": [
                 0
               ]
@@ -3439,24 +3439,10 @@
       ],
       "expected": {
         "response_type": "specification",
-        "status": "conflicting_evidence",
-        "conflicts": {
-          "candidates": [
-            {
-              "claim": "Tighten the hose barb and barb sleeve: 1.1-2.2 N·m (10-20 in-lb).",
-              "evidence_indexes": [
-                0
-              ]
-            },
-            {
-              "claim": "Install the new hose barb into the seatpost and tighten: 3.4-4.5 N·m (30-40 in-lb).",
-              "evidence_indexes": [
-                1
-              ]
-            }
-          ],
-          "precedence_established": false
-        }
+        "status": "clarification_required",
+        "clarification_missing_information": [
+          "component"
+        ]
       }
     },
     {
@@ -3483,24 +3469,10 @@
       ],
       "expected": {
         "response_type": "specification",
-        "status": "conflicting_evidence",
-        "conflicts": {
-          "candidates": [
-            {
-              "claim": "Tighten the hose barb and barb sleeve: 1.1-2.2 N·m (10-20 in-lb).",
-              "evidence_indexes": [
-                0
-              ]
-            },
-            {
-              "claim": "Install the new hose barb into the seatpost and tighten: 3.4-4.5 N·m (30-40 in-lb).",
-              "evidence_indexes": [
-                1
-              ]
-            }
-          ],
-          "precedence_established": false
-        }
+        "status": "clarification_required",
+        "clarification_missing_information": [
+          "component"
+        ]
       }
     },
     {
@@ -3527,24 +3499,10 @@
       ],
       "expected": {
         "response_type": "specification",
-        "status": "conflicting_evidence",
-        "conflicts": {
-          "candidates": [
-            {
-              "claim": "Tighten the hose barb and barb sleeve: 1.1-2.2 N·m (10-20 in-lb).",
-              "evidence_indexes": [
-                0
-              ]
-            },
-            {
-              "claim": "Install the new hose barb into the seatpost and tighten: 3.4-4.5 N·m (30-40 in-lb).",
-              "evidence_indexes": [
-                1
-              ]
-            }
-          ],
-          "precedence_established": false
-        }
+        "status": "clarification_required",
+        "clarification_missing_information": [
+          "component"
+        ]
       }
     },
     {
@@ -3571,24 +3529,10 @@
       ],
       "expected": {
         "response_type": "specification",
-        "status": "conflicting_evidence",
-        "conflicts": {
-          "candidates": [
-            {
-              "claim": "Tighten the hose barb and barb sleeve: 1.1-2.2 N·m (10-20 in-lb).",
-              "evidence_indexes": [
-                0
-              ]
-            },
-            {
-              "claim": "Install the new hose barb into the seatpost and tighten: 3.4-4.5 N·m (30-40 in-lb).",
-              "evidence_indexes": [
-                1
-              ]
-            }
-          ],
-          "precedence_established": false
-        }
+        "status": "clarification_required",
+        "clarification_missing_information": [
+          "component"
+        ]
       }
     },
     {

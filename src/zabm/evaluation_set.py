@@ -283,11 +283,14 @@ def _expected_outcome_issues(item: EvaluationItem) -> list[str]:
     elif item.category == "not_found" and expected.status != "not_found":
         issues.append(f"evaluation item {item.id} must have not_found status")
     elif item.category == "conflicting_evidence":
-        if expected.status != "conflicting_evidence":
-            issues.append(f"evaluation item {item.id} must have conflicting_evidence status")
-        if expected.conflicts is None:
+        if expected.status not in {"conflicting_evidence", "clarification_required"}:
+            issues.append(
+                f"evaluation item {item.id} must have conflicting_evidence or "
+                "clarification_required status"
+            )
+        if expected.status == "conflicting_evidence" and expected.conflicts is None:
             issues.append(f"evaluation item {item.id} has no expected conflict candidates")
-        else:
+        elif expected.conflicts is not None:
             evidence_count = len(item.evidence)
             for candidate in expected.conflicts.candidates:
                 for evidence_index in candidate.evidence_indexes:
