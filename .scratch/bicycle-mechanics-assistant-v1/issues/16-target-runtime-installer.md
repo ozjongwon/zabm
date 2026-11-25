@@ -4,9 +4,9 @@
 
 **Blocked by:** 05, 15.
 
-**Status:** ready-for-human
+**Status:** resolved
 
-- [ ] The runtime installer succeeds on clean Debian 13 and Ubuntu 24.04 x86_64 targets and rejects unsupported systems clearly.
+- [x] The runtime installer succeeds on clean Debian 13 and Ubuntu 24.04 x86_64 targets and rejects unsupported systems clearly.
 - [x] The installer is idempotent, fails fast, and does not require a manually prepared Python environment.
 - [x] The runtime dependency group is installed from the lockfile and excludes development, test, and evaluation-only tooling.
 - [x] The selected local OpenAI-compatible model server and its required runtime libraries are installed and configured.
@@ -72,4 +72,7 @@
 - 2026-11-25: `select-runtime-models.sh` now uses the same provider-selection,
   remote credential, hybrid embedding, dry-run, and configuration persistence
   flow as `install-runtime.sh` instead of forcing local Ollama.
+- 2026-11-25: Accepted by the operator after completed target-runtime
+  acceptance. The installer, provider/model selection, hybrid default,
+  evidence rebuild, installed smoke, and local-network web access are working.
 
