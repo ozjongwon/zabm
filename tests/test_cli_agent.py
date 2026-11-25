@@ -259,6 +259,64 @@ def test_cli_falls_back_to_prototype_routing_when_a_model_route_finds_no_evidenc
     )
 
 
+def test_cli_reports_the_model_response_when_claim_phrasing_is_invalid(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    download_and_ingest(manifest_path, evidence_path, data_dir)
+    route: dict[str, object] = {
+        "intent": "specification",
+        "normalized_question": "What is the Trail Post Standard Remote clamp bolt torque?",
+        "entities": [],
+        "missing_fields": [],
+        "ambiguous_fields": [],
+        "candidate_intents": [],
+    }
+    model_response = "The torque is 2.8-3.4 N·m, but this is not JSON."
+
+    with provider_server(
+        {"sentences": []},
+        route_response=route,
+        generated_response_body=json.dumps(
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": model_response,
+                        }
+                    }
+                ]
+            }
+        ).encode(),
+    ) as (provider_url, _):
+        result = run_cli(
+            "ask",
+            "What is the Trail Post Standard Remote clamp bolt torque?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "weak-phrasing-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "not_found"
+    assert response["failure"]["message"] == (
+        "Generated answer was rejected because the model response was not valid "
+        f"claim-linked JSON. Response: {model_response}"
+    )
+
+
 def test_cli_requests_clarification_when_the_request_family_is_ambiguous(
     tmp_path: Path,
 ) -> None:

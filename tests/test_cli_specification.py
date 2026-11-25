@@ -267,7 +267,8 @@ def test_cli_rejects_generated_prose_without_a_validated_claim(
     assert result.returncode == 0, result.stderr
     response = json.loads(result.stdout)
     assert response["status"] == "not_found"
-    assert "every validated claim" in response["failure"]["message"]
+    assert "claim IDs did not match" in response["failure"]["message"]
+    assert "invented-claim" in response["failure"]["message"]
     assert response["specification"] is None
     assert response["claims"] == []
     assert response["citations"] == []
@@ -770,6 +771,7 @@ def provider_server(
     *,
     route_response: dict[str, Any] | None = None,
     response_body: bytes | None = None,
+    generated_response_body: bytes | None = None,
     embedding_response_body: bytes | None = None,
     embedding_status: int = 200,
 ) -> Generator[tuple[str, list[dict[str, Any]]]]:
@@ -824,6 +826,8 @@ def provider_server(
                         ]
                     }
                 ).encode()
+            elif generated_response_body is not None:
+                payload = generated_response_body
             else:
                 assert generated is not None
                 content = json.dumps(generated)

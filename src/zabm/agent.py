@@ -287,11 +287,22 @@ def _phrase_validated_claims(
     try:
         generated = GeneratedProse.model_validate_json(raw)
     except ValueError:
+        excerpt = _response_excerpt(raw)
         return _reject_generated_answer(
             response,
-            "Generated answer was rejected because it was not a complete claim-linked response.",
+            "Generated answer was rejected because the model response was not valid "
+            f"claim-linked JSON. Response: {excerpt}",
         )
     return _apply_generated_prose(response, generated)
+
+
+def _response_excerpt(raw: str, limit: int = 500) -> str:
+    compact = " ".join(raw.split())
+    if not compact:
+        return "<empty>"
+    if len(compact) <= limit:
+        return compact
+    return f"{compact[:limit]}..."
 
 
 def _apply_generated_prose(
@@ -301,9 +312,12 @@ def _apply_generated_prose(
     original = {claim.claim_id: claim for claim in response.claims}
     generated_ids = [sentence.claim_id for sentence in generated.sentences]
     if len(generated_ids) != len(set(generated_ids)) or set(generated_ids) != set(original):
+        expected = ", ".join(sorted(original))
+        received = ", ".join(sorted(set(generated_ids)))
         return _reject_generated_answer(
             response,
-            "Generated answer was rejected because every validated claim must appear exactly once.",
+            "Generated answer was rejected because claim IDs did not match. "
+            f"Expected: {expected}. Received: {received or '<none>'}.",
         )
 
     phrased: list[Claim] = []
