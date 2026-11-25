@@ -317,24 +317,18 @@ def _has_partial_component_match(rule: VerifiedCompatibilityRule, question: str)
     ):
         return False
     question_tokens = set(tokens(question))
-    present = [
-        _component_tokens_match(component, question_tokens)
-        for component in (rule.component_a, rule.component_b)
+    components = (rule.component_a, rule.component_b)
+    overlaps = [bool(set(tokens(component.name)) & question_tokens) for component in components]
+    full_matches = [
+        set(tokens(component.name)) <= question_tokens
+        or any(
+            alias_tokens and alias_tokens <= question_tokens
+            for alias in component.aliases
+            if (alias_tokens := set(tokens(alias)))
+        )
+        for component in components
     ]
-    return any(present) and not all(present)
-
-
-def _component_tokens_match(
-    component: CompatibilityComponent,
-    question_tokens: set[str],
-) -> bool:
-    if set(tokens(component.name)) <= question_tokens:
-        return True
-    return any(
-        alias_tokens <= question_tokens
-        for alias in component.aliases
-        if (alias_tokens := set(tokens(alias)))
-    )
+    return any(overlaps) and not all(full_matches)
 
 
 def _eligibility_issues(rule: VerifiedCompatibilityRule) -> list[str]:

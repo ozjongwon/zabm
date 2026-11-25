@@ -459,6 +459,33 @@ def test_cli_routes_use_with_questions_to_compatibility(tmp_path: Path) -> None:
     assert response["compatibility"]["outcome"] == "compatible"
 
 
+def test_cli_matches_a_compatibility_question_with_a_passive_verb(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Can the hose barb and sleeve be used with the Trail Post B1 seatpost?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["compatibility"]["outcome"] == "compatible"
+
+
 def test_cli_routes_a_compatibility_paraphrase_by_meaning(tmp_path: Path) -> None:
     manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
         prepare_compatibility_fixture(tmp_path)
@@ -699,6 +726,33 @@ def test_cli_asks_for_the_missing_component_of_a_compatibility_pair(
     }
     assert response["compatibility"] is None
     assert response["claims"] == []
+
+
+def test_cli_asks_for_an_abbreviated_component_instead_of_not_found(
+    tmp_path: Path,
+) -> None:
+    manifest_path, specification_evidence_path, compatibility_evidence_path, data_dir = (
+        prepare_compatibility_fixture(tmp_path)
+    )
+    download_and_ingest(
+        manifest_path,
+        specification_evidence_path,
+        compatibility_evidence_path,
+        data_dir,
+    )
+
+    result = run_cli(
+        "ask",
+        "Is the hose barb compatible with the Trail Post seatpost?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response: dict[str, Any] = json.loads(result.stdout)
+    assert response["status"] == "clarification_required"
+    assert response["clarification"]["missing_information"] == ["component"]
 
 
 def test_cli_asks_for_a_component_when_the_compatibility_request_has_no_subject(

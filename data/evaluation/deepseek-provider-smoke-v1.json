@@ -1,0 +1,15 @@
+{
+  "chat": {
+    "latency_ms": 660.838,
+    "response_characters": 2
+  },
+  "embeddings": {
+    "status": "skipped"
+  },
+  "provider": {
+    "configuration": "deepseek:temperature=0",
+    "embedding_model": "not-configured",
+    "model": "deepseek-flash",
+    "provider": "deepseek"
+  }
+}

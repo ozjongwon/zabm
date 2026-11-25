@@ -30,6 +30,8 @@ from zabm.response import (
 
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 NUMBER_PATTERN = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
+MIN_COMPONENT_TOKEN_OVERLAP = 2
+MIN_COMPONENT_TOKEN_COVERAGE = 0.5
 
 
 class SourceRecord(BaseModel):
@@ -681,20 +683,43 @@ def normalize_text(text: str) -> str:
 
 
 def _matches_question(specification: VerifiedSpecification, question: str) -> bool:
-    return identity_matches(
+    identifiers = [
+        specification.model,
+        specification.component,
+        specification.attribute,
+    ]
+    supporting = [
+        specification.manufacturer,
+        specification.value.unit,
+        specification.value.display,
+        *specification.conditions,
+    ]
+    if identity_matches(
         question,
-        identifiers=[
-            specification.model,
-            specification.component,
-            specification.attribute,
-        ],
+        identifiers=identifiers,
         aliases=specification.aliases,
-        supporting=[
-            specification.manufacturer,
-            specification.value.unit,
-            specification.value.display,
-            *specification.conditions,
-        ],
+        supporting=supporting,
+    ):
+        return True
+    question_tokens = set(tokens(question))
+    generic_attribute_request = {"spec", "specification", "value"} & question_tokens
+    attribute_tokens = set(tokens(specification.attribute))
+    if not generic_attribute_request and not attribute_tokens <= question_tokens:
+        return False
+    if unknown_tokens(
+        question,
+        identifiers=identifiers,
+        aliases=specification.aliases,
+        supporting=supporting,
+    ):
+        return False
+    if not set(tokens(specification.model)) <= question_tokens:
+        return False
+    component_tokens = set(tokens(specification.component))
+    overlap = component_tokens & question_tokens
+    return (
+        len(overlap) >= MIN_COMPONENT_TOKEN_OVERLAP
+        and len(overlap) / len(component_tokens) >= MIN_COMPONENT_TOKEN_COVERAGE
     )
 
 

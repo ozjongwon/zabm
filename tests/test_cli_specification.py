@@ -176,6 +176,212 @@ def test_cli_returns_a_verified_specification_with_complete_provenance(
     ]
 
 
+def test_cli_matches_a_specification_qualified_by_its_service_condition(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    update_specification(
+        evidence_path,
+        specification_updates={
+            "conditions": [
+                "Remote: Standard Remote",
+                "Fastener: remote clamp bolt",
+                "Tool: T25 TORX wrench",
+                "Service: 50/200 Hour Service",
+            ]
+        },
+    )
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What torque should I use for the Trail Post Standard Remote clamp bolt "
+        "during 50/200 Hour Service?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["specification"]["conditions"] == [
+        "Remote: Standard Remote",
+        "Fastener: remote clamp bolt",
+        "Tool: T25 TORX wrench",
+        "Service: 50/200 Hour Service",
+    ]
+
+
+def test_cli_matches_a_singular_question_to_a_plural_component(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    update_specification(
+        evidence_path,
+        specification_updates={
+            "component": "remote clamp bolts",
+            "conditions": ["Fastener: remote clamp bolts"],
+        },
+    )
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post remote clamp bolt torque?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["specification"]["component"] == "remote clamp bolts"
+
+
+def test_cli_matches_a_tightening_range_paraphrase_to_torque(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What tightening range applies to the Trail Post Standard Remote clamp bolt?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["specification"]["attribute"] == "torque"
+
+
+def test_cli_matches_a_fastener_synonym_without_a_mounting_modifier(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    update_specification(
+        evidence_path,
+        specification_updates={
+            "component": "brake caliper mounting bolts",
+            "conditions": ["Fastener: brake caliper mounting bolts"],
+        },
+    )
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What torque applies to the Trail Post brake caliper bolt?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["specification"]["component"] == "brake caliper mounting bolts"
+
+
+def test_cli_ignores_request_framing_around_a_verified_specification(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "Please provide the exact tightening limit that applies to the Trail Post "
+        "remote clamp fastener using a T25 wrench.",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["claims"][0]["claim_id"] == "test-clamp-torque"
+
+
+def test_cli_matches_a_request_for_a_specification_without_naming_the_attribute(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "Give the exact Trail Post remote clamp fastener specification.",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["specification"]["attribute"] == "torque"
+
+
+def test_cli_matches_a_component_with_one_descriptive_token_omitted(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    update_specification(
+        evidence_path,
+        specification_updates={
+            "component": "saddle clamp bolt",
+            "conditions": ["Fastener: saddle clamp bolt"],
+        },
+    )
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "What is the Trail Post saddle fastener torque?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["specification"]["component"] == "saddle clamp bolt"
+
+
+def test_cli_matches_a_specification_identified_by_an_item_number(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    update_specification(
+        evidence_path,
+        specification_updates={
+            "component": "brake caliper mounting bolts",
+            "conditions": ["Fastener: brake caliper mounting bolts (13)"],
+        },
+    )
+    _download_and_ingest(manifest_path, evidence_path, data_dir)
+
+    result = run_cli(
+        "ask",
+        "Which tightening value applies to the Trail Post brake caliper bolts numbered 13?",
+        "--data-dir",
+        str(data_dir),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["specification"]["component"] == "brake caliper mounting bolts"
+
+
 def test_cli_uses_and_records_a_configured_openai_compatible_provider(
     tmp_path: Path,
 ) -> None:

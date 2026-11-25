@@ -84,6 +84,23 @@ def test_cli_declines_unrelated_general_knowledge_as_out_of_scope(
     assert response["citations"] == []
 
 
+def test_cli_declines_photo_identification_as_out_of_scope(
+    tmp_path: Path,
+) -> None:
+    result = run_cli(
+        "ask",
+        "Upload this photo and identify the part on my bike.",
+        "--data-dir",
+        str(tmp_path / "missing-data"),
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "out_of_scope"
+    assert response["response_type"] == "out_of_scope"
+
+
 def test_out_of_scope_declines_before_evidence_or_answer_generation(
     tmp_path: Path,
 ) -> None:
