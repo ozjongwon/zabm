@@ -11,15 +11,21 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 from zabm.compatibility import answer_compatibility
+from zabm.localization import (
+    KoreanTranslationError,
+    load_korean_output_policy,
+    translate_response,
+)
 from zabm.matching import QUESTION_TOKENS, tokens
 from zabm.procedures import answer_procedure
-from zabm.providers import ModelProvider
+from zabm.providers import ModelProvider, ProviderError
 from zabm.response import (
     CanonicalResponse,
     Claim,
     Clarification,
     CompatibilityAnswer,
     Failure,
+    LocalizationMetadata,
     RoutingMetadata,
     default_provider_identity,
 )
@@ -72,6 +78,66 @@ class GeneratedProse(BaseModel):
 
 
 def answer_question(
+    question: str,
+    data_dir: Path,
+    provider: ModelProvider | None = None,
+    *,
+    output_language: Literal["en", "ko"] = "en",
+    seed: int = 0,
+    prompt_budget: int | None = None,
+    router: IntentRouter | None = None,
+) -> CanonicalResponse:
+    response = _answer_canonical_question(
+        question,
+        data_dir,
+        provider,
+        seed=seed,
+        prompt_budget=prompt_budget,
+        router=router,
+    )
+    if output_language == "en":
+        return response
+    policy = load_korean_output_policy()
+    if not policy.allowed:
+        return response.model_copy(
+            update={
+                "localization": LocalizationMetadata(
+                    requested_language="ko",
+                    active_language="en",
+                    status="disabled",
+                    reason=policy.reason,
+                )
+            }
+        )
+    if provider is None:
+        return response.model_copy(
+            update={
+                "localization": LocalizationMetadata(
+                    requested_language="ko",
+                    active_language="en",
+                    status="fallback",
+                    review_id=policy.review_id,
+                    reason="Korean output requires a translation model; English was returned.",
+                )
+            }
+        )
+    try:
+        return translate_response(response, provider, policy, seed=seed)
+    except (KoreanTranslationError, ProviderError) as exc:
+        return response.model_copy(
+            update={
+                "localization": LocalizationMetadata(
+                    requested_language="ko",
+                    active_language="en",
+                    status="fallback",
+                    review_id=policy.review_id,
+                    reason=f"{exc} English was returned.",
+                )
+            }
+        )
+
+
+def _answer_canonical_question(
     question: str,
     data_dir: Path,
     provider: ModelProvider | None = None,

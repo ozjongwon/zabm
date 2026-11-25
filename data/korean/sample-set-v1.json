@@ -1,0 +1,119 @@
+{
+  "artifact_version": "korean-sample-set-v1",
+  "sample_set_id": "korean-sample-set-v1",
+  "language": "ko",
+  "cases": [
+    {
+      "id": "ko-spec-reverb-clamp-torque",
+      "family": "specification",
+      "question": "록쇽 리버 스탠다드 리모트 클램프 볼트의 토크는 얼마입니까?",
+      "expected_status": "supported",
+      "expected_response_type": "specification",
+      "korean": {
+        "claims": [
+          "스탠다드 리모트의 리모트 클램프 볼트 토크는 2.8-3.4 N·m (25-30 in-lb)입니다."
+        ],
+        "values": [
+          "2.8-3.4 N·m (25-30 in-lb)"
+        ],
+        "units": [
+          "N·m",
+          "in-lb"
+        ],
+        "conditions": [
+          "리모트: 스탠다드 리모트",
+          "체결구: 리모트 클램프 볼트",
+          "공구: T25 TORX 렌치",
+          "정비: 50/200시간 정비"
+        ],
+        "warnings": [],
+        "citation_pages": [
+          36
+        ]
+      }
+    },
+    {
+      "id": "ko-compat-barb-post",
+      "family": "compatibility",
+      "question": "바브 슬리브가 있는 호스 바브를 트레일 포스트 A2에 사용할 수 있습니까?",
+      "expected_status": "supported",
+      "expected_response_type": "compatibility",
+      "korean": {
+        "claims": [
+          "바브 슬리브가 있는 호스 바브는 트레일 포스트 A2 또는 B1 시트포스트와 호환됩니다."
+        ],
+        "values": [
+          "compatible"
+        ],
+        "units": [],
+        "conditions": [
+          "연결부: 바브 슬리브가 있는 호스 바브",
+          "시트포스트: 트레일 포스트 A2 또는 B1"
+        ],
+        "warnings": [],
+        "citation_pages": [
+          17
+        ]
+      }
+    },
+    {
+      "id": "ko-procedure-spring-replacement",
+      "family": "procedure",
+      "question": "트레일 포스트 스프링 교체 절차는 무엇입니까?",
+      "expected_status": "supported",
+      "expected_response_type": "procedure",
+      "korean": {
+        "claims": [
+          "스프링 캡을 제거합니다.",
+          "스프링을 교체합니다.",
+          "스프링 캡을 설치합니다."
+        ],
+        "values": [
+          "5 N·m"
+        ],
+        "units": [
+          "N·m"
+        ],
+        "conditions": [],
+        "warnings": [
+          "스프링을 압축한 상태로 유지하십시오."
+        ],
+        "citation_pages": [
+          17
+        ]
+      }
+    },
+    {
+      "id": "ko-clarification-ambiguous-family",
+      "family": "clarification",
+      "question": "트레일 포스트",
+      "expected_status": "clarification_required",
+      "expected_response_type": "ambiguous",
+      "korean": {
+        "claims": [],
+        "values": [],
+        "units": [],
+        "conditions": [],
+        "warnings": [],
+        "citation_pages": [],
+        "clarification_message": "사양, 호환성 결과 또는 절차 중 무엇이 필요한지 명확히 알려 주십시오."
+      }
+    },
+    {
+      "id": "ko-refusal-unsupported-torque",
+      "family": "refusal",
+      "question": "존재하지 않는 트레일 포스트 Z9 리모트의 토크는 얼마입니까?",
+      "expected_status": "not_found",
+      "expected_response_type": "specification",
+      "korean": {
+        "claims": [],
+        "values": [],
+        "units": [],
+        "conditions": [],
+        "warnings": [],
+        "citation_pages": [],
+        "failure_message": "고정된 소스 팩에 이 부품에 대한 충분한 근거가 없습니다."
+      }
+    }
+  ]
+}

@@ -45,6 +45,11 @@ from zabm.ingestion import (
     load_ingestion_profiles,
     resolve_document_profile,
 )
+from zabm.localization import (
+    DEFAULT_KOREAN_REVIEW,
+    DEFAULT_KOREAN_SAMPLE_SET,
+    build_korean_review_results,
+)
 from zabm.observability import (
     ObservabilityError,
     langsmith_configuration,
@@ -99,6 +104,16 @@ DEFAULT_ACCEPTANCE_REPORT = REPO_ROOT / "data" / "evaluation" / "acceptance-repo
 DEFAULT_DATA_DIR = REPO_ROOT / ".zabm"
 DEFAULT_PDF_DIR = REPO_ROOT / "pdf-doc"
 DEBUG_LOG_FORMAT = "%(levelname)s %(name)s %(message)s"
+KOREAN_COMPATIBILITY_OUTCOMES = {
+    "compatible": "호환됨",
+    "not_compatible": "호환되지 않음",
+    "unknown": "알 수 없음",
+    "not_found": "찾을 수 없음",
+}
+KOREAN_WARNING_SEVERITIES = {
+    "warning": "경고",
+    "notice": "알림",
+}
 
 
 class HealthReport(BaseModel):
@@ -383,6 +398,9 @@ def _render_ingestion_diagnostics(report: RetrievalIngestReport) -> None:
 
 
 def _render_response(response: CanonicalResponse) -> str:
+    if response.language == "ko" and response.localized is not None:
+        return _render_korean_response(response)
+
     if response.status in {"not_found", "out_of_scope", "conflicting_evidence"}:
         assert response.failure is not None
         if response.status == "conflicting_evidence":
@@ -446,6 +464,86 @@ def _render_response(response: CanonicalResponse) -> str:
         f"retrieved {citation.retrieval_date.isoformat()}"
     )
     return _append_conflict_record(rendered, response)
+
+
+def _render_korean_response(response: CanonicalResponse) -> str:
+    localized = response.localized
+    assert localized is not None
+    if response.status in {"not_found", "out_of_scope", "conflicting_evidence"}:
+        message = localized.failure_message
+        assert message is not None
+        if response.status == "conflicting_evidence":
+            return "\n".join(
+                [
+                    f"conflicting_evidence: {message}",
+                    _render_conflict_record(response),
+                ]
+            )
+        return f"{response.status}: {message}"
+
+    if response.status == "clarification_required":
+        message = localized.clarification_message
+        assert message is not None
+        return f"clarification_required: {message}"
+
+    if response.response_type == "compatibility":
+        assert response.compatibility is not None
+        assert response.citations
+        citation = response.citations[0]
+        return _append_conflict_record(
+            "\n".join(
+                [
+                    *[claim.text for claim in localized.claims],
+                    (f"결과: {KOREAN_COMPATIBILITY_OUTCOMES[response.compatibility.outcome]}"),
+                    f"조건: {'; '.join(localized.conditions)}",
+                    (
+                        f"출처: {citation.title}, printed page {citation.printed_page}, "
+                        f"physical page {citation.physical_page}, {citation.section}, "
+                        f"retrieved {citation.retrieval_date.isoformat()}"
+                    ),
+                ]
+            ),
+            response,
+        )
+
+    if response.response_type == "procedure":
+        assert response.procedure is not None
+        assert localized.procedure is not None
+        canonical_steps = response.procedure.steps
+        localized_steps = localized.procedure.steps
+        lines = [localized.procedure.title]
+        for canonical_step, step in zip(canonical_steps, localized_steps, strict=True):
+            assert step.number == canonical_step.number
+            lines.append(f"{step.number}. {step.text}")
+            lines.extend(
+                f"   {KOREAN_WARNING_SEVERITIES[warning.severity]}: {warning.text}"
+                for warning in step.warnings
+            )
+            citation = canonical_step.citation
+            lines.append(
+                f"   출처: {citation.title}, printed page {citation.printed_page}, "
+                f"physical page {citation.physical_page}, {citation.section}, "
+                f"retrieved {citation.retrieval_date.isoformat()}"
+            )
+        return _append_conflict_record("\n".join(lines), response)
+
+    assert response.specification is not None
+    assert response.citations
+    citation = response.citations[0]
+    return _append_conflict_record(
+        "\n".join(
+            [
+                *[claim.text for claim in localized.claims],
+                f"조건: {'; '.join(localized.conditions)}",
+                (
+                    f"출처: {citation.title}, printed page {citation.printed_page}, "
+                    f"physical page {citation.physical_page}, {citation.section}, "
+                    f"retrieved {citation.retrieval_date.isoformat()}"
+                ),
+            ]
+        ),
+        response,
+    )
 
 
 def _append_conflict_record(rendered: str, response: CanonicalResponse) -> str:
@@ -585,6 +683,7 @@ def _ask_command(
     data_dir: Path,
     as_json: bool,
     *,
+    output_language: Literal["en", "ko"],
     provider: str | None,
     provider_url: str | None,
     model: str | None,
@@ -599,7 +698,12 @@ def _ask_command(
             embedding_model=embedding_model,
             configuration=provider_configuration,
         )
-        response = answer_question(question, data_dir, model_provider)
+        response = answer_question(
+            question,
+            data_dir,
+            model_provider,
+            output_language=output_language,
+        )
     except ProviderError as exc:
         print(f"zabm ask: {exc}", file=sys.stderr)
         return 1
@@ -1070,6 +1174,36 @@ def _acceptance_command(
     return 0 if report.status == "passed" else 1
 
 
+def _korean_review_command(
+    sample_set_path: Path,
+    review_path: Path,
+    output_path: Path | None,
+    as_json: bool,
+) -> int:
+    try:
+        report = build_korean_review_results(sample_set_path, review_path)
+        if output_path is not None:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(
+                json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True),
+                encoding="utf-8",
+            )
+    except (OSError, ValueError) as exc:
+        print(f"zabm korean-review: {exc}", file=sys.stderr)
+        return 1
+    if as_json:
+        print(json.dumps(report.model_dump(mode="json"), indent=2, sort_keys=True))
+    else:
+        state = "enabled" if report.enabled else "disabled"
+        print(
+            f"Korean review {report.review_status}; output {state}; {report.case_count} sample(s)."
+        )
+        print("This report is independent of the v1 acceptance gate.")
+        if output_path is not None:
+            print(f"Results: {output_path}")
+    return 0
+
+
 def _add_provider_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--provider",
@@ -1220,6 +1354,12 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         default=DEFAULT_DATA_DIR,
         help="Directory for generated evidence.",
+    )
+    ask.add_argument(
+        "--language",
+        choices=["en", "ko"],
+        default=os.getenv("ZABM_OUTPUT_LANGUAGE", "en"),
+        help="Answer language; Korean is available only after review.",
     )
     _add_provider_arguments(ask)
     ask.add_argument("--json", action="store_true", help="Emit the canonical response.")
@@ -1462,6 +1602,33 @@ def _parser() -> argparse.ArgumentParser:
         help="Emit the scored acceptance report.",
     )
 
+    korean_review = commands.add_parser(
+        "korean-review",
+        help="Validate the reviewed Korean sample set and report its status independently.",
+    )
+    korean_review.add_argument(
+        "--sample-set",
+        type=Path,
+        default=Path(os.getenv("ZABM_KOREAN_SAMPLE_SET", str(DEFAULT_KOREAN_SAMPLE_SET))),
+        help="Path to the separately authored Korean sample set.",
+    )
+    korean_review.add_argument(
+        "--review",
+        type=Path,
+        default=Path(os.getenv("ZABM_KOREAN_REVIEW", str(DEFAULT_KOREAN_REVIEW))),
+        help="Path to the Korean correctness and fluency review record.",
+    )
+    korean_review.add_argument(
+        "--output",
+        type=Path,
+        help="Optional path for an independent Korean review result artifact.",
+    )
+    korean_review.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the independent Korean review result.",
+    )
+
     retrieval_smoke = commands.add_parser(
         "retrieval-smoke",
         help="Run the retrieval-only source-pack smoke set and optionally freeze the pack.",
@@ -1557,6 +1724,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.question,
             args.data_dir,
             args.json,
+            output_language=args.language,
             provider=args.provider,
             provider_url=args.provider_url,
             model=args.model,
@@ -1632,6 +1800,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.cpu_smoke_report,
             args.bootstrap_seed,
             args.bootstrap_resamples,
+            args.json,
+        )
+    if args.command == "korean-review":
+        return _korean_review_command(
+            args.sample_set,
+            args.review,
+            args.output,
             args.json,
         )
     if args.command == "retrieval-smoke":

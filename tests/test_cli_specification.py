@@ -976,6 +976,7 @@ def provider_server(
     generated: dict[str, Any] | None = None,
     *,
     route_response: dict[str, Any] | None = None,
+    translation_response: dict[str, Any] | None = None,
     response_body: bytes | None = None,
     generated_response_body: bytes | None = None,
     embedding_response_body: bytes | None = None,
@@ -1027,6 +1028,25 @@ def provider_server(
                                 "message": {
                                     "role": "assistant",
                                     "content": json.dumps(effective_route),
+                                }
+                            }
+                        ]
+                    }
+                ).encode()
+            elif translation_response is not None and any(
+                "korean-translation" in message.get("content", "")
+                for message in body.get("messages", [])
+            ):
+                payload = json.dumps(
+                    {
+                        "choices": [
+                            {
+                                "message": {
+                                    "role": "assistant",
+                                    "content": json.dumps(
+                                        translation_response,
+                                        ensure_ascii=False,
+                                    ),
                                 }
                             }
                         ]

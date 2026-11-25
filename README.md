@@ -343,6 +343,45 @@ DeepSeek has no configured embedding model by default, so its identity records
 `not-configured`; current RAG evaluation uses the deterministic local page
 vectors and does not request DeepSeek embeddings.
 
+## Reviewed Korean output
+
+Korean output is disabled by default. A request with `--language ko` still
+returns the canonical English answer until the separate Korean review is
+approved. After approval, the model normalizes the question to English, the
+application builds and validates the canonical English response, and only the
+answer prose is translated back into Korean. Claim IDs, values, units,
+conditions, statuses, warnings, and citations remain application-owned and are
+validated against that canonical response.
+
+Enable Korean output only with an approved review record:
+
+```bash
+export ZABM_KOREAN_OUTPUT=1
+export ZABM_KOREAN_SAMPLE_SET="$PWD/data/korean/sample-set-v1.json"
+export ZABM_KOREAN_REVIEW=/path/to/approved-korean-review.json
+
+./.venv/bin/python -m zabm ask \
+  "록쇽 리버 스탠다드 리모트 클램프 볼트의 토크는 얼마입니까?" \
+  --provider openai-compatible \
+  --provider-url http://127.0.0.1:8000/v1 \
+  --model local-open-weight-model \
+  --embedding-model local-embedding-model \
+  --language ko
+```
+
+The committed sample set covers specification, compatibility, procedure,
+clarification, and refusal outcomes. Its review record remains pending in
+`data/korean/review-v1.json`. Inspect the independent review status with:
+
+```bash
+./.venv/bin/python -m zabm korean-review
+```
+
+Korean review results are separate from the v1 acceptance gate. Invalid,
+unreviewed, or structurally changed Korean prose is not returned; the same
+canonical response falls back to English. See
+[Korean output review](docs/korean-output-review.md) for the approval procedure.
+
 CLI values take precedence over provider-specific environment variables. The
 generic `ZABM_PROVIDER_API_KEY` can override either typed API key. Named
 provider identities, model, embedding model, and configuration are recorded in

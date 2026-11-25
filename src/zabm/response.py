@@ -174,6 +174,38 @@ class ProcedureAnswer(BaseModel):
     match: ProcedureMatchProvenance | None = None
 
 
+class LocalizationMetadata(BaseModel):
+    requested_language: Literal["en", "ko"]
+    active_language: Literal["en", "ko"]
+    status: Literal["translated", "disabled", "fallback"]
+    review_id: str | None = None
+    reason: str | None = None
+
+
+class LocalizedClaim(BaseModel):
+    claim_id: str
+    text: str
+
+
+class LocalizedProcedureStep(BaseModel):
+    number: int
+    text: str
+    warnings: list[ProcedureWarning]
+
+
+class LocalizedProcedure(BaseModel):
+    title: str
+    steps: list[LocalizedProcedureStep]
+
+
+class LocalizedAnswer(BaseModel):
+    claims: list[LocalizedClaim]
+    conditions: list[str]
+    procedure: LocalizedProcedure | None = None
+    clarification_message: str | None = None
+    failure_message: str | None = None
+
+
 class CanonicalResponse(BaseModel):
     request_id: str
     timestamp: datetime
@@ -184,7 +216,7 @@ class CanonicalResponse(BaseModel):
         "out_of_scope",
         "ambiguous",
     ]
-    language: Literal["en"]
+    language: Literal["en", "ko"]
     status: Literal[
         "supported",
         "clarification_required",
@@ -203,3 +235,5 @@ class CanonicalResponse(BaseModel):
     provider: ProviderIdentity = Field(default_factory=default_provider_identity)
     routing: RoutingMetadata | None = None
     source_pack_id: str
+    localization: LocalizationMetadata | None = None
+    localized: LocalizedAnswer | None = None
