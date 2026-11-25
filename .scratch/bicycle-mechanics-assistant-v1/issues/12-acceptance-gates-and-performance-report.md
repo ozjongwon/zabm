@@ -13,7 +13,6 @@
 - [ ] Correct abstention is at least 95% across not-found, conflicting-evidence, and out-of-scope items. Current run: 60.00%, failed.
 - [x] Fabricated numeric values are zero across all three runs.
 - [ ] Local GPU latency has a median of 20 seconds or less and a p95 of 30 seconds or less over the frozen evaluation set, excluding warm-up. No local NVIDIA GPU was available for this run.
-- [ ] CPU-quantized operation has a successful smoke run and documented performance without being required to meet the GPU threshold.
 - [x] The report includes every baseline, provider, run, hardware, configuration version, latency, retrieval metric, and gate result.
 - [x] A failed gate is reported as a failure with diagnostic evidence; no threshold or result is silently changed.
 
@@ -58,3 +57,6 @@
   evaluation reconciliation, ticket 21 for complete procedure coverage, and
   ticket 22 for CPU-quantized and GPU performance evidence. Ticket 12 remains
   the final acceptance gate and is blocked until those tickets resolve.
+- 2026-11-25: Maintainer review removed the CPU-quantized smoke gate. The
+  local reference deployment is GPU-only; remote provider comparison and
+  local Ollama smoke coverage do not establish a CPU performance claim.

@@ -19,19 +19,13 @@ from pypdf._configuration import overwrite_configuration
 from zabm import __version__
 from zabm.acceptance import (
     build_acceptance_report,
-    load_cpu_smoke_evidence,
     load_evaluation_artifact,
     write_acceptance_report,
 )
 from zabm.agent import answer_question
 from zabm.compatibility import ingest_compatibility
 from zabm.coverage import run_coverage
-from zabm.evaluation import (
-    RuntimeIdentity,
-    detect_hardware,
-    run_evaluation,
-    write_evaluation_artifact,
-)
+from zabm.evaluation import run_evaluation, write_evaluation_artifact
 from zabm.evaluation_set import (
     build_evaluation_report,
     create_evaluation_freeze,
@@ -594,7 +588,6 @@ def _render_conflict_record(response: CanonicalResponse) -> str:
 def _provider_smoke_command(
     as_json: bool,
     output_path: Path | None,
-    cpu_quantized: bool,
     skip_embeddings: bool,
     *,
     provider: str | None,
@@ -653,22 +646,6 @@ def _provider_smoke_command(
         "chat": chat_result,
         "embeddings": embedding_result,
     }
-    if cpu_quantized:
-        report = {
-            "artifact_version": "cpu-smoke-v1",
-            "status": "passed",
-            "provider": model_provider.identity.model_dump(mode="json"),
-            "hardware": detect_hardware().model_dump(mode="json"),
-            "runtime": RuntimeIdentity(
-                application="zabm",
-                application_version=__version__,
-                python_version=platform.python_version(),
-                python_implementation=platform.python_implementation(),
-            ).model_dump(mode="json"),
-            "latency_ms": round(chat_latency_ms + embedding_latency_ms, 3),
-            "chat": chat_result,
-            "embeddings": embedding_result,
-        }
     if output_path is not None:
         write_json(output_path, report)
     if as_json:
@@ -1147,24 +1124,17 @@ def _evaluation_command(
 def _acceptance_command(
     results_path: Path,
     output_path: Path,
-    execution_environment: Literal["local-gpu", "local-cpu-quantized"],
-    cpu_smoke_report_path: Path | None,
+    execution_environment: Literal["local-gpu"],
     bootstrap_seed: int,
     bootstrap_resamples: int,
     as_json: bool,
 ) -> int:
     try:
         evaluation = load_evaluation_artifact(results_path)
-        cpu_performance = (
-            load_cpu_smoke_evidence(cpu_smoke_report_path)
-            if cpu_smoke_report_path is not None
-            else None
-        )
         report = build_acceptance_report(
             evaluation_path=results_path,
             evaluation=evaluation,
             execution_environment=execution_environment,
-            cpu_performance=cpu_performance,
             bootstrap_seed=bootstrap_seed,
             bootstrap_resamples=bootstrap_resamples,
         )
@@ -1379,11 +1349,6 @@ def _parser() -> argparse.ArgumentParser:
     )
     _add_provider_arguments(provider_smoke)
     provider_smoke.add_argument(
-        "--cpu-quantized",
-        action="store_true",
-        help="Write CPU-quantized acceptance evidence for the smoke result.",
-    )
-    provider_smoke.add_argument(
         "--skip-embeddings",
         action="store_true",
         help="Check chat without calling an embedding endpoint.",
@@ -1584,14 +1549,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     acceptance.add_argument(
         "--execution-environment",
-        choices=("local-gpu", "local-cpu-quantized"),
+        choices=("local-gpu",),
         required=True,
         help="Recorded execution target used for performance gates.",
-    )
-    acceptance.add_argument(
-        "--cpu-smoke-report",
-        type=Path,
-        help="Successful CPU-quantized smoke report for the documented performance gate.",
     )
     acceptance.add_argument(
         "--bootstrap-seed",
@@ -1744,7 +1704,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _provider_smoke_command(
             args.json,
             args.output,
-            args.cpu_quantized,
             args.skip_embeddings,
             provider=args.provider,
             provider_url=args.provider_url,
@@ -1806,7 +1765,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.results,
             args.output,
             args.execution_environment,
-            args.cpu_smoke_report,
             args.bootstrap_seed,
             args.bootstrap_resamples,
             args.json,

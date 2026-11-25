@@ -19,6 +19,7 @@ PROVIDER_NAMES: Final[tuple[str, ...]] = (
     "openai",
     "deepseek",
 )
+MAX_COMPLETION_TOKENS: Final = 1024
 
 
 class ProviderError(RuntimeError):
@@ -83,6 +84,7 @@ class OpenAICompatibleProvider:
             "model": self.identity.model,
             "messages": list(messages),
             "temperature": 0,
+            "max_tokens": MAX_COMPLETION_TOKENS,
         }
         if self.seed_supported:
             request_payload["seed"] = seed
@@ -291,9 +293,13 @@ def configured_provider(
         assert profile.api_key_env is not None
         raise ProviderError(f"{profile.api_key_env} is required for {profile.name}")
     default_configuration = (
-        "temperature=0,seed=0"
+        f"temperature=0,seed=0,max_tokens={MAX_COMPLETION_TOKENS}"
         if profile.name == "openai-compatible"
-        else (f"{profile.name}:temperature=0" + (",seed=0" if profile.supports_seed else ""))
+        else (
+            f"{profile.name}:temperature=0"
+            + (",seed=0" if profile.supports_seed else "")
+            + f",max_tokens={MAX_COMPLETION_TOKENS}"
+        )
     )
     return OpenAICompatibleProvider(
         base_url=effective_base_url,

@@ -244,45 +244,12 @@ def make_evaluation_artifact(
     )
 
 
-def write_cpu_smoke_report(path: Path) -> None:
-    write_json(
-        path,
-        {
-            "artifact_version": "cpu-smoke-v1",
-            "status": "passed",
-            "provider": {
-                "provider": "openai-compatible",
-                "model": "local-cpu-model",
-                "embedding_model": "local-test-embedding",
-                "configuration": "cpu-quantized-test-v1",
-            },
-            "hardware": {
-                "platform": "Linux-test",
-                "machine": "x86_64",
-                "processor": "test-cpu",
-                "python_version": "3.13.5",
-                "memory_bytes": 34_359_738_368,
-                "gpu": None,
-            },
-            "runtime": {
-                "application": "zabm",
-                "application_version": "0.1.0",
-                "python_version": "3.13.5",
-                "python_implementation": "CPython",
-            },
-            "latency_ms": 42_000,
-        },
-    )
-
-
 def test_acceptance_report_scores_every_gate_and_preserves_run_evidence(
     tmp_path: Path,
 ) -> None:
     evaluation_path = tmp_path / "evaluation-results.json"
     output_path = tmp_path / "acceptance-report.json"
-    cpu_smoke_path = tmp_path / "cpu-smoke.json"
     make_evaluation_artifact(evaluation_path)
-    write_cpu_smoke_report(cpu_smoke_path)
 
     result = run_cli(
         "acceptance",
@@ -292,8 +259,6 @@ def test_acceptance_report_scores_every_gate_and_preserves_run_evidence(
         str(output_path),
         "--execution-environment",
         "local-gpu",
-        "--cpu-smoke-report",
-        str(cpu_smoke_path),
         "--json",
     )
 
@@ -324,7 +289,6 @@ def test_acceptance_report_scores_every_gate_and_preserves_run_evidence(
         "correct_abstention",
         "fabricated_numeric_values",
         "local_gpu_latency",
-        "cpu_quantized_smoke",
     }
     assert all(gate["status"] == "passed" for gate in report["gates"])
     full_agent_runs = report["configurations"][-1]["runs"]
@@ -333,7 +297,6 @@ def test_acceptance_report_scores_every_gate_and_preserves_run_evidence(
     assert report["configurations"][-1]["accuracy"]["median"] == 0.9
     assert report["paired_differences"][0]["lower_bound"] > 0
     assert report["paired_differences"][1]["lower_bound"] > 0
-    assert report["cpu_performance"]["latency_ms"] == 42_000
 
 
 def test_acceptance_failure_is_written_without_changing_the_threshold(
@@ -341,9 +304,7 @@ def test_acceptance_failure_is_written_without_changing_the_threshold(
 ) -> None:
     evaluation_path = tmp_path / "evaluation-results.json"
     output_path = tmp_path / "acceptance-report.json"
-    cpu_smoke_path = tmp_path / "cpu-smoke.json"
     make_evaluation_artifact(evaluation_path, full_agent_passing_count=101)
-    write_cpu_smoke_report(cpu_smoke_path)
 
     result = run_cli(
         "acceptance",
@@ -353,8 +314,6 @@ def test_acceptance_failure_is_written_without_changing_the_threshold(
         str(output_path),
         "--execution-environment",
         "local-gpu",
-        "--cpu-smoke-report",
-        str(cpu_smoke_path),
         "--json",
     )
 
@@ -373,9 +332,7 @@ def test_acceptance_requires_each_refusal_category_to_meet_abstention_threshold(
 ) -> None:
     evaluation_path = tmp_path / "evaluation-results.json"
     output_path = tmp_path / "acceptance-report.json"
-    cpu_smoke_path = tmp_path / "cpu-smoke.json"
     make_evaluation_artifact(evaluation_path)
-    write_cpu_smoke_report(cpu_smoke_path)
     evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
     full_agent = evaluation["configurations"][-1]
     for run in full_agent["runs"]:
@@ -392,8 +349,6 @@ def test_acceptance_requires_each_refusal_category_to_meet_abstention_threshold(
         str(output_path),
         "--execution-environment",
         "local-gpu",
-        "--cpu-smoke-report",
-        str(cpu_smoke_path),
         "--json",
     )
 
@@ -407,9 +362,7 @@ def test_acceptance_requires_each_refusal_category_to_meet_abstention_threshold(
 
 def test_acceptance_rejects_misaligned_items_across_baselines(tmp_path: Path) -> None:
     evaluation_path = tmp_path / "evaluation-results.json"
-    cpu_smoke_path = tmp_path / "cpu-smoke.json"
     make_evaluation_artifact(evaluation_path)
-    write_cpu_smoke_report(cpu_smoke_path)
     evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
     for run in evaluation["configurations"][1]["runs"]:
         run["items"][0]["id"] = "misaligned-item"
@@ -423,8 +376,6 @@ def test_acceptance_rejects_misaligned_items_across_baselines(tmp_path: Path) ->
         str(tmp_path / "acceptance-report.json"),
         "--execution-environment",
         "local-gpu",
-        "--cpu-smoke-report",
-        str(cpu_smoke_path),
         "--json",
     )
 
@@ -432,13 +383,11 @@ def test_acceptance_rejects_misaligned_items_across_baselines(tmp_path: Path) ->
     assert "item order differs" in result.stderr
 
 
-def test_acceptance_does_not_use_deterministic_cpu_output_as_gpu_evidence(
+def test_acceptance_does_not_use_deterministic_output_as_gpu_evidence(
     tmp_path: Path,
 ) -> None:
     evaluation_path = tmp_path / "evaluation-results.json"
-    cpu_smoke_path = tmp_path / "cpu-smoke.json"
     make_evaluation_artifact(evaluation_path)
-    write_cpu_smoke_report(cpu_smoke_path)
     evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
     evaluation["provider"] = {
         "provider": "local-deterministic",
@@ -456,8 +405,6 @@ def test_acceptance_does_not_use_deterministic_cpu_output_as_gpu_evidence(
         str(tmp_path / "acceptance-report.json"),
         "--execution-environment",
         "local-gpu",
-        "--cpu-smoke-report",
-        str(cpu_smoke_path),
         "--json",
     )
 
@@ -470,9 +417,7 @@ def test_acceptance_does_not_use_deterministic_cpu_output_as_gpu_evidence(
 
 def test_acceptance_rejects_wrong_frozen_category_counts(tmp_path: Path) -> None:
     evaluation_path = tmp_path / "evaluation-results.json"
-    cpu_smoke_path = tmp_path / "cpu-smoke.json"
     make_evaluation_artifact(evaluation_path)
-    write_cpu_smoke_report(cpu_smoke_path)
     evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
     for configuration in evaluation["configurations"]:
         for run in configuration["runs"]:
@@ -487,8 +432,6 @@ def test_acceptance_rejects_wrong_frozen_category_counts(tmp_path: Path) -> None
         str(tmp_path / "acceptance-report.json"),
         "--execution-environment",
         "local-gpu",
-        "--cpu-smoke-report",
-        str(cpu_smoke_path),
         "--json",
     )
 
@@ -500,9 +443,7 @@ def test_acceptance_applies_latency_thresholds_to_the_median_run(
     tmp_path: Path,
 ) -> None:
     evaluation_path = tmp_path / "evaluation-results.json"
-    cpu_smoke_path = tmp_path / "cpu-smoke.json"
     make_evaluation_artifact(evaluation_path)
-    write_cpu_smoke_report(cpu_smoke_path)
     evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
     full_agent = evaluation["configurations"][-1]
     supported_passes = (66, 78, 84)
@@ -534,8 +475,6 @@ def test_acceptance_applies_latency_thresholds_to_the_median_run(
         str(tmp_path / "acceptance-report.json"),
         "--execution-environment",
         "local-gpu",
-        "--cpu-smoke-report",
-        str(cpu_smoke_path),
         "--json",
     )
 

@@ -661,28 +661,9 @@ retained in the report with its observed value and threshold; it is never
 silently replaced or removed.
 
 Latency is measured per scored question in the median-accuracy run after an
-explicit provider warm-up.
-For CPU-quantized operation, generate the required smoke evidence with a CPU
-provider, then pass it to acceptance:
-
-```bash
-./.venv/bin/python -m zabm provider-smoke \
-  --provider openai-compatible \
-  --provider-url http://127.0.0.1:8000/v1 \
-  --model <cpu-model> \
-  --embedding-model <embedding-model> \
-  --provider-configuration <cpu-configuration> \
-  --cpu-quantized \
-  --output data/evaluation/cpu-smoke-v1.json
-
-make acceptance \
-  EXECUTION_ENVIRONMENT=local-cpu-quantized \
-  CPU_SMOKE_REPORT=data/evaluation/cpu-smoke-v1.json
-```
-
-Use `EXECUTION_ENVIRONMENT=local-gpu` only for a run whose provider and model
-execute on the recorded local GPU. The GPU gate requires recorded hardware plus
-a median of 20 seconds or less and a p95 of 30 seconds or less.
+explicit provider warm-up. The local reference acceptance run is GPU-only and
+requires recorded NVIDIA hardware plus a median of 20 seconds or less and a p95
+of 30 seconds or less.
 
 ## Retrieval-only freeze
 
@@ -763,7 +744,8 @@ The target installer validates `nvidia-smi -L` but never installs, upgrades, or
 replaces the kernel GPU driver. If a machine has NVIDIA hardware and
 `nvidia-smi` is missing or cannot see a GPU, install the NVIDIA driver from the
 Debian or Ubuntu packages recommended for that kernel, reboot, and verify
-`nvidia-smi -L`. The local server falls back to CPU when the driver is absent.
+`nvidia-smi -L`. CPU execution is not part of the supported local-reference
+performance claim.
 
 ## Environment changes
 

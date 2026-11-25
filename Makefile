@@ -4,8 +4,6 @@ PYTHON := .venv/bin/python
 RUFF := .venv/bin/ruff
 PYRIGHT := .venv/bin/pyright
 EXECUTION_ENVIRONMENT ?= local-gpu
-CPU_SMOKE_REPORT ?=
-CPU_SMOKE_ARGS = $(if $(CPU_SMOKE_REPORT),--cpu-smoke-report $(CPU_SMOKE_REPORT),)
 
 install:
 	./scripts/install-dev.sh
@@ -50,8 +48,7 @@ evaluation-fixture:
 
 acceptance:
 	$(PYTHON) -m zabm acceptance \
-		--execution-environment $(EXECUTION_ENVIRONMENT) \
-		$(CPU_SMOKE_ARGS)
+		--execution-environment $(EXECUTION_ENVIRONMENT)
 
 lint:
 	$(RUFF) check .

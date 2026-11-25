@@ -109,19 +109,10 @@ class GateResult(BaseModel):
     diagnosis: str
 
 
-class CpuSmokeEvidence(BaseModel):
-    artifact_version: Literal["cpu-smoke-v1"] = "cpu-smoke-v1"
-    status: Literal["passed", "failed"]
-    provider: ProviderIdentity
-    hardware: HardwareIdentity
-    runtime: RuntimeIdentity
-    latency_ms: float = Field(ge=0)
-
-
 class AcceptanceReport(BaseModel):
     artifact_version: Literal["acceptance-report-v1"] = "acceptance-report-v1"
     status: Literal["passed", "failed"]
-    execution_environment: Literal["local-gpu", "local-cpu-quantized"]
+    execution_environment: Literal["local-gpu"]
     evaluation: AcceptanceEvaluationIdentity
     methodology: AcceptanceMethodology
     provider: ProviderIdentity
@@ -132,23 +123,17 @@ class AcceptanceReport(BaseModel):
     paired_differences: list[PairedDifference]
     gates: list[GateResult]
     failed_gates: list[str]
-    cpu_performance: CpuSmokeEvidence | None
 
 
 def load_evaluation_artifact(path: Path) -> EvaluationArtifact:
     return EvaluationArtifact.model_validate_json(path.read_text(encoding="utf-8"))
 
 
-def load_cpu_smoke_evidence(path: Path) -> CpuSmokeEvidence:
-    return CpuSmokeEvidence.model_validate_json(path.read_text(encoding="utf-8"))
-
-
 def build_acceptance_report(
     *,
     evaluation_path: Path,
     evaluation: EvaluationArtifact,
-    execution_environment: Literal["local-gpu", "local-cpu-quantized"],
-    cpu_performance: CpuSmokeEvidence | None,
+    execution_environment: Literal["local-gpu"],
     bootstrap_seed: int = DEFAULT_BOOTSTRAP_SEED,
     bootstrap_resamples: int = DEFAULT_BOOTSTRAP_RESAMPLES,
 ) -> AcceptanceReport:
@@ -237,14 +222,12 @@ def build_acceptance_report(
             failure=f"{fabricated_count} fabricated numeric value(s) were recorded",
         ),
         _local_gpu_latency_gate(
-            execution_environment,
             latency_median,
             latency_p95,
             warmup_excluded=evaluation.latency_measurement.warmup_excluded,
             gpu_present=evaluation.hardware.gpu is not None,
             model_backed=evaluation.provider.provider != "local-deterministic",
         ),
-        _cpu_smoke_gate(cpu_performance),
     ]
     failed_gates = [gate.id for gate in gates if gate.status == "failed"]
     return AcceptanceReport(
@@ -277,7 +260,6 @@ def build_acceptance_report(
         paired_differences=paired_differences,
         gates=gates,
         failed_gates=failed_gates,
-        cpu_performance=cpu_performance,
     )
 
 
@@ -471,7 +453,6 @@ def _improvement_gate(
 
 
 def _local_gpu_latency_gate(
-    execution_environment: Literal["local-gpu", "local-cpu-quantized"],
     median_ms: float,
     p95_ms: float,
     *,
@@ -479,14 +460,6 @@ def _local_gpu_latency_gate(
     gpu_present: bool,
     model_backed: bool,
 ) -> GateResult:
-    if execution_environment == "local-cpu-quantized":
-        return GateResult(
-            id="local_gpu_latency",
-            status="not_applicable",
-            threshold={"median_ms": 20_000, "p95_ms": 30_000},
-            observed={"median_ms": median_ms, "p95_ms": p95_ms},
-            diagnosis="CPU-quantized operation records performance without the GPU threshold",
-        )
     passed = (
         warmup_excluded
         and gpu_present
@@ -514,31 +487,6 @@ def _local_gpu_latency_gate(
             "local GPU latency meets the median and p95 thresholds"
             if passed
             else "; ".join(reasons)
-        ),
-    )
-
-
-def _cpu_smoke_gate(cpu_performance: CpuSmokeEvidence | None) -> GateResult:
-    passed = cpu_performance is not None and cpu_performance.status == "passed"
-    return GateResult(
-        id="cpu_quantized_smoke",
-        status="passed" if passed else "failed",
-        threshold="successful CPU-quantized smoke run",
-        observed=(
-            None
-            if cpu_performance is None
-            else {
-                "status": cpu_performance.status,
-                "latency_ms": cpu_performance.latency_ms,
-                "provider": cpu_performance.provider.model_dump(),
-                "hardware": cpu_performance.hardware.model_dump(mode="json"),
-                "runtime": cpu_performance.runtime.model_dump(),
-            }
-        ),
-        diagnosis=(
-            "CPU-quantized smoke run passed and its performance is documented"
-            if passed
-            else "no successful CPU-quantized smoke report was supplied"
         ),
     )
 

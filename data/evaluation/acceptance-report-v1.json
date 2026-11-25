@@ -434,7 +434,6 @@
       ]
     }
   ],
-  "cpu_performance": null,
   "evaluation": {
     "artifact_version": "evaluation-results-v1",
     "baseline_config_sha256": "a40567bb104404f2f972630b3b6f9fa863efe6b849a47bf940ab6835e0b5a50d",
@@ -453,8 +452,7 @@
   "failed_gates": [
     "full_agent_accuracy",
     "correct_abstention",
-    "local_gpu_latency",
-    "cpu_quantized_smoke"
+    "local_gpu_latency"
   ],
   "gates": [
     {
@@ -536,13 +534,6 @@
         "median_ms": 20000,
         "p95_ms": 30000
       }
-    },
-    {
-      "diagnosis": "no successful CPU-quantized smoke report was supplied",
-      "id": "cpu_quantized_smoke",
-      "observed": null,
-      "status": "failed",
-      "threshold": "successful CPU-quantized smoke run"
     }
   ],
   "hardware": {

@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-import platform
 import socket
 import subprocess
 import sys
 from pathlib import Path
 from typing import cast
 
-import pytest
 from test_cli_evaluation import (
     prepare_evaluation_fixture,
     write_evaluation_fixture,
@@ -225,7 +223,7 @@ def test_cli_uses_the_deepseek_provider_profile(tmp_path: Path) -> None:
         "provider": "deepseek",
         "model": "deepseek-flash",
         "embedding_model": "not-configured",
-        "configuration": "deepseek:temperature=0",
+        "configuration": "deepseek:temperature=0,max_tokens=1024",
     }
     assert requests[0]["authorization"] == "Bearer deepseek-test-key"
     assert requests[0]["body"]["model"] == "deepseek-flash"
@@ -274,6 +272,7 @@ def test_provider_smoke_exercises_chat_and_embedding_contracts() -> None:
         "/v1/chat/completions",
         "/v1/embeddings",
     ]
+    assert requests[0]["body"]["max_tokens"] == 1024
     assert all(request["authorization"] == f"Bearer {api_key}" for request in requests)
     assert api_key not in result.stdout
     assert api_key not in result.stderr
@@ -332,45 +331,6 @@ def test_provider_smoke_supports_remote_chat_with_local_embeddings() -> None:
     assert chat_requests[0]["authorization"] == "Bearer deepseek-test-key"
     assert [request["path"] for request in embedding_requests] == ["/v1/embeddings"]
     assert embedding_requests[0]["authorization"] is None
-
-
-def test_cpu_quantized_provider_smoke_writes_acceptance_evidence(tmp_path: Path) -> None:
-    output_path = tmp_path / "cpu-smoke.json"
-
-    with provider_server(generated_specification()) as (provider_url, _):
-        result = run_cli_with_env(
-            {},
-            "provider-smoke",
-            "--provider",
-            "openai-compatible",
-            "--provider-url",
-            provider_url,
-            "--model",
-            "local-cpu-model",
-            "--embedding-model",
-            "local-cpu-embedding",
-            "--provider-configuration",
-            "cpu-quantized-test-v1",
-            "--cpu-quantized",
-            "--output",
-            str(output_path),
-            "--json",
-        )
-
-    assert result.returncode == 0, result.stderr
-    report = json.loads(result.stdout)
-    assert output_path.is_file()
-    assert json.loads(output_path.read_text(encoding="utf-8")) == report
-    assert report["artifact_version"] == "cpu-smoke-v1"
-    assert report["status"] == "passed"
-    assert report["provider"]["model"] == "local-cpu-model"
-    assert report["hardware"]["machine"] == platform.machine()
-    assert report["hardware"]["gpu"] is None
-    assert report["runtime"]["application"] == "zabm"
-    assert report["latency_ms"] == pytest.approx(
-        report["chat"]["latency_ms"] + report["embeddings"]["latency_ms"],
-        abs=0.002,
-    )
 
 
 def test_provider_smoke_rejects_an_embedding_count_mismatch() -> None:
@@ -438,7 +398,7 @@ def test_cli_uses_the_openai_provider_profile(tmp_path: Path) -> None:
         "provider": "openai",
         "model": "gpt-test-model",
         "embedding_model": "text-embedding-3-small",
-        "configuration": "openai:temperature=0,seed=0",
+        "configuration": "openai:temperature=0,seed=0,max_tokens=1024",
     }
     assert requests[0]["authorization"] == "Bearer openai-test-key"
     assert requests[0]["body"]["seed"] == 0

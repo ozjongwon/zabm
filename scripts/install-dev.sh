@@ -198,7 +198,7 @@ check_nvidia_prerequisites() {
     return
   fi
 
-  warn "nvidia-smi was not found; the CPU fallback is available, but GPU model runs need a working NVIDIA driver"
+  warn "nvidia-smi was not found; CPU execution is not covered by the local acceptance claim"
   warn "install the NVIDIA kernel driver through the official Debian or Ubuntu distribution packages, reboot, and confirm 'nvidia-smi' works"
   warn "this installer intentionally does not install or replace the kernel GPU driver"
 }
