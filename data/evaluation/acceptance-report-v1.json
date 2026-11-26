@@ -448,9 +448,9 @@
     "source_pack_id": "2026-11-23.3-frozen-1",
     "source_pack_manifest_sha256": "8ca22cc463ffba28ab8ab0b55c1fa1a0133cdc28f06b2300b3ace0792ebcf1fe"
   },
-  "execution_environment": "local-gpu",
+  "execution_environment": "remote-llm",
   "failed_gates": [
-    "local_gpu_latency"
+    "remote_llm_latency"
   ],
   "gates": [
     {
@@ -521,8 +521,8 @@
       "threshold": 0
     },
     {
-      "diagnosis": "no NVIDIA GPU was recorded; no model provider was used for the measured answers",
-      "id": "local_gpu_latency",
+      "diagnosis": "no model provider was used for the measured answers",
+      "id": "remote_llm_latency",
       "observed": {
         "median_ms": 88.35396097856574,
         "p95_ms": 478.4388610365568

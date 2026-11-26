@@ -209,7 +209,7 @@ def make_evaluation_artifact(
                 "provider": "openai-compatible",
                 "model": "local-test-model",
                 "embedding_model": "local-test-embedding",
-                "configuration": "local-gpu-test-v1",
+                "configuration": "remote-llm-test-v1",
             },
             "routing": {"version": "structured-intent-v1", "strategy": "model"},
             "hardware": {
@@ -258,7 +258,7 @@ def test_acceptance_report_scores_every_gate_and_preserves_run_evidence(
         "--output",
         str(output_path),
         "--execution-environment",
-        "local-gpu",
+        "remote-llm",
         "--json",
     )
 
@@ -288,7 +288,7 @@ def test_acceptance_report_scores_every_gate_and_preserves_run_evidence(
         "citation_validity",
         "correct_abstention",
         "fabricated_numeric_values",
-        "local_gpu_latency",
+        "remote_llm_latency",
     }
     assert all(gate["status"] == "passed" for gate in report["gates"])
     full_agent_runs = report["configurations"][-1]["runs"]
@@ -313,7 +313,7 @@ def test_acceptance_failure_is_written_without_changing_the_threshold(
         "--output",
         str(output_path),
         "--execution-environment",
-        "local-gpu",
+        "remote-llm",
         "--json",
     )
 
@@ -348,7 +348,7 @@ def test_acceptance_requires_each_refusal_category_to_meet_abstention_threshold(
         "--output",
         str(output_path),
         "--execution-environment",
-        "local-gpu",
+        "remote-llm",
         "--json",
     )
 
@@ -375,7 +375,7 @@ def test_acceptance_rejects_misaligned_items_across_baselines(tmp_path: Path) ->
         "--output",
         str(tmp_path / "acceptance-report.json"),
         "--execution-environment",
-        "local-gpu",
+        "remote-llm",
         "--json",
     )
 
@@ -383,7 +383,7 @@ def test_acceptance_rejects_misaligned_items_across_baselines(tmp_path: Path) ->
     assert "item order differs" in result.stderr
 
 
-def test_acceptance_does_not_use_deterministic_output_as_gpu_evidence(
+def test_acceptance_does_not_use_deterministic_output_as_remote_llm_evidence(
     tmp_path: Path,
 ) -> None:
     evaluation_path = tmp_path / "evaluation-results.json"
@@ -404,15 +404,43 @@ def test_acceptance_does_not_use_deterministic_output_as_gpu_evidence(
         "--output",
         str(tmp_path / "acceptance-report.json"),
         "--execution-environment",
-        "local-gpu",
+        "remote-llm",
         "--json",
     )
 
     assert result.returncode == 1
     report = json.loads(result.stdout)
-    latency_gate = next(gate for gate in report["gates"] if gate["id"] == "local_gpu_latency")
+    latency_gate = next(gate for gate in report["gates"] if gate["id"] == "remote_llm_latency")
     assert latency_gate["status"] == "failed"
     assert "no model provider" in latency_gate["diagnosis"]
+
+
+def test_acceptance_remote_llm_latency_does_not_require_gpu(
+    tmp_path: Path,
+) -> None:
+    evaluation_path = tmp_path / "evaluation-results.json"
+    output_path = tmp_path / "acceptance-report.json"
+    make_evaluation_artifact(evaluation_path)
+    evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
+    evaluation["hardware"]["gpu"] = None
+    write_json(evaluation_path, evaluation)
+
+    result = run_cli(
+        "acceptance",
+        "--results",
+        str(evaluation_path),
+        "--output",
+        str(output_path),
+        "--execution-environment",
+        "remote-llm",
+        "--json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report["execution_environment"] == "remote-llm"
+    latency_gate = next(gate for gate in report["gates"] if gate["id"] == "remote_llm_latency")
+    assert latency_gate["status"] == "passed"
 
 
 def test_acceptance_rejects_wrong_frozen_category_counts(tmp_path: Path) -> None:
@@ -431,7 +459,7 @@ def test_acceptance_rejects_wrong_frozen_category_counts(tmp_path: Path) -> None
         "--output",
         str(tmp_path / "acceptance-report.json"),
         "--execution-environment",
-        "local-gpu",
+        "remote-llm",
         "--json",
     )
 
@@ -474,12 +502,12 @@ def test_acceptance_applies_latency_thresholds_to_the_median_run(
         "--output",
         str(tmp_path / "acceptance-report.json"),
         "--execution-environment",
-        "local-gpu",
+        "remote-llm",
         "--json",
     )
 
     assert result.returncode == 0, result.stderr
     report = json.loads(result.stdout)
-    latency_gate = next(gate for gate in report["gates"] if gate["id"] == "local_gpu_latency")
+    latency_gate = next(gate for gate in report["gates"] if gate["id"] == "remote_llm_latency")
     assert latency_gate["status"] == "passed"
     assert latency_gate["observed"] == {"median_ms": 18_000, "p95_ms": 18_000}

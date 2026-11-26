@@ -1,15 +1,18 @@
 {
   "chat": {
-    "latency_ms": 660.838,
+    "latency_ms": 924.403,
     "response_characters": 2
   },
   "embeddings": {
-    "status": "skipped"
+    "dimensions": 1024,
+    "input_count": 1,
+    "latency_ms": 175.848,
+    "vector_count": 1
   },
   "provider": {
-    "configuration": "deepseek:temperature=0",
-    "embedding_model": "not-configured",
-    "model": "deepseek-flash",
+    "configuration": "deepseek-chat,mxbai-embed-large:latest,temperature=0",
+    "embedding_model": "mxbai-embed-large:latest",
+    "model": "deepseek-chat",
     "provider": "deepseek"
   }
 }

@@ -32,3 +32,7 @@
 - 2026-11-26: Closed as `wontfix` by maintainer direction. No local GPU
   performance claim is being made from the incomplete attempts. Reopen with
   faster local hardware if this evidence is needed for v1 acceptance.
+- 2026-11-26: Superseded by the revised v1 provider requirement in ticket 12
+  and ADR 0008. V1 now uses a remote OpenAI-compatible LLM with remote or local
+  Ollama embeddings; local GPU performance is no longer required. This ticket
+  remains historical evidence for the GTX 1060 attempts.

@@ -221,16 +221,16 @@ def test_cli_uses_the_deepseek_provider_profile(tmp_path: Path) -> None:
     assert response["status"] == "supported"
     assert response["provider"] == {
         "provider": "deepseek",
-        "model": "deepseek-flash",
+        "model": "deepseek-chat",
         "embedding_model": "not-configured",
         "configuration": "deepseek:temperature=0,max_tokens=1024",
     }
     assert requests[0]["authorization"] == "Bearer deepseek-test-key"
-    assert requests[0]["body"]["model"] == "deepseek-flash"
+    assert requests[0]["body"]["model"] == "deepseek-chat"
     assert "seed" not in requests[0]["body"]
     assert "DEBUG zabm.agent route" in result.stderr
-    assert "DEBUG zabm.llm request provider=deepseek model=deepseek-flash" in result.stderr
-    assert "DEBUG zabm.llm response provider=deepseek model=deepseek-flash" in result.stderr
+    assert "DEBUG zabm.llm request provider=deepseek model=deepseek-chat" in result.stderr
+    assert "DEBUG zabm.llm response provider=deepseek model=deepseek-chat" in result.stderr
 
 
 def test_provider_smoke_exercises_chat_and_embedding_contracts() -> None:

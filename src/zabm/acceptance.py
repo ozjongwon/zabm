@@ -25,6 +25,7 @@ from zabm.evaluation import (
 from zabm.specifications import file_sha256, write_json
 
 GateStatus = Literal["passed", "failed", "not_applicable"]
+ExecutionEnvironment = Literal["remote-llm"]
 REQUIRED_EVALUATION_ITEMS = 120
 REQUIRED_RUNS = 3
 DEFAULT_BOOTSTRAP_SEED = 20_261_124
@@ -112,7 +113,7 @@ class GateResult(BaseModel):
 class AcceptanceReport(BaseModel):
     artifact_version: Literal["acceptance-report-v1"] = "acceptance-report-v1"
     status: Literal["passed", "failed"]
-    execution_environment: Literal["local-gpu"]
+    execution_environment: ExecutionEnvironment
     evaluation: AcceptanceEvaluationIdentity
     methodology: AcceptanceMethodology
     provider: ProviderIdentity
@@ -133,7 +134,7 @@ def build_acceptance_report(
     *,
     evaluation_path: Path,
     evaluation: EvaluationArtifact,
-    execution_environment: Literal["local-gpu"],
+    execution_environment: ExecutionEnvironment,
     bootstrap_seed: int = DEFAULT_BOOTSTRAP_SEED,
     bootstrap_resamples: int = DEFAULT_BOOTSTRAP_RESAMPLES,
 ) -> AcceptanceReport:
@@ -221,11 +222,10 @@ def build_acceptance_report(
             success="no fabricated numeric values were recorded",
             failure=f"{fabricated_count} fabricated numeric value(s) were recorded",
         ),
-        _local_gpu_latency_gate(
+        _remote_llm_latency_gate(
             latency_median,
             latency_p95,
             warmup_excluded=evaluation.latency_measurement.warmup_excluded,
-            gpu_present=evaluation.hardware.gpu is not None,
             model_backed=evaluation.provider.provider != "local-deterministic",
         ),
     ]
@@ -452,26 +452,17 @@ def _improvement_gate(
     )
 
 
-def _local_gpu_latency_gate(
+def _remote_llm_latency_gate(
     median_ms: float,
     p95_ms: float,
     *,
     warmup_excluded: bool,
-    gpu_present: bool,
     model_backed: bool,
 ) -> GateResult:
-    passed = (
-        warmup_excluded
-        and gpu_present
-        and model_backed
-        and median_ms <= 20_000
-        and p95_ms <= 30_000
-    )
+    passed = warmup_excluded and model_backed and median_ms <= 20_000 and p95_ms <= 30_000
     reasons: list[str] = []
     if not warmup_excluded:
         reasons.append("warm-up was not excluded")
-    if not gpu_present:
-        reasons.append("no NVIDIA GPU was recorded")
     if not model_backed:
         reasons.append("no model provider was used for the measured answers")
     if median_ms > 20_000:
@@ -479,12 +470,12 @@ def _local_gpu_latency_gate(
     if p95_ms > 30_000:
         reasons.append("p95 exceeds 30 seconds")
     return GateResult(
-        id="local_gpu_latency",
+        id="remote_llm_latency",
         status="passed" if passed else "failed",
         threshold={"median_ms": 20_000, "p95_ms": 30_000},
         observed={"median_ms": median_ms, "p95_ms": p95_ms},
         diagnosis=(
-            "local GPU latency meets the median and p95 thresholds"
+            "remote LLM latency meets the median and p95 thresholds"
             if passed
             else "; ".join(reasons)
         ),

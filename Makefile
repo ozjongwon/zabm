@@ -3,7 +3,7 @@
 PYTHON := .venv/bin/python
 RUFF := .venv/bin/ruff
 PYRIGHT := .venv/bin/pyright
-EXECUTION_ENVIRONMENT ?= local-gpu
+EXECUTION_ENVIRONMENT ?= remote-llm
 
 install:
 	./scripts/install-dev.sh

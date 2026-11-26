@@ -39,7 +39,7 @@ prompts for the chat model and optional embedding model. Ollama must already
 be installed under `/home/ollama` or exposed through `ZABM_OLLAMA_BIN`, with
 `ollama.service` enabled and active.
 
-For DeepSeek, the installer prompts for the endpoint, `deepseek-flash` chat
+For DeepSeek, the installer prompts for the endpoint, `deepseek-chat` chat
 model, API key, and local Ollama embedding model. Keys can also come from
 `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`, or `ZABM_PROVIDER_API_KEY`. For OpenAI or
 a custom service, choose the corresponding provider and supply its embedding
@@ -324,7 +324,7 @@ the application retries the original question with the deterministic prototype
 router. A supported fallback is recorded with routing strategy `prototype`;
 otherwise the original model-routed `not_found` response is returned.
 
-Use the DeepSeek preset with its default `deepseek-flash` model and
+Use the DeepSeek preset with its default `deepseek-chat` model and
 `https://api.deepseek.com` endpoint:
 
 ```bash
@@ -340,8 +340,18 @@ and `--model`/`DEEPSEEK_MODEL`. The OpenAI preset similarly defaults to
 `https://api.openai.com/v1`, requires `OPENAI_API_KEY`, accepts
 `OPENAI_MODEL`, and defaults to the `text-embedding-3-small` embedding model.
 DeepSeek has no configured embedding model by default, so its identity records
-`not-configured`; current RAG evaluation uses the deterministic local page
-vectors and does not request DeepSeek embeddings.
+`not-configured`. Configure `ZABM_EMBEDDING_PROVIDER_URL` and
+`ZABM_EMBEDDING_MODEL` for a remote or local Ollama embedding service; the chat
+credential is not forwarded to a distinct embedding endpoint.
+
+```bash
+export ZABM_EMBEDDING_PROVIDER_URL="https://embedding.example/v1"
+export ZABM_EMBEDDING_MODEL="embedding-model-name"
+export ZABM_EMBEDDING_PROVIDER_API_KEY="..."
+```
+
+The reference topology is DeepSeek chat with either this remote embedding
+provider or a local Ollama embedding endpoint.
 
 ## Reviewed Korean output
 
@@ -394,7 +404,7 @@ Enable interaction tracing with `--debug` or `ZABM_DEBUG=1`:
 ./.venv/bin/python -m zabm ask \
   "What are the steps for Test Function?" \
   --provider deepseek \
-  --model deepseek-flash \
+  --model deepseek-chat \
   --debug
 ```
 
@@ -644,8 +654,8 @@ failure isolation.
 ## Acceptance report
 
 Score the canonical evaluation artifact against every v1 answer, improvement,
-confidence-interval, citation, abstention, fabrication, and local performance
-gate:
+confidence-interval, citation, abstention, fabrication, and remote-LLM
+performance gate:
 
 ```bash
 make acceptance
@@ -661,9 +671,10 @@ retained in the report with its observed value and threshold; it is never
 silently replaced or removed.
 
 Latency is measured per scored question in the median-accuracy run after an
-explicit provider warm-up. The local reference acceptance run is GPU-only and
-requires recorded NVIDIA hardware plus a median of 20 seconds or less and a p95
-of 30 seconds or less.
+explicit provider warm-up. The reference acceptance path uses a remote
+OpenAI-compatible LLM, normally DeepSeek, with either remote embeddings or a
+local Ollama embedding model. It passes at a median of 20 seconds or less and a
+p95 of 30 seconds or less; local GPU hardware is not required.
 
 ## Retrieval-only freeze
 

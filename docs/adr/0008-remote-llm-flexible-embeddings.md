@@ -1,0 +1,3 @@
+# Use a remote LLM with a flexible embedding provider
+
+The v1 acceptance path uses a remote OpenAI-compatible LLM, normally DeepSeek, while embeddings may come from a remote OpenAI-compatible service or a local Ollama instance. We changed the previous local-GPU reference because the available 6 GB GPU could not complete the frozen provider ladder with any installed local model, while chat inference and embedding inference are already independent provider concerns. Local chat providers remain supported for development, but they are not sources of v1 acceptance evidence; the 20-second median and 30-second p95 latency gate applies to the recorded remote-LLM deployment and excludes model warm-up.

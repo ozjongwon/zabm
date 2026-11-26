@@ -29,6 +29,7 @@ RUNTIME_PROVIDER_NAME=""
 RUNTIME_PROVIDER_URL=""
 RUNTIME_EMBEDDING_PROVIDER_KIND=""
 RUNTIME_EMBEDDING_PROVIDER_URL=""
+RUNTIME_EMBEDDING_API_KEY="${ZABM_EMBEDDING_PROVIDER_API_KEY:-}"
 RUNTIME_API_KEY=""
 AVAILABLE_MODELS=()
 readonly VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
@@ -273,6 +274,24 @@ configure_local_embedding() {
   log "selected local Ollama embedding model: ${RUNTIME_EMBEDDING_MODEL_NAME}"
 }
 
+configure_deepseek_embedding() {
+  if [[ -z "${ZABM_EMBEDDING_PROVIDER_URL:-}" ]]; then
+    configure_local_embedding
+    return
+  fi
+
+  RUNTIME_EMBEDDING_PROVIDER_KIND=remote
+  RUNTIME_EMBEDDING_PROVIDER_URL="${ZABM_EMBEDDING_PROVIDER_URL}"
+  prompt_value \
+    "embedding model" \
+    "${RUNTIME_EMBEDDING_MODEL_NAME}" \
+    RUNTIME_EMBEDDING_MODEL_NAME
+  [[ -n "${RUNTIME_EMBEDDING_MODEL_NAME}" &&
+    "${RUNTIME_EMBEDDING_MODEL_NAME}" != "not-configured" ]] ||
+    die "remote embeddings require ZABM_EMBEDDING_MODEL"
+  log "selected remote embedding model: ${RUNTIME_EMBEDDING_MODEL_NAME}"
+}
+
 configure_remote_provider() {
   local default_embedding=""
   local default_model=""
@@ -283,7 +302,7 @@ configure_remote_provider() {
     deepseek)
       RUNTIME_PROVIDER_NAME=deepseek
       default_url="${DEEPSEEK_BASE_URL:-https://api.deepseek.com}"
-      default_model="${RUNTIME_CHAT_MODEL_NAME:-${DEEPSEEK_MODEL:-deepseek-flash}}"
+      default_model="${RUNTIME_CHAT_MODEL_NAME:-${DEEPSEEK_MODEL:-deepseek-chat}}"
       key_environment=DEEPSEEK_API_KEY
       ;;
     openai)
@@ -314,7 +333,7 @@ configure_remote_provider() {
     prompt_required_value "${RUNTIME_PROVIDER_NAME} chat model" RUNTIME_CHAT_MODEL_NAME
   fi
   if [[ "${PROVIDER_KIND}" == "deepseek" ]]; then
-    configure_local_embedding
+    configure_deepseek_embedding
   else
     prompt_value \
       "${RUNTIME_PROVIDER_NAME} embedding model (blank to skip)" \
@@ -365,9 +384,14 @@ prepare_dry_run_plan() {
     deepseek)
       RUNTIME_PROVIDER_NAME=deepseek
       RUNTIME_PROVIDER_URL="${PROVIDER_URL_ARG:-${DEEPSEEK_BASE_URL:-https://api.deepseek.com}}"
-      RUNTIME_CHAT_MODEL_NAME="${RUNTIME_CHAT_MODEL_NAME:-${DEEPSEEK_MODEL:-deepseek-flash}}"
-      RUNTIME_EMBEDDING_PROVIDER_KIND=local
-      RUNTIME_EMBEDDING_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
+      RUNTIME_CHAT_MODEL_NAME="${RUNTIME_CHAT_MODEL_NAME:-${DEEPSEEK_MODEL:-deepseek-chat}}"
+      if [[ -n "${ZABM_EMBEDDING_PROVIDER_URL:-}" ]]; then
+        RUNTIME_EMBEDDING_PROVIDER_KIND=remote
+        RUNTIME_EMBEDDING_PROVIDER_URL="${ZABM_EMBEDDING_PROVIDER_URL}"
+      else
+        RUNTIME_EMBEDDING_PROVIDER_KIND=local
+        RUNTIME_EMBEDDING_PROVIDER_URL="${LOCAL_PROVIDER_URL}"
+      fi
       ;;
     openai)
       RUNTIME_PROVIDER_NAME=openai
@@ -457,6 +481,7 @@ require_installed_runtime() {
   RUNTIME_PROVIDER_URL="${ZABM_PROVIDER_URL:-${RUNTIME_PROVIDER_URL}}"
   RUNTIME_EMBEDDING_PROVIDER_KIND="${ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND:-}"
   RUNTIME_EMBEDDING_PROVIDER_URL="${ZABM_EMBEDDING_PROVIDER_URL:-${RUNTIME_EMBEDDING_PROVIDER_URL}}"
+  RUNTIME_EMBEDDING_API_KEY="${ZABM_EMBEDDING_PROVIDER_API_KEY:-${RUNTIME_EMBEDDING_API_KEY}}"
   if [[ -z "${RUNTIME_EMBEDDING_PROVIDER_KIND}" ]]; then
     if [[ "${PROVIDER_KIND}" == "local" ]]; then
       RUNTIME_EMBEDDING_PROVIDER_KIND=local
@@ -568,7 +593,7 @@ write_runtime_config() {
       provider_configuration="ollama-v${RUNTIME_SERVER_VERSION},${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0,seed=0"
       ;;
     deepseek)
-      provider_configuration="deepseek-v1,${RUNTIME_CHAT_MODEL_NAME},ollama,${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0"
+      provider_configuration="deepseek-v1,${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_PROVIDER_KIND},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0"
       ;;
     *)
       provider_configuration="${RUNTIME_PROVIDER_NAME}-v1,${RUNTIME_CHAT_MODEL_NAME},${RUNTIME_EMBEDDING_MODEL_NAME},temperature=0,seed=0"
@@ -584,6 +609,7 @@ write_runtime_config() {
     printf 'ZABM_PROVIDER_URL=%q\n' "${RUNTIME_PROVIDER_URL}"
     printf 'ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND=%q\n' "${RUNTIME_EMBEDDING_PROVIDER_KIND}"
     printf 'ZABM_EMBEDDING_PROVIDER_URL=%q\n' "${RUNTIME_EMBEDDING_PROVIDER_URL}"
+    printf 'ZABM_EMBEDDING_PROVIDER_API_KEY=%q\n' "${RUNTIME_EMBEDDING_API_KEY}"
     printf 'ZABM_MODEL=%q\n' "${RUNTIME_CHAT_MODEL_NAME}"
     printf 'ZABM_EMBEDDING_MODEL=%q\n' "${RUNTIME_EMBEDDING_MODEL_NAME}"
     printf 'ZABM_PROVIDER_CONFIGURATION=%q\n' "${provider_configuration}"

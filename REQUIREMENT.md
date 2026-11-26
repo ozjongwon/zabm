@@ -32,7 +32,8 @@ Part and model aliases, incomplete references, and false premises must be handle
 - Documents from any manufacturer, provided they satisfy the accepted-source and reproducibility rules.
 - English source documents and English questions.
 - Korean questions and answers as a separately evaluated, feature-flagged stretch capability.
-- Local open-weight models plus configurable OpenAI-compatible remote providers.
+- Remote OpenAI-compatible LLM providers, with embeddings from a remote
+  OpenAI-compatible service or a local Ollama instance.
 - A CLI for evaluation and a minimal local web chat for demonstration.
 - Source acquisition, provenance, ingestion, retrieval, answer verification, and evaluation.
 
@@ -216,12 +217,14 @@ Both interfaces use the same application service and canonical response contract
 
 ### FR12 Model providers
 
-Support the same provider interface for:
-
-- A local OpenAI-compatible server using an open-weight model and embeddings.
-- An optional OpenAI-compatible remote service such as DeepSeek.
-
-Credentials come from environment variables or an equivalent secret store and are never committed. Results and latency are tagged with provider and model configuration. Remote operation is optional; local operation is the reproducible reference path.
+Use a remote OpenAI-compatible LLM as the reference chat provider, such as
+DeepSeek. Use either a remote OpenAI-compatible embedding service or a local
+Ollama embedding model. Chat and embedding providers remain separately
+addressable so a remote chat API key is never sent to the embedding endpoint.
+Local chat providers may remain supported for development, but they are not
+v1 acceptance evidence. Credentials come from environment variables or an
+equivalent secret store and are never committed. Results and latency are
+tagged with provider, chat model, embedding model, and configuration.
 
 ### FR13 Reproducible data build
 
@@ -324,19 +327,19 @@ The paired bootstrap uses a fixed seed and the item-level paired differences ave
 
 ## 10. Performance
 
-The local reference machine is:
-
-- Linux x86_64.
-- NVIDIA GTX 1060 with 6 GB VRAM.
-- 32 GB system memory.
-- A documented CUDA-capable Python environment.
-
-Measure end-to-end latency from question submission until the complete answer with citations is rendered, excluding model warm-up. The local GPU target is:
+The reference topology is a remote OpenAI-compatible LLM, normally DeepSeek,
+with embeddings from a remote OpenAI-compatible service or a local Ollama
+instance. Measure end-to-end latency from question submission until the complete
+answer with citations is rendered, excluding model warm-up. The remote-LLM
+target is:
 
 - Median: 20 seconds or less.
 - p95: 30 seconds or less.
 
-Latency is measured over the frozen evaluation set and reported by provider and model. CPU-quantized operation requires a successful smoke run and documented performance but does not need to meet the GPU threshold. Remote-provider latency is reported separately and is not part of the reproducible pass condition.
+Latency is measured over the frozen evaluation set and reported by provider,
+chat model, embedding model, and embedding deployment. Remote API variability
+is expected; the acceptance artifact records the selected configuration rather
+than pooling distinct deployments. Local GPU operation is not a prerequisite.
 
 ## 11. Repository and licensing
 
@@ -406,11 +409,11 @@ From a fresh clone and empty generated-data directories:
 The following choices must be made from recorded experiments rather than silently assumed:
 
 - The final 4-8 document source pack.
-- The concrete local model and embedding model.
+- The concrete remote LLM, embedding provider, and embedding model.
 - Chunker, vector store, reranker, and final retrieval parameters.
 - Which optional retrieval enhancements belong in the full agent.
 - Whether Korean output meets the quality bar for enabling.
-- CPU-quantized performance characteristics.
+- Remote-LLM and embedding-provider latency characteristics.
 
 The evaluation report must record each choice, the alternatives considered, and the evidence used.
 

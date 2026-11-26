@@ -2,6 +2,7 @@
 
 Status: ready-for-agent
 Published: 2026-11-21
+Requirement revision: 2026-11-26
 
 ## Problem Statement
 
@@ -13,7 +14,7 @@ The mechanic needs an assistant whose answers can be checked quickly, whose cove
 
 Build a local-first bicycle maintenance assistant over a bounded, frozen source pack of accepted manufacturer documents. It answers specification, compatibility, and service-procedure questions using either human-verified structured evidence or complete retrieval evidence, as appropriate. Every supported claim carries a citation to an accepted source, and deterministic application code owns response status, evidence gates, numerical verification, and procedure completeness.
 
-The same canonical application service powers both a CLI for asking questions, inspecting evidence, rebuilding data, and running evaluation, and a minimal local web chat for demonstration. A local open-weight model is the reproducible reference provider; an OpenAI-compatible remote provider is optional. Evaluation compares the full assistant against LLM-only, plain RAG, and hybrid retrieval baselines and reports accuracy, abstention, citation validity, fabricated-number rate, retrieval diagnostics, and latency.
+The same canonical application service powers both a CLI for asking questions, inspecting evidence, rebuilding data, and running evaluation, and a minimal local web chat for demonstration. A remote OpenAI-compatible LLM, normally DeepSeek, is the v1 reference chat provider. Embeddings may come from a remote OpenAI-compatible service or a local Ollama instance. Evaluation compares the full assistant against LLM-only, plain RAG, and hybrid retrieval baselines and reports accuracy, abstention, citation validity, fabricated-number rate, retrieval diagnostics, and latency.
 
 ## User Stories
 
@@ -45,8 +46,8 @@ The same canonical application service powers both a CLI for asking questions, i
 26. As an English-speaking mechanic, I want English questions and answers supported by default, so that the v1 reference workflow is always available.
 27. As a Korean-speaking mechanic, I want Korean questions and answers available behind a feature flag after separate quality review, so that values, units, statuses, and citations remain correct in Korean.
 28. As a Korean-speaking mechanic, I want a clear English fallback when reviewed Korean output is disabled or fails validation, so that invalid translated prose is never returned.
-29. As a mechanic using the local reference deployment, I want the assistant to run with a local open-weight model and embeddings on documented hardware, so that the central accuracy claims are reproducible without a remote dependency.
-30. As an operator, I want an optional OpenAI-compatible remote provider configured without committed credentials, so that I can compare providers without changing the answer workflow.
+29. As a mechanic, I want the assistant to use a remote OpenAI-compatible LLM with either remote embeddings or local Ollama embeddings, so that v1 does not depend on a local GPU.
+30. As an operator, I want the chat and embedding providers configured independently without committed credentials, so that I can use DeepSeek chat with either a remote embedding API or local Ollama.
 31. As an evaluator, I want results and latency tagged by provider, model, and configuration, so that distinct runs are never pooled accidentally.
 32. As a maintainer, I want candidate sources checked for first-party authority, public availability, extraction quality, and retrieval usability before inclusion, so that source selection is auditable.
 33. As a maintainer, I want source inclusion and exclusion decisions and smoke metrics recorded, so that the frozen source pack can be defended after evaluation begins.
@@ -99,7 +100,12 @@ The same canonical application service powers both a CLI for asking questions, i
 - Let the LLM route, rewrite queries, select procedure evidence, phrase validated claims, and translate. Application code owns evidence gates, status, compatibility outcome, claim-to-evidence references, citations, numeric verification, procedure completeness, and final acceptance.
 - Reject generated substantive prose that cannot be associated with a validated claim. A terminal failure contains no substantive answer, substituted component, or speculative value.
 - Normalize units and verify every numeric token in a supported answer against the evidence excerpt attached to its claim. Fail closed on unmatched numbers. Do not perform arithmetic, conversion, interpolation, or averaging unless the cited source explicitly specifies that operation.
-- Use one provider interface for a local OpenAI-compatible model and embedding server and an optional OpenAI-compatible remote service. Load credentials from the environment or an equivalent secret store and never commit them. The local path is the reproducible reference.
+- Use one provider interface with a remote OpenAI-compatible chat service and
+  an independently selected embedding service. Embeddings may use a remote
+  OpenAI-compatible API or local Ollama. Load credentials from the environment
+  or an equivalent secret store and never send chat credentials to a distinct
+  embedding endpoint. Local chat remains supported for development but is not
+  v1 acceptance evidence.
 - Expose a CLI for asking questions, inspecting evidence, rebuilding data, and running evaluation. Expose a minimal web chat for the same maintenance-question path. Both adapters call one canonical application service and use the same response contract.
 - Use a frozen 120-item scored evaluation set: 36 specification, 27 compatibility, 27 procedure, 15 not-found, 8 conflicting-evidence, and 7 out-of-scope items. Include adjacent models, wrong generations, cross-brand pairs, unsupported materials, missing attributes, truncated procedures, ambiguous aliases, and false premises.
 - Compare LLM-only, plain RAG, hybrid retrieval, and full-agent configurations under matched questions, provider, prompt budget, decoding settings, and hardware. Freeze retrieval parameters and configuration versions before scoring.
@@ -108,7 +114,7 @@ The same canonical application service powers both a CLI for asking questions, i
 - Accept the full agent only at 90% or higher median accuracy; at least a 10 percentage-point improvement over LLM-only and plain RAG; paired-bootstrap 95% confidence intervals wholly above zero for both differences; 95% or higher citation validity; 95% or higher correct abstention; and zero fabricated numeric values across all runs.
 - Produce canonical local evaluation artifacts and treat LangSmith as an optional result and trace mirror. Keep evaluation operational when LangSmith is unavailable, while demonstrating successful logging in the acceptance run.
 - Support English by default. Keep Korean behind a separate reviewed feature flag and retain an English fallback when Korean output is disabled or structurally invalid.
-- Select the final source pack, local model and embedding model, chunker, vector store, reranker, retrieval parameters, optional full-agent enhancements, Korean enablement, and CPU-quantized performance from recorded experiments. The evaluation report records alternatives and evidence for each choice.
+- Select the final source pack, remote LLM, embedding provider and model, chunker, vector store, reranker, retrieval parameters, optional full-agent enhancements, and Korean enablement from recorded experiments. The evaluation report records alternatives and evidence for each choice.
 
 ## Testing Decisions
 
@@ -117,7 +123,7 @@ The same canonical application service powers both a CLI for asking questions, i
 - Exercise specification answers with required qualifiers and units; compatibility answers for all four outcomes; complete and incomplete procedures; aliases and clarification; false premises; not-found, conflicting-evidence, and out-of-scope responses; citation validity; and rejected unsupported numbers.
 - Exercise source acquisition with matching and mismatched hashes, provenance output, and manifest-version reporting. Exercise ingestion from empty generated-data state and assert page alignment, record counts, canonical artifact checksums, and repeatable rebuild behavior.
 - Exercise evaluation contracts with a small fixture set across all four baseline configurations, repeated runs, exact grading, local artifact production, and operation without LangSmith. A separate acceptance run validates the frozen 120-item set and the approved performance gates.
-- Use fixtures to vary providers without network access or model weight downloads. Keep at least one documented local-provider acceptance path using the reference model configuration.
+- Use fixtures to vary providers without network access or model weight downloads. Keep a documented remote-LLM acceptance path using either remote embeddings or local Ollama.
 - Treat the CLI as the sole automated test seam. Exercise the web chat as an adapter during acceptance against the same application service; it must not contain a separate answer path or independent evidence rules.
 - There is no existing implementation or test suite to reuse as prior art. Establish the first suite as integration-first at the CLI seam, then add internal tests only where they expose external risk rather than routine implementation detail.
 
@@ -139,7 +145,7 @@ The same canonical application service powers both a CLI for asking questions, i
 
 - This spec records the accepted v1 requirements dated 2026-11-21 and the current project glossary and ADRs. The glossary remains the authority for domain language, and the ADRs remain authoritative for bounded support, explicit compatibility evidence, human-verified safety facts, and application-owned response structure.
 - The central portfolio claim is reproducible accuracy and refusal behavior against weaker baselines, not general conversational bicycle knowledge.
-- The local GPU latency target is 20 seconds median and 30 seconds p95 over the frozen evaluation set, excluding model warm-up. Remote-provider latency is reported separately and is not part of the reproducible pass condition.
+- The remote-LLM latency target is 20 seconds median and 30 seconds p95 over the frozen evaluation set, excluding model warm-up. The artifact records the remote chat and embedding deployment; local GPU operation is not required.
 - A checksum detects future source changes but cannot preserve a source that disappears. PDF parsing, table extraction, figures, and small-model routing or phrasing remain material failure sources.
 - Passing evaluation does not establish production safety, domain-wide coverage, or agreement with current manuals.
 - The next workflow step is to split this spec into implementation tickets; the parent spec should not itself be treated as a single implementation ticket.

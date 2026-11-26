@@ -184,9 +184,39 @@ def test_runtime_installer_defaults_to_deepseek_chat_with_local_embeddings(
     assert result.returncode == 0, result.stderr
     assert "provider: deepseek at https://api.deepseek.com" in result.stdout
     assert "embedding provider: local Ollama at http://127.0.0.1:11434/v1" in result.stdout
-    assert "chat model: deepseek-flash" in result.stdout
+    assert "chat model: deepseek-chat" in result.stdout
     assert "embedding model: mxbai-embed-large:latest" in result.stdout
     assert "deepseek-secret-do-not-print" not in result.stdout + result.stderr
+
+
+def test_runtime_installer_supports_deepseek_with_remote_embeddings(
+    tmp_path: Path,
+) -> None:
+    os_release = tmp_path / "debian-release"
+    os_release.write_text(
+        'ID=debian\nVERSION_ID="13"\nPRETTY_NAME="Debian GNU/Linux 13"\n',
+        encoding="utf-8",
+    )
+
+    result = run_runtime_installer(
+        "--dry-run",
+        os_release=str(os_release),
+        extra_env={
+            "DEEPSEEK_API_KEY": "deepseek-secret-do-not-print",
+            "ZABM_EMBEDDING_PROVIDER_URL": "https://embeddings.example/v1",
+            "ZABM_EMBEDDING_MODEL": "remote-embedding-v1",
+            "ZABM_EMBEDDING_PROVIDER_API_KEY": "embedding-secret-do-not-print",
+        },
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "provider: deepseek at https://api.deepseek.com" in result.stdout
+    assert "embedding provider: https://embeddings.example/v1" in result.stdout
+    assert "chat model: deepseek-chat" in result.stdout
+    assert "embedding model: remote-embedding-v1" in result.stdout
+    assert "Ollama prerequisite" not in result.stdout
+    assert "deepseek-secret-do-not-print" not in result.stdout + result.stderr
+    assert "embedding-secret-do-not-print" not in result.stdout + result.stderr
 
 
 def test_runtime_configuration_and_launcher_are_secret_free_and_idempotent(
@@ -546,17 +576,63 @@ write_runtime_config
     assert "ZABM_PROVIDER_URL=https://api.deepseek.com\n" in contents
     assert "ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND=local\n" in contents
     assert "ZABM_EMBEDDING_PROVIDER_URL=http://127.0.0.1:11434/v1\n" in contents
-    assert "ZABM_MODEL=deepseek-flash\n" in contents
+    assert "ZABM_MODEL=deepseek-chat\n" in contents
     assert "ZABM_EMBEDDING_MODEL=mxbai-embed-large:latest\n" in contents
     assert "DEEPSEEK_API_KEY=deepseek-secret-do-not-print\n" in contents
     assert "deepseek-secret-do-not-print" not in result.stdout + result.stderr
+
+
+def test_runtime_config_persists_separate_remote_embedding_credentials(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    config_home = tmp_path / "config"
+    command = f"""
+source {shlex.quote(str(RUNTIME_INSTALLER))}
+PROVIDER_KIND=deepseek
+RUNTIME_PROVIDER_NAME=deepseek
+RUNTIME_PROVIDER_URL=https://api.deepseek.com
+RUNTIME_CHAT_MODEL_NAME=deepseek-chat
+RUNTIME_EMBEDDING_MODEL_NAME=remote-embedding-v1
+configure_deepseek_embedding
+write_runtime_config
+"""
+    env = os.environ.copy()
+    env.update(
+        {
+            "HOME": str(home),
+            "XDG_CONFIG_HOME": str(config_home),
+            "DEEPSEEK_API_KEY": "deepseek-secret-do-not-print",
+            "ZABM_EMBEDDING_PROVIDER_URL": "https://embeddings.example/v1",
+            "ZABM_EMBEDDING_PROVIDER_API_KEY": "embedding-secret-do-not-print",
+        }
+    )
+
+    result = subprocess.run(
+        ["bash", "-c", command],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    config = config_home / "zabm" / "runtime.env"
+    contents = config.read_text(encoding="utf-8")
+    assert result.returncode == 0, result.stderr
+    assert "ZABM_RUNTIME_EMBEDDING_PROVIDER_KIND=remote\n" in contents
+    assert "ZABM_EMBEDDING_PROVIDER_URL=https://embeddings.example/v1\n" in contents
+    assert "ZABM_EMBEDDING_PROVIDER_API_KEY=embedding-secret-do-not-print\n" in contents
+    assert "ZABM_EMBEDDING_MODEL=remote-embedding-v1\n" in contents
+    assert "deepseek-secret-do-not-print" not in result.stdout + result.stderr
+    assert "embedding-secret-do-not-print" not in result.stdout + result.stderr
 
 
 def test_installed_remote_runtime_does_not_require_ollama(tmp_path: Path) -> None:
     config_dir = tmp_path / "config" / "zabm"
     config_dir.mkdir(parents=True)
     (config_dir / "runtime.env").write_text(
-        "ZABM_RUNTIME_PROVIDER_KIND=deepseek\nZABM_PROVIDER=deepseek\nZABM_MODEL=deepseek-flash\n",
+        "ZABM_RUNTIME_PROVIDER_KIND=deepseek\nZABM_PROVIDER=deepseek\nZABM_MODEL=deepseek-chat\n",
         encoding="utf-8",
     )
     command = f"""

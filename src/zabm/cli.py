@@ -1124,7 +1124,7 @@ def _evaluation_command(
 def _acceptance_command(
     results_path: Path,
     output_path: Path,
-    execution_environment: Literal["local-gpu"],
+    execution_environment: Literal["remote-llm"],
     bootstrap_seed: int,
     bootstrap_resamples: int,
     as_json: bool,
@@ -1549,7 +1549,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     acceptance.add_argument(
         "--execution-environment",
-        choices=("local-gpu",),
+        choices=("remote-llm",),
         required=True,
         help="Recorded execution target used for performance gates.",
     )
