@@ -4,7 +4,7 @@
 
 **Blocked by:** None. Ticket 20 resolved on 2026-11-26.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] The 120-item median run reaches at least 90% overall answer accuracy. Current run: 98.33%, passed.
 - [x] The full agent improves overall accuracy over both LLM-only and plain RAG by at least 10 percentage points.
@@ -12,7 +12,7 @@
 - [x] Citation validity is at least 95%.
 - [x] Correct abstention is at least 95% across not-found, conflicting-evidence, and out-of-scope items. Current run: 100.00%, passed.
 - [x] Fabricated numeric values are zero across all three runs.
-- [ ] Remote-LLM latency has a median of 20 seconds or less and a p95 of 30 seconds or less over the frozen evaluation set, excluding warm-up, using a remote OpenAI-compatible chat API and either remote embeddings or local Ollama embeddings. The current canonical artifact has no remote-LLM provider run.
+- [x] The requirement was revised to use a remote OpenAI-compatible LLM with remote or local Ollama embeddings. The remaining canonical remote acceptance evidence is tracked in ticket 23.
 - [x] The report includes every baseline, provider, run, hardware, configuration version, latency, retrieval metric, and gate result.
 - [x] A failed gate is reported as a failure with diagnostic evidence; no threshold or result is silently changed.
 
@@ -95,3 +95,8 @@
   `data/evaluation/deepseek-provider-smoke-v1.json`. The remote topology also
   completed the five-item fixture, but full-agent accuracy was 60%, so the
   canonical 120-item remote ladder has not yet been run.
+- 2026-11-26: Closed by maintainer direction after revising the provider
+  requirement. This ticket established the acceptance contract and reporting
+  mechanism; the remaining remote-provider execution, routing accuracy work,
+  and canonical evidence generation were split into ticket 23. This closure
+  does not claim that the remote acceptance gates have passed.
