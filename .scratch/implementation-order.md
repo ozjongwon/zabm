@@ -6,10 +6,9 @@ files.
 
 ## Current state
 
-- Completed in `bicycle-mechanics-assistant-v1`: tickets 01 through 16, 18
-  through 21, and 23.
+- Completed in `bicycle-mechanics-assistant-v1`: tickets 01 through 21 and 23.
 - Won't fix in `bicycle-mechanics-assistant-v1`: ticket 22.
-- Pending in `bicycle-mechanics-assistant-v1`: ticket 17.
+- Pending in `bicycle-mechanics-assistant-v1`: none.
 - Completed in `general-pdf-ingestion`: tickets 01 through 12.
 - Pending in `general-pdf-ingestion`: none.
 - Pending in `multilingual-reviewed-output`: tickets 01 through 06.
@@ -39,8 +38,8 @@ files.
 | 19 | [bicycle-mechanics-assistant-v1/12](bicycle-mechanics-assistant-v1/issues/12-acceptance-gates-and-performance-report.md) | Run and report the full v1 acceptance gates. | Complete |
 | 20 | [bicycle-mechanics-assistant-v1/16](bicycle-mechanics-assistant-v1/issues/16-target-runtime-installer.md) | Install and smoke-test the runtime target, including web chat. | Complete |
 | 21 | [bicycle-mechanics-assistant-v1/23](bicycle-mechanics-assistant-v1/issues/23-remote-llm-acceptance-evidence.md) | Produce canonical remote-LLM acceptance and performance evidence. | Complete |
-| 22 | [bicycle-mechanics-assistant-v1/17](bicycle-mechanics-assistant-v1/issues/17-operational-acceptance-and-documentation.md) | Complete final operational handoff and documentation. | Next agent ticket |
-| 23 | [multilingual-reviewed-output/01](multilingual-reviewed-output/issues/01-language-profile-contract-and-korean-migration.md) | Introduce the language-profile contract and migrate Korean artifacts. | Next multilingual ticket |
+| 22 | [bicycle-mechanics-assistant-v1/17](bicycle-mechanics-assistant-v1/issues/17-operational-acceptance-and-documentation.md) | Complete final operational handoff and documentation. | Complete |
+| 23 | [multilingual-reviewed-output/01](multilingual-reviewed-output/issues/01-language-profile-contract-and-korean-migration.md) | Introduce the language-profile contract and migrate Korean artifacts. | Next agent ticket |
 | 24 | [multilingual-reviewed-output/02](multilingual-reviewed-output/issues/02-dynamic-question-language-routing.md) | Detect and select arbitrary target languages through semantic routing. | Blocked by order 23 |
 | 25 | [multilingual-reviewed-output/03](multilingual-reviewed-output/issues/03-language-neutral-translation-validation.md) | Generalize translation and structural validation for approved profiles. | Blocked by orders 23-24 |
 | 26 | [multilingual-reviewed-output/04](multilingual-reviewed-output/issues/04-per-language-review-and-activation.md) | Review and activate language profiles independently. | Blocked by orders 23, 25 |

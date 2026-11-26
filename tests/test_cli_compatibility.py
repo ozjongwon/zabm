@@ -244,9 +244,7 @@ def prepare_compatibility_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Pat
                             "physical_page": 1,
                             "section": "Compatibility table",
                         },
-                        "evidence_excerpts": [
-                            "Seatpost and seat tube diameters must be the same."
-                        ],
+                        "evidence_excerpts": ["Seatpost and seat tube diameters must be the same."],
                         "verification": {
                             "status": "human_verified",
                             "verified_by": "repository-maintainer",

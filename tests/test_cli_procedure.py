@@ -51,10 +51,7 @@ def write_split_step_fixture_pdf(path: Path, lines: list[str]) -> None:
         (72, 580, "Proceed to Remote System Bleed."),
         (72, 560, "Proceed to Remote System Bleed."),
     ]
-    commands = [
-        f"1 0 0 1 {x} {y} Tm ({_pdf_escape(text)}) Tj"
-        for x, y, text in positioned_lines
-    ]
+    commands = [f"1 0 0 1 {x} {y} Tm ({_pdf_escape(text)}) Tj" for x, y, text in positioned_lines]
     stream = f"BT /F1 10 Tf {' '.join(commands)} ET".encode()
     write_pdf_stream(path, stream)
 
@@ -149,9 +146,7 @@ def _positioned_text_stream(
     commands: list[str] = []
     for x, y, font_size, text in positioned_lines:
         font_name = "F2" if font_size >= 12 else "F1"
-        commands.append(
-            f"1 0 0 1 {x} {y} Tm /{font_name} {font_size} Tf ({_pdf_escape(text)}) Tj"
-        )
+        commands.append(f"1 0 0 1 {x} {y} Tm /{font_name} {font_size} Tf ({_pdf_escape(text)}) Tj")
     stream = f"BT {' '.join(commands)} ET".encode()
     return f"<< /Length {len(stream)} >>\nstream\n".encode() + stream + b"\nendstream"
 
@@ -727,8 +722,7 @@ def test_cli_matches_a_function_confirmation_request(
 
     result = run_cli(
         "ask",
-        "Which steps confirm that the RockShox Reverb remote hydraulic system "
-        "functions correctly?",
+        "Which steps confirm that the RockShox Reverb remote hydraulic system functions correctly?",
         "--data-dir",
         str(data_dir),
         "--json",
@@ -765,8 +759,7 @@ def test_cli_matches_step_wording_to_the_containing_procedure(
 
     result = run_cli(
         "ask",
-        "Walk me through routing and cutting the Reverb hydraulic hose "
-        "to the handlebar remote.",
+        "Walk me through routing and cutting the Reverb hydraulic hose to the handlebar remote.",
         "--data-dir",
         str(data_dir),
         "--json",
@@ -804,8 +797,7 @@ def test_cli_matches_a_step_behavior_question_to_its_procedure(
 
     result = run_cli(
         "ask",
-        "What should happen when I press the remote actuator and push the "
-        "Reverb seatpost by hand?",
+        "What should happen when I press the remote actuator and push the Reverb seatpost by hand?",
         "--data-dir",
         str(data_dir),
         "--json",

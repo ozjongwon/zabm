@@ -165,12 +165,8 @@ class DeterministicPageBlockClassifier:
         has_numbered_step = any(NUMBERED_LINE.match(text) for text in texts) or bool(
             _standalone_step_marker_indexes(layout)
         )
-        if (
-            NAVIGATION_HEADING.search(title_text)
-            or (
-                sum(bool(NAVIGATION_TEXT.search(text)) for text in texts) >= 2
-                and not has_numbered_step
-            )
+        if NAVIGATION_HEADING.search(title_text) or (
+            sum(bool(NAVIGATION_TEXT.search(text)) for text in texts) >= 2 and not has_numbered_step
         ):
             return self._result(
                 observation,
@@ -182,9 +178,7 @@ class DeterministicPageBlockClassifier:
         if WARNING_TEXT.match(title_text) and not any(NUMBERED_LINE.match(text) for text in texts):
             return self._result(observation, layout, "warning", confidence=0.92, profile=profile)
         if COVER_HEADING.search(title_text) or (
-            observation.physical_page == 1
-            and len(texts) <= 4
-            and not has_numbered_step
+            observation.physical_page == 1 and len(texts) <= 4 and not has_numbered_step
         ):
             return self._result(observation, layout, "cover", confidence=0.9, profile=profile)
 

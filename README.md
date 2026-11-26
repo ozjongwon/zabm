@@ -4,6 +4,10 @@ This repository is bootstrapped for the evidence-gated bicycle maintenance
 assistant described in [REQUIREMENT.md](REQUIREMENT.md) and the
 [implementation spec](.scratch/bicycle-mechanics-assistant-v1/spec.md).
 
+Start with the [v1 operational handoff](docs/operational-handoff.md) for the
+quickstart, architecture, source-selection audit, evaluation protocol and
+results, empirical choices, safety boundaries, and known limitations.
+
 ## Supported development machines
 
 The bootstrap supports Debian 13 and Ubuntu 24.04 on x86_64. It installs the

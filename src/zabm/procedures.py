@@ -3272,9 +3272,7 @@ def _content_procedure_matches(
                 source.manufacturer,
             ]
         )
-        evidence_tokens = {
-            canonical_tokens.get(token, token) for token in tokens(evidence_text)
-        }
+        evidence_tokens = {canonical_tokens.get(token, token) for token in tokens(evidence_text)}
         matched = significant_tokens & evidence_tokens
         coverage = len(matched) / len(significant_tokens)
         if coverage >= PROCEDURE_CONTENT_MATCH_COVERAGE:
@@ -3350,9 +3348,7 @@ def _has_matching_partial_procedure(
                     source.manufacturer,
                 ]
             )
-            section_tokens = {
-                canonical_tokens.get(token, token) for token in tokens(section_text)
-            }
+            section_tokens = {canonical_tokens.get(token, token) for token in tokens(section_text)}
             if not significant_tokens & section_tokens:
                 continue
             page_text = " ".join(
@@ -3364,16 +3360,12 @@ def _has_matching_partial_procedure(
                     source.manufacturer,
                 ]
             )
-            page_tokens = {
-                canonical_tokens.get(token, token) for token in tokens(page_text)
-            }
+            page_tokens = {canonical_tokens.get(token, token) for token in tokens(page_text)}
             matched = significant_tokens & page_tokens
             score = (len(matched) / len(significant_tokens), len(matched))
             best_score = max(best_score, score)
         if best_score[0] >= PROCEDURE_PARTIAL_MATCH_COVERAGE:
-            document_scores.append(
-                (float(best_score[0]), int(best_score[1]), source.document_id)
-            )
+            document_scores.append((float(best_score[0]), int(best_score[1]), source.document_id))
 
     if not document_scores:
         return False

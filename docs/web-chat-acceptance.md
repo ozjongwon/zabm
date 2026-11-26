@@ -86,6 +86,7 @@ Use this representative set:
 | --- | --- |
 | Supported specification | What torque should I use for the RockShox Reverb Standard Remote clamp bolt? |
 | Supported compatibility | Is a Reverb Stealth hose barb with barb sleeve compatible with a Reverb Stealth A2 seatpost? |
+| Supported complete procedure | What are the steps for hose sizing and remote installation? |
 | Clarification required | What torque should I use for the bolt? |
 | Not found | What torque should I use for a Reverb unicorn clamp bolt? |
 | Out of scope | What bicycle should I buy for commuting? |
