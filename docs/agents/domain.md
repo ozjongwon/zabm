@@ -6,6 +6,8 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - **`GLOSSARY.md`** at the repo root, or **`GLOSSARY-MAP.md`** if it exists.
 - **`docs/adr/`**: read ADRs that touch the area you're about to work in.
+- **`docs/maintainability.md`**: read the architecture, module map, extension
+  recipes, and change checklist before changing implementation code.
 
 If any of these files don't exist, proceed silently. The `/domain-modeling` skill creates them lazily when terms or decisions are resolved.
 

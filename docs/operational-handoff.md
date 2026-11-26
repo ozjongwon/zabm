@@ -80,6 +80,10 @@ a complete sequence; every step and warning carries a citation. See the
 [domain glossary](../GLOSSARY.md) and [architecture decisions](adr/) for the
 authoritative vocabulary and decisions.
 
+For module responsibilities, request and build lifecycles, extension recipes,
+testing guidance, artifact ownership, and maintainability hotspots, see the
+[maintainability, architecture, and extension guide](maintainability.md).
+
 ## Source selection
 
 The frozen source pack in

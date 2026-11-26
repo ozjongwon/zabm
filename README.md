@@ -7,6 +7,8 @@ assistant described in [REQUIREMENT.md](REQUIREMENT.md) and the
 Start with the [v1 operational handoff](docs/operational-handoff.md) for the
 quickstart, architecture, source-selection audit, evaluation protocol and
 results, empirical choices, safety boundaries, and known limitations.
+Maintainers changing the code should also read the
+[maintainability, architecture, and extension guide](docs/maintainability.md).
 
 ## Supported development machines
 
