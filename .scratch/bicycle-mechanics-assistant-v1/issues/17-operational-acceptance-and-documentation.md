@@ -22,4 +22,6 @@
 
 - 2026-11-24: Added `general-pdf-ingestion/12` as a blocker because the final
   operational handoff depends on stable, documented ingestion provenance.
+- 2026-11-26: All blockers are resolved, including ticket 23's canonical remote
+  acceptance evidence. Selected as the next agent ticket.
 

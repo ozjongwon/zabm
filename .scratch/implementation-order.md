@@ -6,9 +6,10 @@ files.
 
 ## Current state
 
-- Completed in `bicycle-mechanics-assistant-v1`: tickets 01 through 11, 13
-  through 16, and 18 through 21.
-- Pending in `bicycle-mechanics-assistant-v1`: tickets 12 and 17.
+- Completed in `bicycle-mechanics-assistant-v1`: tickets 01 through 16, 18
+  through 21, and 23.
+- Won't fix in `bicycle-mechanics-assistant-v1`: ticket 22.
+- Pending in `bicycle-mechanics-assistant-v1`: ticket 17.
 - Completed in `general-pdf-ingestion`: tickets 01 through 12.
 - Pending in `general-pdf-ingestion`: none.
 - Pending in `multilingual-reviewed-output`: tickets 01 through 06.
@@ -35,20 +36,22 @@ files.
 | 16 | [bicycle-mechanics-assistant-v1/14](bicycle-mechanics-assistant-v1/issues/14-langsmith-result-mirror.md) | Mirror evaluation results without making LangSmith canonical. | Complete |
 | 17 | [bicycle-mechanics-assistant-v1/18](bicycle-mechanics-assistant-v1/issues/18-optional-reviewed-korean-output.md) | Add reviewed Korean output behind a disabled-by-default flag. | Complete |
 | 18 | [bicycle-mechanics-assistant-v1/01](bicycle-mechanics-assistant-v1/issues/01-development-environment-bootstrap.md) | Complete clean Debian and Ubuntu development acceptance. | Complete |
-| 19 | [bicycle-mechanics-assistant-v1/12](bicycle-mechanics-assistant-v1/issues/12-acceptance-gates-and-performance-report.md) | Run and report the full v1 acceptance gates. | Human review: GPU latency evidence pending; all software gates pass |
+| 19 | [bicycle-mechanics-assistant-v1/12](bicycle-mechanics-assistant-v1/issues/12-acceptance-gates-and-performance-report.md) | Run and report the full v1 acceptance gates. | Complete |
 | 20 | [bicycle-mechanics-assistant-v1/16](bicycle-mechanics-assistant-v1/issues/16-target-runtime-installer.md) | Install and smoke-test the runtime target, including web chat. | Complete |
-| 21 | [bicycle-mechanics-assistant-v1/17](bicycle-mechanics-assistant-v1/issues/17-operational-acceptance-and-documentation.md) | Complete final operational handoff and documentation. | Blocked by ticket 12 |
-| 22 | [multilingual-reviewed-output/01](multilingual-reviewed-output/issues/01-language-profile-contract-and-korean-migration.md) | Introduce the language-profile contract and migrate Korean artifacts. | Next agent ticket |
-| 23 | [multilingual-reviewed-output/02](multilingual-reviewed-output/issues/02-dynamic-question-language-routing.md) | Detect and select arbitrary target languages through semantic routing. | Blocked by order 22 |
-| 24 | [multilingual-reviewed-output/03](multilingual-reviewed-output/issues/03-language-neutral-translation-validation.md) | Generalize translation and structural validation for approved profiles. | Blocked by orders 22-23 |
-| 25 | [multilingual-reviewed-output/04](multilingual-reviewed-output/issues/04-per-language-review-and-activation.md) | Review and activate language profiles independently. | Blocked by orders 22, 24 |
-| 26 | [multilingual-reviewed-output/05](multilingual-reviewed-output/issues/05-language-neutral-cli-and-web-rendering.md) | Render arbitrary reviewed languages in CLI and web adapters. | Blocked by orders 22, 24-25 |
-| 27 | [multilingual-reviewed-output/06](multilingual-reviewed-output/issues/06-cross-language-acceptance-and-review-guide.md) | Prove the complete multilingual review and adapter workflow. | Blocked by orders 22-26 |
+| 21 | [bicycle-mechanics-assistant-v1/23](bicycle-mechanics-assistant-v1/issues/23-remote-llm-acceptance-evidence.md) | Produce canonical remote-LLM acceptance and performance evidence. | Complete |
+| 22 | [bicycle-mechanics-assistant-v1/17](bicycle-mechanics-assistant-v1/issues/17-operational-acceptance-and-documentation.md) | Complete final operational handoff and documentation. | Next agent ticket |
+| 23 | [multilingual-reviewed-output/01](multilingual-reviewed-output/issues/01-language-profile-contract-and-korean-migration.md) | Introduce the language-profile contract and migrate Korean artifacts. | Next multilingual ticket |
+| 24 | [multilingual-reviewed-output/02](multilingual-reviewed-output/issues/02-dynamic-question-language-routing.md) | Detect and select arbitrary target languages through semantic routing. | Blocked by order 23 |
+| 25 | [multilingual-reviewed-output/03](multilingual-reviewed-output/issues/03-language-neutral-translation-validation.md) | Generalize translation and structural validation for approved profiles. | Blocked by orders 23-24 |
+| 26 | [multilingual-reviewed-output/04](multilingual-reviewed-output/issues/04-per-language-review-and-activation.md) | Review and activate language profiles independently. | Blocked by orders 23, 25 |
+| 27 | [multilingual-reviewed-output/05](multilingual-reviewed-output/issues/05-language-neutral-cli-and-web-rendering.md) | Render arbitrary reviewed languages in CLI and web adapters. | Blocked by orders 23, 25-26 |
+| 28 | [multilingual-reviewed-output/06](multilingual-reviewed-output/issues/06-cross-language-acceptance-and-review-guide.md) | Prove the complete multilingual review and adapter workflow. | Blocked by orders 23-27 |
 
 ## Rules
 
 1. Do not start a ticket until every `Blocked by` ticket is complete.
-2. The first unblocked multilingual implementation ticket is
+2. The first unblocked multilingual implementation ticket after the operational
+   handoff is
    `multilingual-reviewed-output/01`.
 3. Provider work (ticket 13) and general PDF ingestion are complete.
 4. Human-gated tickets may be reviewed in parallel but must not be marked
