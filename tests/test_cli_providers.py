@@ -96,6 +96,7 @@ def test_cli_selects_environment_configured_remote_provider_without_leaking_secr
     assert response["provider"] == {
         "provider": "openai-compatible",
         "model": "remote-test-model",
+        "embedding_deployment": provider_url,
         "embedding_model": "remote-test-embedding",
         "configuration": "remote-environment-v1",
     }
@@ -222,6 +223,7 @@ def test_cli_uses_the_deepseek_provider_profile(tmp_path: Path) -> None:
     assert response["provider"] == {
         "provider": "deepseek",
         "model": "deepseek-chat",
+        "embedding_deployment": "not-configured",
         "embedding_model": "not-configured",
         "configuration": "deepseek:temperature=0,max_tokens=1024",
     }
@@ -258,6 +260,7 @@ def test_provider_smoke_exercises_chat_and_embedding_contracts() -> None:
     assert report["provider"] == {
         "provider": "openai-compatible",
         "model": "remote-smoke-model",
+        "embedding_deployment": provider_url,
         "embedding_model": "remote-smoke-embedding",
         "configuration": "remote-smoke-v1",
     }
@@ -327,6 +330,7 @@ def test_provider_smoke_supports_remote_chat_with_local_embeddings() -> None:
     report = json.loads(result.stdout)
     assert report["provider"]["model"] == "deepseek-test-model"
     assert report["provider"]["embedding_model"] == "mxbai-embed-large:latest"
+    assert report["provider"]["embedding_deployment"] == embedding_url
     assert [request["path"] for request in chat_requests] == ["/v1/chat/completions"]
     assert chat_requests[0]["authorization"] == "Bearer deepseek-test-key"
     assert [request["path"] for request in embedding_requests] == ["/v1/embeddings"]
@@ -397,6 +401,7 @@ def test_cli_uses_the_openai_provider_profile(tmp_path: Path) -> None:
     assert response["provider"] == {
         "provider": "openai",
         "model": "gpt-test-model",
+        "embedding_deployment": provider_url,
         "embedding_model": "text-embedding-3-small",
         "configuration": "openai:temperature=0,seed=0,max_tokens=1024",
     }

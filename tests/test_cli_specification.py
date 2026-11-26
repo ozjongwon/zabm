@@ -148,6 +148,7 @@ def test_cli_returns_a_verified_specification_with_complete_provenance(
     assert response["provider"] == {
         "provider": "local-deterministic",
         "model": "evidence-renderer-v1",
+        "embedding_deployment": "in-process",
         "embedding_model": "canonical-alias-index-v1",
         "configuration": "offline-v1",
     }
@@ -444,6 +445,7 @@ def test_cli_uses_and_records_a_configured_openai_compatible_provider(
     assert response["provider"] == {
         "provider": "openai-compatible",
         "model": "local-open-weight-model",
+        "embedding_deployment": provider_url,
         "embedding_model": "local-embedding-model",
         "configuration": "local-test-v1",
     }

@@ -561,6 +561,7 @@ def test_evaluation_runs_four_baselines_three_times_and_writes_canonical_results
     assert report["provider"] == {
         "provider": "local-deterministic",
         "model": "evidence-renderer-v1",
+        "embedding_deployment": "in-process",
         "embedding_model": "canonical-alias-index-v1",
         "configuration": "offline-v1",
     }
@@ -916,6 +917,7 @@ def test_evaluation_uses_one_provider_budget_and_run_seed_for_every_baseline(
     assert report["provider"] == {
         "provider": "openai-compatible",
         "model": "local-test-model",
+        "embedding_deployment": provider_url,
         "embedding_model": "local-test-embedding",
         "configuration": "evaluation-test-v1",
     }

@@ -724,6 +724,7 @@ def test_out_of_scope_declines_before_evidence_or_answer_generation(
     assert response["provider"] == {
         "provider": "openai-compatible",
         "model": "local-open-weight-model",
+        "embedding_deployment": provider_url,
         "embedding_model": "local-embedding-model",
         "configuration": "local-test-v1",
     }
@@ -733,6 +734,50 @@ def test_out_of_scope_declines_before_evidence_or_answer_generation(
     assert any(
         "request-routing" in message["content"] for message in requests[0]["body"]["messages"]
     )
+
+
+def test_cli_declines_a_model_misclassified_out_of_scope_purchase_request(
+    tmp_path: Path,
+) -> None:
+    route = {
+        "intent": "specification",
+        "normalized_question": "Which carbon saddle should I buy for my road bike?",
+        "entities": [
+            {"kind": "component", "text": "carbon saddle"},
+            {"kind": "other", "text": "road bike"},
+        ],
+        "missing_fields": ["budget", "saddle_width"],
+        "ambiguous_fields": ["carbon saddle"],
+        "candidate_intents": ["specification", "compatibility"],
+    }
+
+    with provider_server({"sentences": []}, route_response=route) as (provider_url, requests):
+        result = run_cli(
+            "ask",
+            "Which carbon saddle should I buy for my road bike?",
+            "--data-dir",
+            str(tmp_path / "missing-data"),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "over-eager-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "out_of_scope"
+    assert response["response_type"] == "out_of_scope"
+    assert response["source_pack_id"] == "not-consulted"
+    assert response["routing"]["strategy"] == "prototype"
+    assert response["routing"]["intent"] == "out_of_scope"
+    assert len(requests) == 1
 
 
 def test_cli_routes_a_non_english_request_through_a_semantic_route(
@@ -863,6 +908,78 @@ def test_cli_falls_back_to_prototype_routing_when_a_model_route_finds_no_evidenc
     )
 
 
+def test_cli_falls_back_to_prototype_when_a_model_marks_a_procedure_ambiguous(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, compatibility_path, data_dir = prepare_procedure_fixture(
+        tmp_path,
+        complete_procedure_lines(),
+    )
+    download_and_ingest_procedure(
+        manifest_path,
+        evidence_path,
+        compatibility_path,
+        data_dir,
+    )
+    route = {
+        "intent": "ambiguous",
+        "normalized_question": "What are the steps for the Trail Post spring replacement?",
+        "entities": [{"kind": "task", "text": "Trail Post spring replacement"}],
+        "missing_fields": ["what the task refers to"],
+        "ambiguous_fields": ["Trail Post spring replacement"],
+        "candidate_intents": ["procedure", "specification"],
+    }
+    procedure_id = "test-manual#trail-post-spring-replacement-p1"
+    generated = {
+        "sentences": [
+            {
+                "claim_id": f"{procedure_id}#step-1",
+                "text": "Step 1: Remove the spring cap.",
+            },
+            {
+                "claim_id": f"{procedure_id}#step-1-warning-1",
+                "text": "Notice: Hold the spring under compression.",
+            },
+            {
+                "claim_id": f"{procedure_id}#step-2",
+                "text": "Step 2: Replace the spring.",
+            },
+            {
+                "claim_id": f"{procedure_id}#step-3",
+                "text": "Step 3: Install the spring cap.",
+            },
+        ]
+    }
+
+    with provider_server(generated, route_response=route) as (provider_url, requests):
+        result = run_cli(
+            "ask",
+            "What are the steps to replace the Trail Post spring?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "over-cautious-router",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["response_type"] == "procedure"
+    assert response["routing"]["strategy"] == "prototype"
+    assert response["routing"]["intent"] == "procedure"
+    assert [step["number"] for step in response["procedure"]["steps"]] == [1, 2, 3]
+    assert len(requests) == 2
+
+
 def test_cli_reports_the_model_response_when_claim_phrasing_is_invalid(
     tmp_path: Path,
 ) -> None:
@@ -919,6 +1036,58 @@ def test_cli_reports_the_model_response_when_claim_phrasing_is_invalid(
         "Generated answer was rejected because the model response was not valid "
         f"claim-linked JSON. Response: {model_response}"
     )
+
+
+def test_cli_accepts_a_claim_split_across_multiple_generated_sentences(
+    tmp_path: Path,
+) -> None:
+    manifest_path, evidence_path, data_dir = prepare_source_fixture(tmp_path)
+    download_and_ingest(manifest_path, evidence_path, data_dir)
+    generated = {
+        "sentences": [
+            {
+                "claim_id": "test-clamp-torque",
+                "text": "Test Manufacturer Trail Post remote clamp bolt torque",
+            },
+            {
+                "claim_id": "test-clamp-torque",
+                "text": "is 2.8-3.4 N·m (25-30 in-lb).",
+            },
+        ]
+    }
+
+    with provider_server(generated) as (provider_url, _):
+        result = run_cli(
+            "ask",
+            "What is the Trail Post Standard Remote clamp bolt torque?",
+            "--data-dir",
+            str(data_dir),
+            "--provider",
+            "openai-compatible",
+            "--provider-url",
+            provider_url,
+            "--model",
+            "sentence-splitting-model",
+            "--embedding-model",
+            "local-embedding-model",
+            "--provider-configuration",
+            "local-test-v1",
+            "--json",
+        )
+
+    assert result.returncode == 0, result.stderr
+    response = json.loads(result.stdout)
+    assert response["status"] == "supported"
+    assert response["claims"] == [
+        {
+            "claim_id": "test-clamp-torque",
+            "evidence_ids": ["test-clamp-torque"],
+            "text": (
+                "Test Manufacturer Trail Post remote clamp bolt torque "
+                "is 2.8-3.4 N·m (25-30 in-lb)."
+            ),
+        }
+    ]
 
 
 def test_cli_requests_clarification_when_the_request_family_is_ambiguous(

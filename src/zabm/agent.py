@@ -152,6 +152,19 @@ def _answer_canonical_question(
     if router is None:
         router = PrototypeIntentRouter() if provider is None else ModelIntentRouter(provider)
     route = router.route(question)
+    prototype_router: PrototypeIntentRouter | None = None
+    prototype_route: RequestRoute | None = None
+    preanswered_response: CanonicalResponse | None = None
+    if provider is not None:
+        prototype_router = PrototypeIntentRouter()
+        prototype_route = prototype_router.route(original_question)
+        if (
+            prototype_route.intent == "out_of_scope"
+            and not prototype_route.missing_fields
+            and not prototype_route.ambiguous_fields
+        ):
+            route = prototype_route
+            router = prototype_router
     response_type = route.intent
     question = route.normalized_question
     logger.debug(
@@ -161,6 +174,32 @@ def _answer_canonical_question(
         ROUTING_VERSION,
     )
     metadata = routing_metadata(route, router.strategy)
+    if (
+        provider is not None
+        and (response_type == "ambiguous" or route.missing_fields or route.ambiguous_fields)
+        and prototype_router is not None
+        and prototype_route is not None
+        and prototype_route.intent not in {"ambiguous", "out_of_scope"}
+        and not prototype_route.missing_fields
+        and not prototype_route.ambiguous_fields
+    ):
+        fallback_response = _answer_from_valid_route(
+            prototype_route,
+            prototype_route.normalized_question,
+            data_dir,
+        )
+        if fallback_response.status == "supported":
+            preanswered_response = fallback_response
+            route = prototype_route
+            router = prototype_router
+            response_type = route.intent
+            question = route.normalized_question
+            metadata = routing_metadata(route, router.strategy)
+            logger.debug(
+                "route-fallback model_intent=clarification fallback_intent=%s question=%s",
+                route.intent,
+                route.normalized_question,
+            )
     if response_type == "out_of_scope":
         response = CanonicalResponse(
             request_id=os.urandom(16).hex(),
@@ -215,11 +254,11 @@ def _answer_canonical_question(
         _log_response(response)
         return response
 
-    response = _answer_from_valid_route(route, question, data_dir)
+    response = preanswered_response or _answer_from_valid_route(route, question, data_dir)
     response = response.model_copy(update={"routing": metadata})
     if response.status == "not_found" and router.strategy == "model":
-        fallback_router = PrototypeIntentRouter()
-        fallback_route = fallback_router.route(original_question)
+        fallback_router = prototype_router or PrototypeIntentRouter()
+        fallback_route = prototype_route or fallback_router.route(original_question)
         if (
             fallback_route.intent not in {"ambiguous", "out_of_scope"}
             and not fallback_route.missing_fields
@@ -333,9 +372,10 @@ def _phrase_validated_claims(
         ],
     }
     system_content = (
-        "Phrase every supplied validated claim once. Do not add advice, "
-        "causes, assurances, substitutions, citations, statuses, or numbers "
-        "that are absent from the claim. Return only JSON with a sentences "
+        "Phrase every supplied validated claim. A claim may be split across "
+        "multiple sentences, and every sentence must carry that claim_id. Do not "
+        "add advice, causes, assurances, substitutions, citations, statuses, or "
+        "numbers that are absent from the claim. Return only JSON with a sentences "
         "array; each sentence must contain claim_id and text."
     )
     user_content = json.dumps(prompt, ensure_ascii=False)
@@ -379,7 +419,7 @@ def _apply_generated_prose(
 ) -> CanonicalResponse:
     original = {claim.claim_id: claim for claim in response.claims}
     generated_ids = [sentence.claim_id for sentence in generated.sentences]
-    if len(generated_ids) != len(set(generated_ids)) or set(generated_ids) != set(original):
+    if set(generated_ids) != set(original):
         expected = ", ".join(sorted(original))
         received = ", ".join(sorted(set(generated_ids)))
         return _reject_generated_answer(
@@ -388,7 +428,8 @@ def _apply_generated_prose(
             f"Expected: {expected}. Received: {received or '<none>'}.",
         )
 
-    phrased: list[Claim] = []
+    fragments: dict[str, list[str]] = {claim_id: [] for claim_id in original}
+    claim_order: list[str] = []
     for sentence in generated.sentences:
         claim = original[sentence.claim_id]
         text = sentence.text.strip()
@@ -411,13 +452,17 @@ def _apply_generated_prose(
                 response,
                 "Generated answer was rejected because a sentence contained unsupported content.",
             )
-        phrased.append(
-            Claim(
-                claim_id=claim.claim_id,
-                text=text,
-                evidence_ids=claim.evidence_ids,
-            )
+        if not fragments[claim.claim_id]:
+            claim_order.append(claim.claim_id)
+        fragments[claim.claim_id].append(text)
+    phrased = [
+        Claim(
+            claim_id=claim_id,
+            text=" ".join(fragments[claim_id]),
+            evidence_ids=original[claim_id].evidence_ids,
         )
+        for claim_id in claim_order
+    ]
     return response.model_copy(update={"claims": phrased})
 
 

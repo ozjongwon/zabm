@@ -395,8 +395,8 @@ canonical response falls back to English. See
 
 CLI values take precedence over provider-specific environment variables. The
 generic `ZABM_PROVIDER_API_KEY` can override either typed API key. Named
-provider identities, model, embedding model, and configuration are recorded in
-every canonical response.
+provider identities, model, embedding deployment and model, and configuration
+are recorded in every canonical response.
 
 Enable interaction tracing with `--debug` or `ZABM_DEBUG=1`:
 
@@ -467,8 +467,9 @@ request latency. A timeout, unavailable endpoint, malformed completion, or
 embedding count/shape mismatch exits nonzero without printing a success report.
 
 For remote latency and provenance, run the deterministic evaluation fixture
-with the same provider profile. The artifact records the provider, model,
-configuration, source-pack version, and latency spread together:
+with the same provider profile. The artifact records the provider, chat model,
+embedding deployment and model, configuration, source-pack version, and latency
+spread together:
 
 ```bash
 ./.venv/bin/python -m zabm evaluation \
@@ -631,13 +632,30 @@ item results identify retrieval failures separately from answer-generation
 failures. Provider, model, configuration versions, source-pack version,
 hardware, runtime, and latency are recorded in the artifact.
 
-Evaluation accepts the same provider profiles:
+The canonical v1 acceptance run uses the remote provider topology. Keep the
+chat credential outside the repository and point the independently selected
+embedding model at an OpenAI-compatible Ollama `/v1` endpoint:
 
 ```bash
 export DEEPSEEK_API_KEY="..."
+export ZABM_EMBEDDING_PROVIDER_URL="http://127.0.0.1:11434/v1"
+export ZABM_EMBEDDING_MODEL="mxbai-embed-large:latest"
 
-./.venv/bin/python -m zabm evaluation --provider deepseek
+./.venv/bin/python -m zabm evaluation \
+  --output data/evaluation/baseline-results-v1.json \
+  --provider deepseek \
+  --model deepseek-chat \
+  --embedding-model mxbai-embed-large:latest \
+  --provider-configuration "deepseek-chat,mxbai-embed-large:latest,temperature=0"
 ```
+
+The accepted deployment used `deepseek-chat` and local Ollama
+`mxbai-embed-large:latest`. If Ollama is on another host, establish a tunnel or
+use its reachable OpenAI-compatible embedding URL; the chat credential is not
+forwarded to that endpoint. See
+[Remote LLM acceptance evidence](docs/remote-llm-acceptance.md) for the exact
+passing environment, smoke command, artifact checksums, and observed gate
+results.
 
 LangSmith is not imported or required. The canonical local JSON artifact is
 written before any optional remote mirroring. Set `LANGSMITH_TRACING=true` and
@@ -675,6 +693,11 @@ explicit provider warm-up. The reference acceptance path uses a remote
 OpenAI-compatible LLM, normally DeepSeek, with either remote embeddings or a
 local Ollama embedding model. It passes at a median of 20 seconds or less and a
 p95 of 30 seconds or less; local GPU hardware is not required.
+
+The accepted remote run reaches 94.17% full-agent median accuracy with 100%
+citation validity, 97.78% correct abstention, zero fabricated numbers, and
+2.04-second median / 4.13-second p95 latency. The canonical report records no
+failed gates.
 
 ## Retrieval-only freeze
 

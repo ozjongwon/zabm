@@ -77,6 +77,11 @@ class OpenAICompatibleProvider:
         self.identity = ProviderIdentity(
             provider=provider_name,
             model=model,
+            embedding_deployment=(
+                self._embedding_base_url
+                if embedding_model != "not-configured"
+                else "not-configured"
+            ),
             embedding_model=embedding_model,
             configuration=configuration,
         )

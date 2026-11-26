@@ -88,6 +88,40 @@ if [[ "${ZABM_RUNTIME_PROVIDER_KIND:-}" == "local" ]]; then
 fi
 ```
 
+## Evaluation acceptance
+
+For the accepted remote topology, use the installed chat credential and an
+Ollama OpenAI-compatible embedding endpoint:
+
+```bash
+export DEEPSEEK_API_KEY="..."
+export ZABM_EMBEDDING_PROVIDER_URL="http://127.0.0.1:11434/v1"
+export ZABM_EMBEDDING_MODEL="mxbai-embed-large:latest"
+
+./.venv/bin/python -m zabm provider-smoke \
+  --provider deepseek \
+  --model deepseek-chat \
+  --embedding-model mxbai-embed-large:latest \
+  --provider-configuration "deepseek-chat,mxbai-embed-large:latest,temperature=0" \
+  --output data/evaluation/deepseek-provider-smoke-v1.json
+
+./.venv/bin/python -m zabm evaluation \
+  --output data/evaluation/baseline-results-v1.json \
+  --provider deepseek \
+  --model deepseek-chat \
+  --embedding-model mxbai-embed-large:latest \
+  --provider-configuration "deepseek-chat,mxbai-embed-large:latest,temperature=0"
+
+./.venv/bin/python -m zabm acceptance \
+  --execution-environment remote-llm
+```
+
+The canonical run must leave `zabm acceptance` at exit status zero and write
+all gate outcomes, including failures, to
+`data/evaluation/acceptance-report-v1.json`. The accepted 2026-11-26
+configuration and result are recorded in
+[Remote LLM acceptance evidence](remote-llm-acceptance.md).
+
 ## Idempotence
 
 Run the installer a second time:

@@ -11,6 +11,7 @@ EvidenceIntent = Literal["specification", "compatibility", "procedure", "out_of_
 class ProviderIdentity(BaseModel):
     provider: str
     model: str
+    embedding_deployment: str = "not-configured"
     embedding_model: str
     configuration: str
 
@@ -56,6 +57,7 @@ class RoutingMetadata(BaseModel):
 DEFAULT_PROVIDER_IDENTITY = ProviderIdentity(
     provider="local-deterministic",
     model="evidence-renderer-v1",
+    embedding_deployment="in-process",
     embedding_model="canonical-alias-index-v1",
     configuration="offline-v1",
 )
