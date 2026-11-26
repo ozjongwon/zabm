@@ -8,7 +8,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from zabm.providers import ModelProvider, ProviderError
+from zabm.providers import ModelProvider, ProviderError, normalize_json_content
 from zabm.response import EvidenceIntent, RouteEntity, RoutingMetadata
 
 ROUTING_VERSION = "structured-intent-v1"
@@ -172,7 +172,7 @@ class ModelIntentRouter:
             seed=0,
         )
         try:
-            route = RequestRoute.model_validate_json(raw)
+            route = RequestRoute.model_validate_json(normalize_json_content(raw))
         except ValidationError as exc:
             raise ProviderError("provider returned an invalid request-routing result") from exc
         if not route.normalized_question.strip():

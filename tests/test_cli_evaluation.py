@@ -384,11 +384,17 @@ def run_evaluation(
 @contextmanager
 def evaluation_provider_server(
     baseline_generated: dict[str, Any] | None = None,
+    *,
+    empty_chat_after: int | None = None,
+    fenced_json: bool = False,
+    invalid_routing: bool = False,
 ) -> Generator[tuple[str, list[dict[str, Any]]]]:
     requests: list[dict[str, Any]] = []
+    chat_request_count = 0
 
     class ProviderHandler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
+            nonlocal chat_request_count
             length = int(self.headers.get("Content-Length", "0"))
             body = cast(dict[str, Any], json.loads(self.rfile.read(length)))
             requests.append({"path": self.path, "body": body})
@@ -402,6 +408,15 @@ def evaluation_provider_server(
                         ]
                     }
                 ).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+                return
+            chat_request_count += 1
+            if empty_chat_after is not None and chat_request_count > empty_chat_after:
+                payload = b'{"choices": []}'
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(payload)))
@@ -422,7 +437,11 @@ def evaluation_provider_server(
                     ]
                 }
             elif "request-routing" in system:
-                generated = fake_route_for_question(cast(str, user["question"]))
+                generated = (
+                    {"intent": "not-a-valid-intent"}
+                    if invalid_routing
+                    else fake_route_for_question(cast(str, user["question"]))
+                )
             elif baseline_generated is not None:
                 generated = baseline_generated
             else:
@@ -437,13 +456,16 @@ def evaluation_provider_server(
                     "clarification_message": None,
                     "clarification_missing_information": [],
                 }
+            content = json.dumps(generated)
+            if fenced_json:
+                content = f"```json\n{content}\n```"
             payload = json.dumps(
                 {
                     "choices": [
                         {
                             "message": {
                                 "role": "assistant",
-                                "content": json.dumps(generated),
+                                "content": content,
                             }
                         }
                     ]
@@ -958,6 +980,77 @@ def test_evaluation_uses_one_provider_budget_and_run_seed_for_every_baseline(
         2,
     ]
     assert all(run["seed_supported"] is True for run in report["configurations"][0]["runs"])
+
+
+def test_evaluation_records_invalid_full_agent_routing_as_item_failure(
+    tmp_path: Path,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+
+    with evaluation_provider_server(invalid_routing=True) as (provider_url, _):
+        result, report, output_path = run_evaluation(
+            tmp_path=tmp_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            evaluation_set_path=evaluation_set_path,
+            provider_url=provider_url,
+        )
+
+    assert result.returncode == 0, result.stderr
+    assert output_path.is_file()
+    full_agent = next(config for config in report["configurations"] if config["id"] == "full-agent")
+    first_item = full_agent["runs"][0]["items"][0]
+    assert first_item["answer_generation_failed"] is True
+    assert first_item["response"]["status"] == "not_found"
+    assert "invalid request-routing" in first_item["response"]["failure"]["message"]
+
+
+def test_evaluation_records_provider_failure_as_item_failure_for_every_baseline(
+    tmp_path: Path,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+
+    with evaluation_provider_server(empty_chat_after=1) as (provider_url, _):
+        result, report, output_path = run_evaluation(
+            tmp_path=tmp_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            evaluation_set_path=evaluation_set_path,
+            provider_url=provider_url,
+        )
+
+    assert result.returncode == 0, result.stderr
+    assert output_path.is_file()
+    for configuration in report["configurations"]:
+        first_item = configuration["runs"][0]["items"][0]
+        assert first_item["answer_generation_failed"] is True
+        assert first_item["response"]["status"] == "not_found"
+        assert "invalid chat completion" in first_item["response"]["failure"]["message"]
+
+
+def test_evaluation_accepts_provider_json_in_markdown_fences(
+    tmp_path: Path,
+) -> None:
+    manifest_path, pdf_dir, data_dir = prepare_evaluation_fixture(tmp_path)
+    evaluation_set_path = write_evaluation_fixture(tmp_path)
+
+    with evaluation_provider_server(fenced_json=True) as (provider_url, _):
+        result, report, _ = run_evaluation(
+            tmp_path=tmp_path,
+            manifest_path=manifest_path,
+            pdf_dir=pdf_dir,
+            data_dir=data_dir,
+            evaluation_set_path=evaluation_set_path,
+            provider_url=provider_url,
+        )
+
+    assert result.returncode == 0, result.stderr
+    full_agent = next(config for config in report["configurations"] if config["id"] == "full-agent")
+    assert all(item["answer_passed"] for run in full_agent["runs"] for item in run["items"])
 
 
 def test_evaluation_records_per_item_latency_after_an_explicit_warmup(

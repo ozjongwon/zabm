@@ -13,7 +13,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from zabm.providers import ModelProvider
+from zabm.providers import ModelProvider, normalize_json_content
 from zabm.response import (
     CanonicalResponse,
     LocalizationMetadata,
@@ -333,7 +333,7 @@ def translate_response(
         seed=seed,
     )
     try:
-        translated = TranslatedAnswer.model_validate_json(raw)
+        translated = TranslatedAnswer.model_validate_json(normalize_json_content(raw))
     except ValueError as exc:
         raise KoreanTranslationError(
             "Korean output was rejected because the model did not return valid "

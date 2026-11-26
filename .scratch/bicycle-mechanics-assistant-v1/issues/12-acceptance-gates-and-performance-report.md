@@ -12,7 +12,7 @@
 - [x] Citation validity is at least 95%.
 - [x] Correct abstention is at least 95% across not-found, conflicting-evidence, and out-of-scope items. Current run: 100.00%, passed.
 - [x] Fabricated numeric values are zero across all three runs.
-- [ ] Local GPU latency has a median of 20 seconds or less and a p95 of 30 seconds or less over the frozen evaluation set, excluding warm-up. No local NVIDIA GPU was available for this run.
+- [ ] Local GPU latency has a median of 20 seconds or less and a p95 of 30 seconds or less over the frozen evaluation set, excluding warm-up. `hope.local` has an NVIDIA GTX 1060 6 GB, but the available local models could not complete enough valid provider-backed requests to produce latency evidence.
 - [x] The report includes every baseline, provider, run, hardware, configuration version, latency, retrieval metric, and gate result.
 - [x] A failed gate is reported as a failure with diagnostic evidence; no threshold or result is silently changed.
 
@@ -65,3 +65,21 @@
   abstention, and fabrication all pass. Correct abstention is 100% in every
   refusal category. The only failed gate remains local GPU latency because no
   NVIDIA GPU is available and no provider-backed latency run could be recorded.
+- 2026-11-26: Retried local performance evidence on `hope.local` using
+  `zbm`, NVIDIA driver 550.163.01, a GTX 1060 6 GB, and Ollama 0.40.18.
+  Created 8192-token aliases of existing local weights with `ollama create`
+  so the runners fit wholly on the GPU. Provider smokes passed for
+  `llama3.2`, `qwen3.5-4b`, `phi-4-mini`, and Hermes 2 Pro. Fixture ladders
+  remained unusable: llama3.2 returned invalid routing/schema JSON, qwen3.5
+  spent its completion budget in reasoning and returned empty content, and
+  phi-4-mini reached only 20% full-agent accuracy with misrouting and
+  malformed claim output. Hermes answered a representative specification
+  correctly in 17.4 seconds, but its provider fixture timed out after 9m29s
+  without producing an artifact. No threshold was changed and no incomplete
+  run is used as latency evidence. The canonical report was regenerated from
+  the latest post-ticket-20 ladder: every non-GPU gate passes with full-agent
+  accuracy 98.33%, and only `local_gpu_latency` remains failed.
+- 2026-11-26: Evaluation now accepts provider JSON wrapped in Markdown fences
+  and records provider-output failures as item-level diagnostics instead of
+  aborting the ladder. Coverage was added through the `zabm evaluation` CLI
+  seam.

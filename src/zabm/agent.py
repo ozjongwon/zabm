@@ -19,7 +19,7 @@ from zabm.localization import (
 )
 from zabm.matching import QUESTION_TOKENS, tokens
 from zabm.procedures import answer_procedure
-from zabm.providers import ModelProvider, ProviderError
+from zabm.providers import ModelProvider, ProviderError, normalize_json_content
 from zabm.response import (
     CanonicalResponse,
     Claim,
@@ -353,7 +353,7 @@ def _phrase_validated_claims(
         seed=seed,
     )
     try:
-        generated = GeneratedProse.model_validate_json(raw)
+        generated = GeneratedProse.model_validate_json(normalize_json_content(raw))
     except ValueError:
         excerpt = _response_excerpt(raw)
         return _reject_generated_answer(

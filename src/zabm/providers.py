@@ -26,6 +26,17 @@ class ProviderError(RuntimeError):
     pass
 
 
+def normalize_json_content(content: str) -> str:
+    lines = content.strip().splitlines()
+    if (
+        len(lines) >= 2
+        and lines[0].strip().lower() in {"```", "```json"}
+        and lines[-1].strip() == "```"
+    ):
+        return "\n".join(lines[1:-1]).strip()
+    return content
+
+
 class ModelProvider(Protocol):
     identity: ProviderIdentity
 

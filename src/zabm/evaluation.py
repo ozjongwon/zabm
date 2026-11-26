@@ -30,7 +30,7 @@ from zabm.evaluation_set import (
 )
 from zabm.matching import tokens
 from zabm.procedures import RetrievalCatalog
-from zabm.providers import ModelProvider
+from zabm.providers import ModelProvider, ProviderError, normalize_json_content
 from zabm.response import (
     CanonicalResponse,
     Claim,
@@ -575,20 +575,28 @@ def _run_configuration(
             catalog,
             prompt_budget.value,
         )
-        response = _answer_for_configuration(
-            item.question,
-            item.expected.response_type,
-            baseline,
-            data_dir,
-            provider,
-            provider_identity,
-            retrieved,
-            catalog,
-            manifest,
-            retrieved_evidence_text,
-            prompt_budget,
-            seed,
-        )
+        try:
+            response = _answer_for_configuration(
+                item.question,
+                item.expected.response_type,
+                baseline,
+                data_dir,
+                provider,
+                provider_identity,
+                retrieved,
+                catalog,
+                manifest,
+                retrieved_evidence_text,
+                prompt_budget,
+                seed,
+            )
+        except ProviderError as exc:
+            response = _baseline_not_found(
+                item.expected.response_type,
+                f"Provider output was rejected: {exc}",
+                provider_identity,
+                manifest.manifest_version,
+            )
         grading_issues, checklist = _grade_answer(item, response)
         citation_issues = _citation_issues(response, manifest, source_pages)
         unsupported_numbers = _unsupported_numbers(response, source_pages, manifest)
@@ -885,7 +893,7 @@ def _provider_baseline_answer(
             ],
             seed=seed,
         )
-        generated = GeneratedBaselineAnswer.model_validate_json(raw)
+        generated = GeneratedBaselineAnswer.model_validate_json(normalize_json_content(raw))
     except (ValidationError, ValueError) as exc:
         return _baseline_not_found(
             expected_response_type,
