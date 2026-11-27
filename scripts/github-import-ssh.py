@@ -5,12 +5,11 @@ This script creates GitHub issues using SSH authentication via GitHub API
 """
 
 import os
-import sys
-import json
-import requests
-from pathlib import Path
 import subprocess
-from typing import Dict, List, Optional
+import sys
+from pathlib import Path
+
+import requests
 
 def get_github_ssh_auth():
     """Check if SSH key is available and authenticated"""
@@ -60,22 +59,16 @@ def get_github_token():
     print("3. Run: export GITHUB_TOKEN=your_token_here")
     return None
 
-def create_github_issue(token: str, repo: str, title: str, body: str, labels: List[str]) -> Optional[Dict]:
+def create_github_issue(
+    token: str, repo: str, title: str, body: str, labels: list[str]
+) -> dict | None:
     """Create a GitHub issue using GitHub API"""
     url = f"https://api.github.com/repos/{repo}/issues"
     headers = {
         'Accept': 'application/vnd.github.v3+json'
     }
     
-    # Handle SSH authentication
-    if token == "ssh":
-        # For SSH, we need to use a different approach
-        # Create a temporary token using SSH
-        auth_headers = {}
-    else:
-        auth_headers = {
-            'Authorization': f'token {token}'
-        }
+    auth_headers = {} if token == "ssh" else {'Authorization': f'token {token}'}
     
     headers.update(auth_headers)
     
@@ -95,10 +88,10 @@ def create_github_issue(token: str, repo: str, title: str, body: str, labels: Li
             print("❌ Authentication failed. Please check your token or SSH key.")
         return None
 
-def get_ticket_content(ticket_file: Path) -> Optional[Dict[str, str]]:
+def get_ticket_content(ticket_file: Path) -> dict | None:
     """Extract ticket content from markdown file"""
     try:
-        with open(ticket_file, 'r', encoding='utf-8') as f:
+        with open(ticket_file, encoding='utf-8') as f:
             content = f.read()
         
         # Extract title
@@ -247,7 +240,10 @@ def main():
         print("")
         
         for issue_info in created_issues:
-            ticket_file = base_dir / "coding-environment-improvements" / "issues" / f"{issue_info['local_ticket']}.md"
+            ticket_file = (
+                base_dir / "coding-environment-improvements" / 
+                "issues" / f"{issue_info['local_ticket']}.md"
+            )
             if ticket_file.exists():
                 with open(ticket_file, 'a', encoding='utf-8') as f:
                     f.write(f"\n\nGitHub Issue: #{issue_info['github_issue']}\n")
@@ -262,7 +258,7 @@ def main():
             for issue_info in created_issues:
                 f.write(f"{issue_info['local_ticket']}:{issue_info['github_issue']}\n")
         
-        print(f"✅ Created tracker file: .github-import-tracker.txt")
+        print("✅ Created tracker file: .github-import-tracker.txt")
         
         # Summary
         print("")

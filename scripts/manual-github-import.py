@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
 GitHub Issues Manual Import Script
-This script creates GitHub issues manually using GitHub API authentication
+This script creates GitHub issues using GitHub API authentication
 """
 
 import os
 import sys
-import json
-import requests
 from pathlib import Path
-from typing import Dict, List, Optional
+
+import requests
 
 def get_github_token():
     """Get GitHub token from environment or prompt user"""
@@ -23,7 +22,9 @@ def get_github_token():
         return None
     return token
 
-def create_github_issue(token: str, repo: str, title: str, body: str, labels: List[str]) -> Optional[Dict]:
+def create_github_issue(
+    token: str, repo: str, title: str, body: str, labels: list[str]
+) -> dict | None:
     """Create a GitHub issue using GitHub API"""
     url = f"https://api.github.com/repos/{repo}/issues"
     headers = {
@@ -45,10 +46,10 @@ def create_github_issue(token: str, repo: str, title: str, body: str, labels: Li
         print(f"❌ Error creating issue: {e}")
         return None
 
-def get_ticket_content(ticket_file: Path) -> Optional[Dict[str, str]]:
+def get_ticket_content(ticket_file: Path) -> dict | None:
     """Extract ticket content from markdown file"""
     try:
-        with open(ticket_file, 'r', encoding='utf-8') as f:
+        with open(ticket_file, encoding='utf-8') as f:
             content = f.read()
         
         # Extract title
@@ -197,7 +198,10 @@ def main():
         print("")
         
         for issue_info in created_issues:
-            ticket_file = base_dir / "coding-environment-improvements" / "issues" / f"{issue_info['local_ticket']}.md"
+            ticket_file = (
+                base_dir / "coding-environment-improvements" / 
+                "issues" / f"{issue_info['local_ticket']}.md"
+            )
             if ticket_file.exists():
                 with open(ticket_file, 'a', encoding='utf-8') as f:
                     f.write(f"\n\nGitHub Issue: #{issue_info['github_issue']}\n")
@@ -212,7 +216,7 @@ def main():
             for issue_info in created_issues:
                 f.write(f"{issue_info['local_ticket']}:{issue_info['github_issue']}\n")
         
-        print(f"✅ Created tracker file: .github-import-tracker.txt")
+        print("✅ Created tracker file: .github-import-tracker.txt")
         
         # Summary
         print("")
