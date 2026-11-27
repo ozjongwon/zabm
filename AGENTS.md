@@ -2,11 +2,19 @@
 
 ### Issue tracker
 
-Issues live in GitHub Issues at https://github.com/ozjongwon/zabm/issues. See `docs/agents/issue-tracker.md`.
+**Primary tracking**: GitHub issues at https://github.com/ozjongwon/zabm/issues
+**Local specs**: Detailed specifications and planning documents live under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### GitHub Issue Workflow
+
+High-priority tasks are tracked as GitHub issues for collaboration and visibility:
+- **Code quality**: Pre-commit hooks, CI pipeline setup
+- **Testing**: Test infrastructure investigation, integration tests
+- **Documentation**: AGENTS.md enhancements, migration planning
 
 ### Triage labels
 
-Uses the five canonical triage labels. See `docs/agents/triage-labels.md`.
+Use the five canonical triage labels. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 

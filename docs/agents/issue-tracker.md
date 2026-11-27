@@ -1,34 +1,30 @@
-# GitHub Issue Tracker
+# Issue tracker: Local Markdown
 
-Issues for this repo live in GitHub Issues at https://github.com/ozjongwon/zabm/issues.
+Issues and specs for this repo live as markdown files in `.scratch/`.
 
-## Workflow
+## Conventions
 
-### For Skills
-- `to-tickets`: Creates GitHub issues for planning tasks
-- `triage`: Moves issues through state machine using labels
-- `to-spec`: Publishes specs to GitHub issues
-- `wayfinder`: Creates decision tickets on GitHub with blocking links
+- One feature per directory: `.scratch/<feature-slug>/`
+- The spec is `.scratch/<feature-slug>/spec.md`
+- Implementation issues are one file per ticket at `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`, never a single combined tickets file
+- Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
+- Comments and conversation history append to the bottom of the file under a `## Comments` heading
 
-### For Humans
-- Create issues via GitHub web interface or `gh issue create` (once CLI is installed)
-- Use the five canonical triage labels for issue lifecycle management
-- Link issues to commits and pull requests
+## When a skill says "publish to the issue tracker"
 
-## GitHub Labels Required
+Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
 
-Create these labels in the GitHub repository:
+## When a skill says "fetch the relevant ticket"
 
-- `needs-triage`: New issues that need assessment
-- `needs-info`: Issues missing required information
-- `ready-for-agent`: Issues ready for implementation
-- `ready-for-human`: Issues needing human decision/input
-- `wontfix`: Issues that won't be addressed
+Read the file at the referenced path. The user will normally pass the path or the issue number directly.
 
-## PRs as Request Surface
+## Wayfinding operations
 
-**PRs are NOT included in the triage queue** by default. External contributions should be handled through GitHub's standard PR workflow.
+Used by `/wayfinder`. **Map** is a file with one **child** file per ticket.
 
-## Local Specs Backup
-
-Detailed specifications and planning documents are kept in `.scratch/` as backup and for complex planning tasks that don't fit well in GitHub's issue format.
+- **Map**: `.scratch/<effort>/map.md` (the Notes / Decisions-so-far / Fog body).
+- **Child ticket**: `.scratch/<effort>/issues/NN-<slug>.md`, numbered from `01`, with the question in the body. A `Type:` line records the ticket type (`research`/`prototype`/`grilling`/`task`); a `Status:` line records `claimed`/`resolved`.
+- **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked when every file it lists is `resolved`.
+- **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
+- **Claim**: set `Status: claimed` and save before any work.
+- **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
