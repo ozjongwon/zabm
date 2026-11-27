@@ -1,30 +1,36 @@
-# Issue tracker: Local Markdown
+# Issue tracker: GitHub Issues
 
-Issues and specs for this repo live as markdown files in `.scratch/`.
+Issues and specs for this repo live in GitHub Issues at https://github.com/ozjongwon/zabm/issues.
 
 ## Conventions
 
-- One feature per directory: `.scratch/<feature-slug>/`
-- The spec is `.scratch/<feature-slug>/spec.md`
-- Implementation issues are one file per ticket at `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`, never a single combined tickets file
-- Triage state is recorded as a `Status:` line near the top of each issue file (see `triage-labels.md` for the role strings)
-- Comments and conversation history append to the bottom of the file under a `## Comments` heading
+- **Primary tracking**: GitHub Issues with triage labels (see `triage-labels.md`)
+- **Local specs**: Detailed specifications and planning documents live under `.scratch/` for reference
+- **Dependencies**: Use GitHub's "Blocked by" feature to manage ticket dependencies
+- **Priority**: Labels indicate priority levels (`priority-high`, `priority-medium`, `priority-low`)
+- **Status**: `ready-for-agent` indicates tickets ready for implementation work
 
 ## When a skill says "publish to the issue tracker"
 
-Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
+Create a new GitHub issue using the GitHub CLI or web interface with appropriate labels and dependencies.
 
 ## When a skill says "fetch the relevant ticket"
 
-Read the file at the referenced path. The user will normally pass the path or the issue number directly.
+Use `gh issue view <number>` to fetch GitHub issue details, or read the referenced path in `.scratch/` for local specifications.
 
 ## Wayfinding operations
 
-Used by `/wayfinder`. **Map** is a file with one **child** file per ticket.
+Used by `/wayfinder`. **Map** is conceptual, with GitHub Issues as the primary tracking system.
 
-- **Map**: `.scratch/<effort>/map.md` (the Notes / Decisions-so-far / Fog body).
-- **Child ticket**: `.scratch/<effort>/issues/NN-<slug>.md`, numbered from `01`, with the question in the body. A `Type:` line records the ticket type (`research`/`prototype`/`grilling`/`task`); a `Status:` line records `claimed`/`resolved`.
-- **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked when every file it lists is `resolved`.
-- **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
-- **Claim**: set `Status: claimed` and save before any work.
-- **Resolve**: append the answer under an `## Answer` heading, set `Status: resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
+- **GitHub Issues**: Numbered tickets with labels, dependencies, and status tracking
+- **Blocking**: Use GitHub's "Blocked by" feature to manage dependencies
+- **Frontier**: Scan GitHub Issues for `ready-for-agent` tickets with no active blockers
+- **Claim**: Assign yourself to the GitHub issue before starting work
+- **Resolve**: Close the GitHub issue when work is complete, with links to relevant outputs
+
+## GitHub CLI Commands
+
+- `gh issue list` - List all issues
+- `gh issue view <number>` - View specific issue details
+- `gh issue create` - Create new issue
+- `gh issue edit <number>` - Edit existing issue
