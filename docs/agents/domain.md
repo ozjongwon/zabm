@@ -1,33 +1,29 @@
 # Domain Docs
 
-How the engineering skills should consume this repo's domain documentation when exploring the codebase.
+This repo uses **single-context** domain documentation layout.
 
-## Before exploring, read these
+## Layout
 
-- **`GLOSSARY.md`** at the repo root, or **`GLOSSARY-MAP.md`** if it exists.
-- **`docs/adr/`**: read ADRs that touch the area you're about to work in.
-- **`docs/maintainability.md`**: read the architecture, module map, extension
-  recipes, and change checklist before changing implementation code.
+- **`GLOSSARY.md`** at the repo root: Contains project-wide terminology and definitions
+- **`docs/adr/`** directory: Contains Architecture Decision Records (ADRs)
 
-If any of these files don't exist, proceed silently. The `/domain-modeling` skill creates them lazily when terms or decisions are resolved.
+## Consumer Rules
 
-## File structure
+### Reading Domain Docs
 
-This is a single-context repository:
+1. **Start with `GLOSSARY.md`** for project terminology and concepts
+2. **Consult `docs/adr/`** for architectural decisions and their rationales
+3. **Use ADR numbering** to find specific decisions (0001-corpus-bounded-support.md, etc.)
 
-```text
-/
-├── GLOSSARY.md
-├── docs/adr/
-└── src/
-```
+### Writing Domain Docs
 
-## Use the glossary's vocabulary
+- **Add new terms to `GLOSSARY.md`** with clear, concise definitions
+- **Create ADRs** for significant architectural decisions using the template format
+- **Number ADRs sequentially** in the docs/adr/ directory
+- **Link ADRs** from relevant code and documentation
 
-When output names a domain concept, use the term as defined in `GLOSSARY.md` rather than a synonym the glossary avoids.
+### Context Discipline
 
-If the concept is missing, either reconsider whether the project needs new language or note a real gap for `/domain-modeling`.
-
-## Flag ADR conflicts
-
-If output contradicts an existing ADR, surface the conflict explicitly rather than silently overriding it.
+- Single-context means one set of domain docs for the entire project
+- No need for context-specific glossaries or ADRs
+- Focus on shared understanding across all development work

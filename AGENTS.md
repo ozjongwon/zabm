@@ -1,20 +1,12 @@
-1|## Agent skills
-2|
-3|### Issue tracker
-4|
-5|**Primary tracking**: GitHub issues at https://github.com/ozjongwon/zabm/issues
-6|**Local specs**: Detailed specifications and planning documents live under `.scratch/`. See `docs/agents/issue-tracker.md`.
-7|
-8|### GitHub Issue Workflow
-9|
-10|High-priority tasks are tracked as GitHub issues for collaboration and visibility:
-11|- **Code quality**: Pre-commit hooks, CI pipeline setup
-12|- **Testing**: Test infrastructure investigation, integration tests
-13|- **Documentation**: AGENTS.md enhancements, migration planning
-14|
-15|### Triage labels
+## Agent skills
 
-Use the five canonical triage labels. See `docs/agents/triage-labels.md`.
+### Issue tracker
+
+Issues live in GitHub Issues at https://github.com/ozjongwon/zabm/issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Uses the five canonical triage labels. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
@@ -26,11 +18,11 @@ Single-context domain docs use the root `GLOSSARY.md` and `docs/adr/`. See `docs
 - Run tests as `pytest -q 2>&1 | tail -30`; re-run only failing tests with `--tb=short`.
 - Inspect changes with `git diff --stat`, then per-file diffs. Never print the full diff.
 - Do not `cat` JSON/fixtures; use `head -c 2000` or `jq` for the keys you need.
-21|- Spawn sub-agents with `fork_turns: "none"` and a self-contained brief.
-22|
-23|### Key Documentation
-24|
-25|**Development Setup**: `docs/agents/issue-tracker.md` - Local issue tracking conventions
-26|**Domain Knowledge**: `GLOSSARY.md` and `docs/adr/` - Single-context domain documentation
-27|**Migration Plan**: `.scratch/github-migration-plan.md` - GitHub migration strategy
-28|**Implementation Order**: `.scratch/implementation-order.md` - Authoritative work backlog
+- Spawn sub-agents with `fork_turns: "none"` and a self-contained brief.
+
+### Key Documentation
+
+**Development Setup**: `docs/agents/issue-tracker.md` - GitHub issue tracking workflow
+**Domain Knowledge**: `GLOSSARY.md` and `docs/adr/` - Single-context domain documentation
+**Migration Plan**: `.scratch/github-migration-plan.md` - GitHub migration strategy
+**Implementation Order**: `.scratch/implementation-order.md` - Authoritative work backlog
