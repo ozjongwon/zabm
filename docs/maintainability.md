@@ -7,7 +7,7 @@ agents who need a reliable map before editing the repository.
 
 This describes the v1 implementation as of 2026-11-26. Product requirements and
 accepted behavior remain authoritative in the
-[v1 specification](../.scratch/bicycle-mechanics-assistant-v1/spec.md).
+[v1 specification](https://github.com/ozjongwon/zabm/issues).
 Architecture decisions remain authoritative in [`docs/adr/`](adr/), and domain
 language remains authoritative in [`GLOSSARY.md`](../GLOSSARY.md).
 
@@ -424,8 +424,7 @@ the application service.
 ### Add a reviewed output language
 
 The current Korean implementation is a bridge to the planned language-profile
-architecture in
-[`multilingual-reviewed-output/spec.md`](../.scratch/multilingual-reviewed-output/spec.md).
+architecture in [GitHub Issues](https://github.com/ozjongwon/zabm/issues).
 
 The intended design is:
 
@@ -571,9 +570,9 @@ Before handing off a change:
   safety boundaries, and known limitations.
 - [Domain glossary](../GLOSSARY.md): authoritative project vocabulary.
 - [Architecture decisions](adr/): accepted design decisions and tradeoffs.
-- [v1 specification](../.scratch/bicycle-mechanics-assistant-v1/spec.md):
+- [v1 specification](https://github.com/ozjongwon/zabm/issues):
   requirements, implementation decisions, and testing decisions.
-- [Multilingual reviewed output](../.scratch/multilingual-reviewed-output/spec.md):
+- [Multilingual reviewed output](https://github.com/ozjongwon/zabm/issues):
   planned language-profile architecture.
-- [Implementation order](../.scratch/implementation-order.md): current ticket
+- [Implementation order](https://github.com/ozjongwon/zabm/issues): current ticket
   frontier.

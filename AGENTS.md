@@ -3,7 +3,7 @@
 ### Issue tracker
 
 **Primary tracking**: GitHub issues at https://github.com/ozjongwon/zabm/issues
-**Local specs**: Detailed specifications and planning documents live under `.scratch/`. See `docs/agents/issue-tracker.md`.
+**Local specs**: Detailed specifications and planning documents live in [GitHub Issues](https://github.com/ozjongwon/zabm/issues). See `docs/agents/issue-tracker.md`.
 
 ### GitHub Issue Workflow
 

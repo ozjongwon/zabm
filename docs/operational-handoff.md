@@ -38,11 +38,7 @@ procedures and evidence to collect are in
 [Development bootstrap acceptance](development-bootstrap-acceptance.md) and
 [Target runtime acceptance](target-runtime-acceptance.md).
 
-Operator acceptance of both installation paths is recorded in the local issue
-tracker:
-
-- [Development environment bootstrap](../.scratch/bicycle-mechanics-assistant-v1/issues/01-development-environment-bootstrap.md)
-- [Target runtime installer](../.scratch/bicycle-mechanics-assistant-v1/issues/16-target-runtime-installer.md)
+Operator acceptance of both installation paths is recorded in [GitHub Issues](https://github.com/ozjongwon/zabm/issues).
 
 ## Architecture
 
@@ -311,4 +307,4 @@ line. LangSmith is not required to reproduce acceptance.
 
 The requirement and these boundaries are also stated in
 [`REQUIREMENT.md`](../REQUIREMENT.md) and the
-[v1 specification](../.scratch/bicycle-mechanics-assistant-v1/spec.md).
+[v1 specification](https://github.com/ozjongwon/zabm/issues).

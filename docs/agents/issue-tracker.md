@@ -5,7 +5,7 @@ Issues and specs for this repo live in GitHub Issues at https://github.com/ozjon
 ## Conventions
 
 - **Primary tracking**: GitHub Issues with triage labels (see `triage-labels.md`)
-- **Local specs**: Detailed specifications and planning documents live under `.scratch/` for reference
+- **Local specs**: Detailed specifications live in [GitHub Issues](https://github.com/ozjongwon/zabm/issues) for reference
 - **Dependencies**: Use GitHub's "Blocked by" feature to manage ticket dependencies
 - **Priority**: Labels indicate priority levels (`priority-high`, `priority-medium`, `priority-low`)
 - **Status**: `ready-for-agent` indicates tickets ready for implementation work
@@ -16,7 +16,7 @@ Create a new GitHub issue using the GitHub CLI or web interface with appropriate
 
 ## When a skill says "fetch the relevant ticket"
 
-Use `gh issue view <number>` to fetch GitHub issue details, or read the referenced path in `.scratch/` for local specifications.
+Use `gh issue view <number>` to fetch GitHub issue details, or read the referenced issue in [GitHub Issues](https://github.com/ozjongwon/zabm/issues) for local specifications.
 
 ## Wayfinding operations
 
