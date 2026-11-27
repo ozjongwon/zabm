@@ -24,5 +24,6 @@ Single-context domain docs use the root `GLOSSARY.md` and `docs/adr/`. See `docs
 
 **Development Setup**: `docs/agents/issue-tracker.md` - GitHub issue tracking workflow
 **Domain Knowledge**: `GLOSSARY.md` and `docs/adr/` - Single-context domain documentation
+**GitHub Import Guide**: `docs/github-import-guide.md` - Batch import local tickets to GitHub Issues
 **Migration Plan**: `.scratch/github-migration-plan.md` - GitHub migration strategy
 **Implementation Order**: `.scratch/implementation-order.md` - Authoritative work backlog
