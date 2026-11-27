@@ -34,3 +34,19 @@ Used by `/wayfinder`. **Map** is conceptual, with GitHub Issues as the primary t
 - `gh issue view <number>` - View specific issue details
 - `gh issue create` - Create new issue
 - `gh issue edit <number>` - Edit existing issue
+
+## Pre-commit workflow
+
+Before committing any change:
+
+1. Install hooks once:
+   ```bash
+   ./.venv/bin/pre-commit install
+   ```
+2. Run all hooks on all files:
+   ```bash
+   ./.venv/bin/pre-commit run --all-files
+   ```
+3. Commit when all three hooks pass (ruff check, ruff format, pyright).
+
+Hooks run automatically on every commit via `.git/hooks/pre-commit`.

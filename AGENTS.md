@@ -26,6 +26,7 @@ Single-context domain docs use the root `GLOSSARY.md` and `docs/adr/`. See `docs
 - Run tests as `pytest -q 2>&1 | tail -30`; re-run only failing tests with `--tb=short`.
 - Inspect changes with `git diff --stat`, then per-file diffs. Never print the full diff.
 - Do not `cat` JSON/fixtures; use `head -c 2000` or `jq` for the keys you need.
+- Before committing, run `./.venv/bin/pre-commit run --all-files` to confirm ruff check, ruff format, and pyright hooks pass.
 - Spawn sub-agents with `fork_turns: "none"` and a self-contained brief.
 
 ### Key Documentation

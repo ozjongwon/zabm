@@ -561,6 +561,7 @@ Before handing off a change:
 - Preserve failed evidence and diagnostics.
 - Update the relevant ADR, spec, acceptance procedure, or maintainability notes.
 - Run health, lint, format, type checking, focused tests, and the full suite.
+- Run `./.venv/bin/pre-commit run --all-files` to confirm the pre-commit hooks pass before committing.
 - Check `git status` for accidental generated data, PDFs, secrets, or runtime
   configuration.
 
