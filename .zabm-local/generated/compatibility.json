@@ -1,0 +1,232 @@
+{
+  "compatibility_rules": [
+    {
+      "citation": {
+        "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+        "manufacturer": "SRAM (RockShox)",
+        "physical_page": 11,
+        "printed_page": 11,
+        "retrieval_date": "2026-11-23",
+        "section": "Hydraulic Hose Replacement",
+        "source_manifest_version": "2026-11-23.3-frozen-2",
+        "title": "Reverb Stealth & Reverb Hydraulic Hose Replacement Remote System Bleed"
+      },
+      "precedence": null,
+      "precedence_validation_issues": [],
+      "rule": {
+        "citation": {
+          "physical_page": 11,
+          "printed_page": 11,
+          "section": "Hydraulic Hose Replacement"
+        },
+        "component_a": {
+          "aliases": [
+            "hose barb with barb sleeve",
+            "Reverb Stealth hose barb and barb sleeve"
+          ],
+          "manufacturer": "SRAM (RockShox)",
+          "name": "Reverb Stealth hose barb with barb sleeve"
+        },
+        "component_b": {
+          "aliases": [
+            "Reverb Stealth A2 seatpost",
+            "Reverb Stealth B1 seatpost"
+          ],
+          "manufacturer": "SRAM (RockShox)",
+          "name": "Reverb Stealth A2 or B1 seatpost"
+        },
+        "conditions": [
+          "Bicycle model: Reverb Stealth",
+          "Revision: A2 and B1",
+          "Connection: hose barb with barb sleeve"
+        ],
+        "evidence_excerpts": [
+          "There are three Reverb\u2122 Stealth hydraulic hose connection types. Verify compatibility before beginning hose replacement process.",
+          "1. Hose barb with barb sleeve (compatible with Reverb Stealth A2 and B1)"
+        ],
+        "id": "sram-reverb-stealth-barb-sleeve-a2-b1",
+        "outcome": "compatible",
+        "precedence": null,
+        "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+        "verification": {
+          "status": "human_verified",
+          "verified_at": "2026-11-23",
+          "verified_by": "project-maintainer"
+        }
+      },
+      "validation_issues": []
+    },
+    {
+      "citation": {
+        "document_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+        "manufacturer": "SRAM (RockShox)",
+        "physical_page": 26,
+        "printed_page": 26,
+        "retrieval_date": "2026-11-23",
+        "section": "Remote Syringe Preparation",
+        "source_manifest_version": "2026-11-23.3-frozen-2",
+        "title": "Reverb Stealth & Reverb Hydraulic Hose Replacement Remote System Bleed"
+      },
+      "precedence": null,
+      "precedence_validation_issues": [],
+      "rule": {
+        "citation": {
+          "physical_page": 26,
+          "printed_page": 26,
+          "section": "Remote Syringe Preparation"
+        },
+        "component_a": {
+          "aliases": [
+            "Reverb hydraulic system",
+            "RockShox Reverb seatpost hydraulic system"
+          ],
+          "manufacturer": "SRAM (RockShox)",
+          "name": "RockShox Reverb hydraulic system"
+        },
+        "component_b": {
+          "aliases": [
+            "DOT-contaminated syringe",
+            "syringe used with DOT brake fluid"
+          ],
+          "manufacturer": "Unspecified",
+          "name": "syringe previously exposed to DOT brake fluid"
+        },
+        "conditions": [
+          "Fluid: DOT brake fluid",
+          "Seatpost: RockShox Reverb",
+          "Component: syringe that has contacted DOT brake fluid"
+        ],
+        "evidence_excerpts": [
+          "Do not use syringes that have been in contact with DOT brake fluid.",
+          "DOT brake fluid will permanently damage the seals and cause the seatpost to malfunction."
+        ],
+        "id": "sram-reverb-hydraulic-system-dot-contaminated-syringe",
+        "outcome": "not_compatible",
+        "precedence": null,
+        "source_id": "sram-rockshox-reverb-hose-replacement-rev-c",
+        "verification": {
+          "status": "human_verified",
+          "verified_at": "2026-11-23",
+          "verified_by": "project-maintainer"
+        }
+      },
+      "validation_issues": []
+    },
+    {
+      "citation": {
+        "document_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+        "manufacturer": "SRAM (RockShox)",
+        "physical_page": 13,
+        "printed_page": 13,
+        "retrieval_date": "2026-11-23",
+        "section": "Compatibility Compatibilit\u00e9 Compatibilidade",
+        "source_manifest_version": "2026-11-23.3-frozen-2",
+        "title": "Reverb AXS User Manual"
+      },
+      "precedence": null,
+      "precedence_validation_issues": [],
+      "rule": {
+        "citation": {
+          "physical_page": 13,
+          "printed_page": 13,
+          "section": "Compatibility Compatibilit\u00e9 Compatibilidade"
+        },
+        "component_a": {
+          "aliases": [
+            "RockShox Reverb AXS dropper post",
+            "Reverb AXS"
+          ],
+          "manufacturer": "SRAM (RockShox)",
+          "name": "Reverb AXS seatpost"
+        },
+        "component_b": {
+          "aliases": [
+            "saddle with metal 7 mm rails",
+            "metal 7 mm saddle rails"
+          ],
+          "manufacturer": "Unspecified",
+          "name": "saddle with metal 7 mm diameter rails"
+        },
+        "conditions": [
+          "Seatpost: Reverb AXS",
+          "Saddle rail material: metal",
+          "Saddle rail diameter: 7 mm",
+          "Rail condition: seated squarely on the inner rail clamps"
+        ],
+        "evidence_excerpts": [
+          "Reverb AXS seatposts are compatible with saddles with metal 7 mm diameter rails"
+        ],
+        "id": "sram-reverb-axs-metal-7mm-saddle-rails",
+        "outcome": "compatible",
+        "precedence": null,
+        "source_id": "sram-rockshox-reverb-axs-user-manual-rev-l",
+        "verification": {
+          "status": "human_verified",
+          "verified_at": "2026-11-23",
+          "verified_by": "project-maintainer"
+        }
+      },
+      "validation_issues": []
+    },
+    {
+      "citation": {
+        "document_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+        "manufacturer": "SRAM",
+        "physical_page": 1,
+        "printed_page": 1,
+        "retrieval_date": "2026-11-23",
+        "section": "SRAM\u00ae Eagle\u2122, Flattop\u2122, and 11 speed Chain Compatible Tools GEN.0000000007151 Rev F \u00a9 2025 SRAM, LLC",
+        "source_manifest_version": "2026-11-23.3-frozen-2",
+        "title": "SRAM Eagle, Flattop, and 11 Speed Chain Compatible Tools"
+      },
+      "precedence": null,
+      "precedence_validation_issues": [],
+      "rule": {
+        "citation": {
+          "physical_page": 1,
+          "printed_page": 1,
+          "section": "SRAM\u00ae Eagle\u2122, Flattop\u2122, and 11 speed Chain Compatible Tools GEN.0000000007151 Rev F \u00a9 2025 SRAM, LLC"
+        },
+        "component_a": {
+          "aliases": [
+            "Eagle chain",
+            "Flattop chain",
+            "11 speed SRAM chain"
+          ],
+          "manufacturer": "SRAM",
+          "name": "SRAM Eagle or Flattop chain"
+        },
+        "component_b": {
+          "aliases": [
+            "CC-4.2",
+            "Park Tool chain wear indicator"
+          ],
+          "manufacturer": "Park Tool",
+          "name": "Park Tool CC-4.2 chain wear check tool"
+        },
+        "conditions": [
+          "Chain families: SRAM Eagle, Flattop, and 11 speed",
+          "Task: chain wear measurement",
+          "Tool: Park Tool CC-4.2"
+        ],
+        "evidence_excerpts": [
+          "and 11 speed Chain Compatible Tools",
+          "Chain Wear Measurement",
+          "Park Tool",
+          "CC-4.2"
+        ],
+        "id": "sram-eagle-flattop-park-tool-cc4-2",
+        "outcome": "compatible",
+        "precedence": null,
+        "source_id": "sram-eagle-flattop-11-speed-compatible-tools-rev-f",
+        "verification": {
+          "status": "human_verified",
+          "verified_at": "2026-11-23",
+          "verified_by": "project-maintainer"
+        }
+      },
+      "validation_issues": []
+    }
+  ],
+  "source_pack_id": "2026-11-23.3-frozen-2"
+}
