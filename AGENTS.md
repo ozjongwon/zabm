@@ -26,4 +26,11 @@ Single-context domain docs use the root `GLOSSARY.md` and `docs/adr/`. See `docs
 - Run tests as `pytest -q 2>&1 | tail -30`; re-run only failing tests with `--tb=short`.
 - Inspect changes with `git diff --stat`, then per-file diffs. Never print the full diff.
 - Do not `cat` JSON/fixtures; use `head -c 2000` or `jq` for the keys you need.
-- Spawn sub-agents with `fork_turns: "none"` and a self-contained brief.
+21|- Spawn sub-agents with `fork_turns: "none"` and a self-contained brief.
+22|
+23|### Key Documentation
+24|
+25|**Development Setup**: `docs/agents/issue-tracker.md` - Local issue tracking conventions
+26|**Domain Knowledge**: `GLOSSARY.md` and `docs/adr/` - Single-context domain documentation
+27|**Migration Plan**: `.scratch/github-migration-plan.md` - GitHub migration strategy
+28|**Implementation Order**: `.scratch/implementation-order.md` - Authoritative work backlog
