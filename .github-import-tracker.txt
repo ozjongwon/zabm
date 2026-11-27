@@ -1,0 +1,16 @@
+# GitHub Issues Import Tracker
+# Format: LocalTicket:GitHubIssueNumber
+
+05-integration-test-scenarios-definition:1
+04-test-file-organization-analysis:2
+03-test-infrastructure-investigation:3
+01-pre-commit-hooks-setup:4
+07-enhanced-acceptance-testing:5
+06-ci-pipeline-setup:6
+02-agents-md-navigation-enhancement:7
+01-language-profile-contract-and-korean-migration:8
+04-per-language-review-and-activation:9
+05-language-neutral-cli-and-web-rendering:10
+03-language-neutral-translation-validation:11
+06-cross-language-acceptance-and-review-guide:12
+02-dynamic-question-language-routing:13
