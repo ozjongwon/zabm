@@ -18,6 +18,7 @@ zabm = "zabm.cli:main"
 
 [dependency-groups]
 dev = [
+  "pre-commit==3.8.0",
   "pyright[nodejs]==1.1.414",
   "ruff==0.17.4",
 ]
