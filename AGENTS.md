@@ -1,10 +1,18 @@
-## Agent skills
-
-### Issue tracker
-
-Local Markdown issues and specs live under `.scratch/`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
+1|## Agent skills
+2|
+3|### Issue tracker
+4|
+5|**Primary tracking**: GitHub issues at https://github.com/ozjongwon/zabm/issues
+6|**Local specs**: Detailed specifications and planning documents live under `.scratch/`. See `docs/agents/issue-tracker.md`.
+7|
+8|### GitHub Issue Workflow
+9|
+10|High-priority tasks are tracked as GitHub issues for collaboration and visibility:
+11|- **Code quality**: Pre-commit hooks, CI pipeline setup
+12|- **Testing**: Test infrastructure investigation, integration tests
+13|- **Documentation**: AGENTS.md enhancements, migration planning
+14|
+15|### Triage labels
 
 Use the five canonical triage labels. See `docs/agents/triage-labels.md`.
 
