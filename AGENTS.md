@@ -33,7 +33,7 @@ the verification you ran.
 
 ## Verification
 
-- Run tests as `./.venv/bin/pytest -q 2>&1 | tail -30`; re-run only failing tests with `--tb=short`.
+- Run tests as `./.venv/bin/pytest -q 2>&1 | tail -30`; re-run only failing tests with `--tb=short`. When running `make test` via the agent's `terminal` tool, use a timeout of at least `300` seconds to avoid premature termination.
 - Before committing, run `./.venv/bin/pre-commit run --all-files` and confirm ruff
   check, ruff format, and pyright pass.
 
